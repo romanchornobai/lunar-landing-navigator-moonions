@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useProgress } from '@react-three/drei'
 import { SceneLoader } from './SceneLoader'
@@ -24,35 +24,61 @@ function titleFor(pathname: string) {
  */
 export function RouteLoader() {
   const { pathname } = useLocation()
-  const { active, progress } = useProgress()
+  const { active } = useProgress()
   const [readyPath, setReadyPath] = useState<string | null>(null)
   const [mounted, setMounted] = useState(true)
   const [minPath, setMinPath] = useState<string | null>(null)
-  const [elapsed, setElapsed] = useState(0)
+  const [shownState, setShownState] = useState({ path: '', value: 0 })
 
   // Derived, so the overlay covers the new view in the very same render as the navigation.
   // (minElapsed is keyed by path so a stale "true" from the previous navigation can't end the loader early.)
   const loading = readyPath !== pathname
   const minElapsed = minPath === pathname
 
-  // Restart the clock on every navigation.
+  // Loading is complete: minimum time reached and nothing left to load.
+  const complete = loading && minElapsed && !active
+  const completeRef = useRef(false)
+  const loadingRef = useRef(true)
+  completeRef.current = complete
+  loadingRef.current = loading
+
+  // Timers per navigation: minimum duration and the safety net.
   useEffect(() => {
-    setElapsed(0)
-    const start = performance.now()
-    const tick = setInterval(() => setElapsed(performance.now() - start), 50)
     const min = setTimeout(() => setMinPath(pathname), MIN_MS)
     const max = setTimeout(() => setReadyPath(pathname), MAX_MS)
     return () => {
-      clearInterval(tick)
       clearTimeout(min)
       clearTimeout(max)
     }
   }, [pathname])
 
-  // Done: minimum time reached and nothing left to load.
+  // Bar animation: eases toward a target on a ~30 fps timer, so it never jumps. (A timer rather than
+  // requestAnimationFrame: rAF stops in background tabs and would stall the loader.)
+  // Target = the elapsed fraction of MIN_MS, so the bar fills evenly over the minimum time and is held at 99%
+  // until loading is really complete (assets done). The fade-out starts only once the bar has reached 100%.
   useEffect(() => {
-    if (loading && minElapsed && !active) setReadyPath(pathname)
-  }, [loading, minElapsed, active, pathname])
+    let value = 0
+    let last = performance.now()
+    const start = last
+    setShownState({ path: pathname, value: 0 })
+    const frame = () => {
+      const now = performance.now()
+      const dt = Math.min(1, (now - last) / 1000)
+      last = now
+      const timePct = Math.min(99, ((now - start) / MIN_MS) * 100)
+      const target = completeRef.current ? 100 : timePct
+      value += (target - value) * (1 - Math.exp(-dt * (completeRef.current ? 14 : 7)))
+      setShownState({ path: pathname, value })
+      if (!loadingRef.current) clearInterval(timer) // ended by the safety net
+      else if (completeRef.current && value >= 99.5) {
+        clearInterval(timer)
+        setShownState({ path: pathname, value: 100 })
+        setReadyPath(pathname)
+      }
+    }
+    const timer = setInterval(frame, 33)
+    return () => clearInterval(timer)
+  }, [pathname])
 
   // Keep the overlay mounted during the fade-out.
   useEffect(() => {
@@ -66,9 +92,8 @@ export function RouteLoader() {
 
   if (!loading && !mounted) return null
 
-  // Bar follows the real asset progress but fills smoothly over MIN_MS; held at 90% until actually done.
-  const timePct = Math.min(100, (elapsed / MIN_MS) * 100)
-  const shown = loading ? Math.min(90, Math.max(progress, timePct * 0.9)) : 100
+  // Right after a navigation the state still holds the previous bar value for one frame: show 0 then.
+  const shown = shownState.path === pathname ? shownState.value : 0
 
   return <SceneLoader progress={shown} title={titleFor(pathname)} hidden={!loading} />
 }

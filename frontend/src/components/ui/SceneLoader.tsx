@@ -34,8 +34,15 @@ export const SceneLoader: React.FC<SceneLoaderProps> = ({ progress, title, hidde
 
   return (
     <div
-      className="fixed inset-0 w-screen h-screen flex flex-col items-center justify-center bg-[#020407] select-none overflow-hidden transition-opacity duration-500 ease-out"
-      style={{ zIndex: 9999, opacity: hidden ? 0 : 1, pointerEvents: hidden ? 'none' : 'auto' }}
+      className="fixed inset-0 w-screen h-screen flex flex-col items-center justify-center bg-black/30 select-none overflow-hidden transition-opacity duration-500 ease-out"
+      style={{
+        zIndex: 9999,
+        opacity: hidden ? 0 : 1,
+        pointerEvents: hidden ? 'none' : 'auto',
+        // Blurred, dimmed view behind the loader instead of a solid black background
+        backdropFilter: 'blur(14px) brightness(0.6)',
+        WebkitBackdropFilter: 'blur(14px) brightness(0.6)',
+      }}
     >
       <style>{`
         @keyframes loaderSpinClockwise {
@@ -72,7 +79,7 @@ export const SceneLoader: React.FC<SceneLoaderProps> = ({ progress, title, hidde
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
-          background: 'radial-gradient(circle at center, transparent 30%, rgba(2, 4, 7, 0.85) 75%, #020407 100%)',
+          background: 'radial-gradient(circle at center, transparent 35%, rgba(2, 4, 7, 0.35) 100%)',
         }}
       />
 
