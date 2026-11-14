@@ -97,7 +97,7 @@ export function ProbeHoloPanel({ coords, direction, extra, onClose }: ProbeHoloP
         }}
         className="w-[340px] sm:w-[370px]"
       >
-        <SciFiHudPanel badgeTitle="TELEMETRÍA // SONDA">
+        <SciFiHudPanel badgeTitle="TELEMETRÍA">
           <div className="font-mono text-xs select-none tracking-wide text-neutral-100">
             <div className="flex items-center justify-between border-b border-white/20 pb-2 mb-3">
               <div className="flex items-center gap-2">

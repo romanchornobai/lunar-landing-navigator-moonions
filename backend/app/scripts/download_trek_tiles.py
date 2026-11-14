@@ -3,6 +3,7 @@
 Layers (South Polar Stereographic, IAU2000:30120, sphere R = 1737.4 km, default028mm tile matrix set):
   - LRO_WAC_Mosaic_SPole60_100m_v02   native zoom 0..5
   - LRO_NAC_Mosaic_SPole85.5_1mp       native zoom 0..11 (~4.2 m/px at 11)
+  - LRO_NAC_Mosaic_0_67mpp_Malapert_Massif_SP  native zoom 0..13 (~1 m/px at 13), Malapert only
 
 For every zoom level, all tiles intersecting a square of +-RADIUS_KM around each site are saved to
 frontend/public/tiles/moon_sp/<layer>/<z>/<row>/<col>.png, plus manifest.json listing what exists
@@ -26,9 +27,11 @@ SITES_JSON = ROOT / "frontend" / "src" / "data" / "landingSites.json"
 OUT_DIR = ROOT / "frontend" / "public" / "tiles" / "moon_sp"
 
 TREK = "https://trek.nasa.gov/tiles/Moon/SP"
-LAYERS = {
-    "LRO_WAC_Mosaic_SPole60_100m_v02": 5,
-    "LRO_NAC_Mosaic_SPole85.5_1mp": 11,
+# layer id -> (max native zoom, layer extent in polar meters [minx, miny, maxx, maxy] from the Trek index)
+LAYERS: dict[str, tuple[int, tuple[float, float, float, float]]] = {
+    "LRO_WAC_Mosaic_SPole60_100m_v02": (5, (-1095700, -1095600, 1095600, 1095700)),
+    "LRO_NAC_Mosaic_SPole85.5_1mp": (11, (-136526, -136526, 136526, 136526)),
+    "LRO_NAC_Mosaic_0_67mpp_Malapert_Massif_SP": (13, (-11000.096, 119699.654, 10000.384, 132000.184)),
 }
 
 R_MOON_M = 1_737_400.0
@@ -44,12 +47,19 @@ def polar_xy(lat: float, lon: float) -> tuple[float, float]:
     return r * math.sin(math.radians(lon)), r * math.cos(math.radians(lon))
 
 
-def tiles_around(x: float, y: float, radius_m: float, z: int) -> set[tuple[int, int]]:
+def tiles_around(
+    x: float, y: float, radius_m: float, z: int, extent: tuple[float, float, float, float]
+) -> set[tuple[int, int]]:
+    """Tiles covering the +-radius square around (x, y), clipped to the layer extent."""
+    minx, miny = max(x - radius_m, extent[0]), max(y - radius_m, extent[1])
+    maxx, maxy = min(x + radius_m, extent[2]), min(y + radius_m, extent[3])
+    if minx >= maxx or miny >= maxy:
+        return set()
     size = TILE0_M / 2**z
-    c0 = math.floor((x - radius_m + ORIGIN_M) / size)
-    c1 = math.floor((x + radius_m + ORIGIN_M) / size)
-    r0 = math.floor((ORIGIN_M - (y + radius_m)) / size)
-    r1 = math.floor((ORIGIN_M - (y - radius_m)) / size)
+    c0 = math.floor((minx + ORIGIN_M) / size)
+    c1 = math.floor((maxx + ORIGIN_M) / size)
+    r0 = math.floor((ORIGIN_M - maxy) / size)
+    r1 = math.floor((ORIGIN_M - miny) / size)
     return {(r, c) for r in range(r0, r1 + 1) for c in range(c0, c1 + 1)}
 
 
@@ -83,12 +93,12 @@ def main() -> None:
     radius_m = args.radius_km * 1000
     manifest: dict[str, list[str]] = {}
 
-    for layer, max_z in LAYERS.items():
+    for layer, (max_z, extent) in LAYERS.items():
         jobs: set[tuple[str, int, int, int]] = set()
         for site in sites:
             x, y = polar_xy(site["coordinates"]["latitude"], site["coordinates"]["longitude"])
             for z in range(max_z + 1):
-                jobs |= {(layer, z, r, c) for r, c in tiles_around(x, y, radius_m, z)}
+                jobs |= {(layer, z, r, c) for r, c in tiles_around(x, y, radius_m, z, extent)}
         print(f"{layer}: {len(jobs)} tiles")
         with ThreadPoolExecutor(args.workers) as pool:
             keys = [k for k in pool.map(fetch, sorted(jobs)) if k]

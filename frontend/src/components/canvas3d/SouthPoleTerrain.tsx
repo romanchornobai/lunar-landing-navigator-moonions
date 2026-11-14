@@ -8,7 +8,7 @@ import { LANDING_SITES, getSite3DPosition, getTerrainHeight, scenePointToLunarCo
 import { SiteMarker } from './SiteMarker'
 import { TerrainProbeMarker } from './TerrainProbeMarker'
 import { SiteComparisonPanel } from '../ui/SiteComparisonPanel'
-import SouthPolarMap from '../map2d/SouthPolarMap'
+import SouthPolarMap, { type MapViewInfo } from '../map2d/SouthPolarMap'
 import MiniSouthPoleTerrain from './MiniSouthPoleTerrain'
 
 // Regional South Pole cap (lat -90..-84, ~364 km): LOLA-derived 1200x1200 Float32 elevation grid
@@ -195,6 +195,7 @@ export default function SouthPoleTerrain() {
   const [isPickerActive, setIsPickerActive] = useState(false)
   const [isComparisonOpen, setIsComparisonOpen] = useState(false)
   const [viewMode, setViewMode] = useState<'3d' | '2d'>('3d')
+  const [mapView, setMapView] = useState<MapViewInfo | null>(null)
   const [hoverPoint, setHoverPoint] = useState<[number, number, number] | null>(null)
   const [probe, setProbe] = useState<{
     position: [number, number, number]
@@ -264,7 +265,7 @@ export default function SouthPoleTerrain() {
 
       {viewMode === '2d' && (
         <div className="absolute inset-0 z-10">
-          <SouthPolarMap isPickerActive={isPickerActive} />
+          <SouthPolarMap isPickerActive={isPickerActive} onViewChange={setMapView} />
         </div>
       )}
 
@@ -316,6 +317,7 @@ export default function SouthPoleTerrain() {
         </button>
 
         {/* Round view toggle: shows a live preview of the other view (2D map in 3D, spinning terrain in 2D) */}
+        <div className="relative">
         <button
           onClick={() => setViewMode((m) => (m === '3d' ? '2d' : '3d'))}
           className="relative w-24 h-24 rounded-full overflow-hidden border border-white/50 bg-[#020408] cursor-pointer transition-all duration-300 active:scale-95 shadow-[0_0_12px_rgba(255,255,255,0.35)] hover:border-white hover:shadow-[0_0_18px_rgba(255,255,255,0.7)]"
@@ -329,6 +331,20 @@ export default function SouthPoleTerrain() {
             {viewMode === '3d' ? '2D' : '3D'}
           </span>
         </button>
+
+        {/* 2D zoom readout: level, imagery layer on screen and ground resolution */}
+        {viewMode === '2d' && mapView && (
+          <div className="absolute top-full right-0 mt-2 whitespace-nowrap text-right font-mono text-[10px] leading-4 tracking-widest text-white/85 drop-shadow-[0_0_4px_rgba(0,0,0,1)] pointer-events-none select-none">
+            <div>ZOOM {mapView.zoom.toFixed(2).replace(/\.?0+$/, '')}</div>
+            <div>{mapView.layer}</div>
+            <div>
+              {mapView.mPerPx >= 1000
+                ? `${(mapView.mPerPx / 1000).toFixed(1)} KM/PX`
+                : `${mapView.mPerPx < 10 ? mapView.mPerPx.toFixed(1) : Math.round(mapView.mPerPx)} M/PX`}
+            </div>
+          </div>
+        )}
+        </div>
       </div>
     </div>
   )

@@ -59,6 +59,9 @@ export const MOON_SOUTH_POLAR_CRS: L.CRS = L.extend({}, L.CRS, {
 }) as unknown as L.CRS // L.CRS is a plain object at runtime (Leaflet 1.x); typings declare a class
 
 /** Zoom that fits a circle of `radiusM` meters (around the pole) into `sizePx` pixels. */
+/** Ground resolution shown on screen at a given zoom (m/px; true scale at the pole). */
+export const metersPerPixel = (zoom: number) => RES0_M_PER_PX / Math.pow(2, zoom)
+
 export function zoomToFitRadius(radiusM: number, sizePx: number): number {
   return Math.log2((sizePx * RES0_M_PER_PX) / (2 * radiusM))
 }
@@ -73,8 +76,29 @@ const LOCAL = '/tiles/moon_sp'
 export const TREK_LAYERS = {
   // LRO LROC WAC mosaic v2, ~100 m/px, to 60 S. Native levels 0-5.
   wac: { id: 'LRO_WAC_Mosaic_SPole60_100m_v02', maxNativeZoom: 5 },
-  // LRO LROC NAC mosaic, 1 m/px source, to 85.5 S. Native levels 0-11.
-  nac: { id: 'LRO_NAC_Mosaic_SPole85.5_1mp', maxNativeZoom: 11 },
+  // LRO LROC NAC mosaic, 1 m/px source, to 85.5 S. Native levels 0-11 (~4.2 m/px at 11).
+  nac: {
+    id: 'LRO_NAC_Mosaic_SPole85.5_1mp',
+    maxNativeZoom: 11,
+    extentM: [-136526, -136526, 136526, 136526] as Extent,
+  },
+  // LRO LROC NAC mosaic of Malapert Massif, 0.67 m/px source. Native levels 0-13 (~1.05 m/px at 13).
+  malapert: {
+    id: 'LRO_NAC_Mosaic_0_67mpp_Malapert_Massif_SP',
+    maxNativeZoom: 13,
+    extentM: [-11000.096, 119699.654, 10000.384, 132000.184] as Extent,
+  },
+}
+
+/** Layer extent in polar stereographic meters: [minX, minY, maxX, maxY] (from the Trek layer index). */
+export type Extent = [number, number, number, number]
+
+/** True if WMTS tile (z, row, col) intersects the extent. */
+export function tileIntersectsExtent(z: number, row: number, col: number, e: Extent): boolean {
+  const size = (256 * RES0_M_PER_PX) / Math.pow(2, z)
+  const x0 = -ORIGIN_M + col * size
+  const yTop = ORIGIN_M - row * size
+  return x0 < e[2] && x0 + size > e[0] && yTop > e[1] && yTop - size < e[3]
 }
 
 export const trekTileUrl = (layerId: string) => `${TREK}/${layerId}/1.0.0/default/default028mm/{z}/{y}/{x}.png`

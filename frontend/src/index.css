@@ -27,5 +27,3 @@ html, body, #root { height: 100%; margin: 0; background: #000; color: #e2e8f0; }
 .polar-site-tooltip::before { display: none; }
 /* Hide hairline seams between tiles at fractional zoom levels */
 .south-polar-map .leaflet-tile-container img.leaflet-tile { width: 256.5px !important; height: 256.5px !important; }
-/* Probe panel over the bright 2D mosaic needs a dark backing to stay readable */
-.south-polar-map .probe-anchor .backdrop-blur-md { background: rgba(2, 4, 8, 0.82); }

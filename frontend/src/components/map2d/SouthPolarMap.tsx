@@ -11,6 +11,9 @@ import {
   loadLocalTileManifest,
   localTileUrl,
   trekTileUrl,
+  tileIntersectsExtent,
+  metersPerPixel,
+  type Extent,
   lunarToPolarXY,
   zoomToFitRadius,
 } from '../../lib/moonSouthPolarCrs'
@@ -29,6 +32,7 @@ class HybridTileLayer extends L.TileLayer {
   constructor(
     private layerId: string,
     private local: Set<string>,
+    private extent: Extent | undefined,
     options: L.TileLayerOptions,
   ) {
     super(trekTileUrl(layerId), options)
@@ -38,16 +42,22 @@ class HybridTileLayer extends L.TileLayer {
     const tpl = this.local.has(`${z}/${coords.y}/${coords.x}`) ? localTileUrl(this.layerId) : trekTileUrl(this.layerId)
     return L.Util.template(tpl, { z, x: coords.x, y: coords.y })
   }
+  // Skip tiles outside the layer extent (they would only 404 on Trek).
+  _isValidTile(coords: L.Coords): boolean {
+    const base = (L.TileLayer.prototype as unknown as { _isValidTile(c: L.Coords): boolean })._isValidTile
+    if (!base.call(this, coords)) return false
+    return !this.extent || tileIntersectsExtent(coords.z, coords.y, coords.x, this.extent)
+  }
 }
 
-function TrekLayer({ layerId, ...options }: { layerId: string } & L.TileLayerOptions) {
+function TrekLayer({ layerId, extent, ...options }: { layerId: string; extent?: Extent } & L.TileLayerOptions) {
   const map = useMap()
   useEffect(() => {
     let layer: L.TileLayer | null = null
     let alive = true
     loadLocalTileManifest().then((m) => {
       if (!alive) return
-      layer = new HybridTileLayer(layerId, m[layerId] ?? new Set(), options).addTo(map)
+      layer = new HybridTileLayer(layerId, m[layerId] ?? new Set(), extent, options).addTo(map)
     })
     return () => {
       alive = false
@@ -126,17 +136,48 @@ function ProbeMarker({ probe, onClose }: { probe: Probe2D; onClose: () => void }
   )
 }
 
+export interface MapViewInfo {
+  zoom: number
+  layer: string // imagery layer on top at the view center
+  mPerPx: number
+}
+
+/** Reports zoom, active imagery layer and screen resolution after every zoom/pan. */
+function ViewReporter({ onChange }: { onChange: (info: MapViewInfo) => void }) {
+  const map = useMapEvents({
+    zoomend: () => report(),
+    moveend: () => report(),
+  })
+  const report = () => {
+    const zoom = map.getZoom()
+    const c = map.getCenter()
+    const p = lunarToPolarXY(c.lat, c.lng)
+    const inside = (e: Extent) => p.x > e[0] && p.x < e[2] && p.y > e[1] && p.y < e[3]
+    let layer = 'LRO WAC'
+    if (zoom >= 10 && inside(TREK_LAYERS.malapert.extentM)) layer = 'LRO NAC · MALAPERT'
+    else if (zoom >= 6 && inside(TREK_LAYERS.nac.extentM)) layer = 'LRO NAC'
+    onChange({ zoom, layer, mPerPx: metersPerPixel(zoom) })
+  }
+  useEffect(report, [map])
+  return null
+}
+
 interface SouthPolarMapProps {
   /** false: static preview (used inside the round view toggle). */
   interactive?: boolean
   isPickerActive?: boolean
+  onViewChange?: (info: MapViewInfo) => void
 }
 
 /**
  * 2D South Pole map: NASA Moon Trek WMTS tiles in South Polar Stereographic (IAU2000:30120).
  * LROC WAC mosaic as base, LROC NAC mosaic on top when zoomed in (inside 85.5 S).
  */
-export default function SouthPolarMap({ interactive = true, isPickerActive = false }: SouthPolarMapProps) {
+export default function SouthPolarMap({
+  interactive = true,
+  isPickerActive = false,
+  onViewChange,
+}: SouthPolarMapProps) {
   const elevations = useSouthPoleElevation()
   const [probe, setProbe] = useState<Probe2D | null>(null)
 
@@ -184,7 +225,7 @@ export default function SouthPolarMap({ interactive = true, isPickerActive = fal
       center={[-90, 0]}
       zoom={3}
       minZoom={1}
-      maxZoom={12}
+      maxZoom={14}
       zoomSnap={0.25}
       zoomDelta={0.5}
       zoomControl={false}
@@ -203,17 +244,29 @@ export default function SouthPolarMap({ interactive = true, isPickerActive = fal
         layerId={TREK_LAYERS.wac.id}
         zIndex={1}
         maxNativeZoom={TREK_LAYERS.wac.maxNativeZoom}
-        maxZoom={12}
+        maxZoom={14}
         errorTileUrl={TRANSPARENT_TILE}
         attribution="NASA Moon Trek · LRO LROC WAC / NAC"
       />
       {interactive && (
         <TrekLayer
           layerId={TREK_LAYERS.nac.id}
+          extent={TREK_LAYERS.nac.extentM}
           zIndex={2}
           minZoom={6}
           maxNativeZoom={TREK_LAYERS.nac.maxNativeZoom}
-          maxZoom={12}
+          maxZoom={14}
+          errorTileUrl={TRANSPARENT_TILE}
+        />
+      )}
+      {interactive && (
+        <TrekLayer
+          layerId={TREK_LAYERS.malapert.id}
+          extent={TREK_LAYERS.malapert.extentM}
+          zIndex={3}
+          minZoom={10}
+          maxNativeZoom={TREK_LAYERS.malapert.maxNativeZoom}
+          maxZoom={14}
           errorTileUrl={TRANSPARENT_TILE}
         />
       )}
@@ -224,6 +277,7 @@ export default function SouthPolarMap({ interactive = true, isPickerActive = fal
       />
       {sites}
       {interactive && <ProbeClick onPick={handlePick} />}
+      {onViewChange && <ViewReporter onChange={onViewChange} />}
       {probe && <ProbeMarker probe={probe} onClose={() => setProbe(null)} />}
     </MapContainer>
   )
