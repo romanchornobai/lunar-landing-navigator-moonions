@@ -5,7 +5,8 @@ Paths are relative to `frontend/public/`.
 
 ## Candidate landing sites (`models/<site>/`)
 Each folder has `<site>_15km.glb`, `<site>_heightmap_16bit.png` (uint16), `<site>_preview.png`, `<site>_meta.json`.
-- 15 km x 15 km at 1:1 scale (meters), 501x501 grid (30 m/px), 251,001 vertices, 500k triangles, ~14 MB each.
+- 15 km x 15 km at 1:1 scale (meters), 501x501 grid (30 m/px), 251,001 vertices, 500k triangles, ~1.7 MB each
+  (meshopt-compressed, see "Optimization" below).
 - Origin is the exact site center at [0, 0, 0]: the lander sits at Y = 0. Elevations are relative to the site center.
 - Source: LRO LOLA GDR polar stereographic, datum = lunar sphere R 1737.4 km (see `DATA_SOURCES.md`).
 
@@ -32,27 +33,37 @@ Load: `useGLTF('/models/<site>/<site>_15km.glb')`, `position=[0,0,0]`.
 - Material: roughness 0.92, metalness 0.02, normalScale 1.25, aoMapIntensity 1.2. Keep `castShadow = false` (frustum cuts on large meshes).
 - Lights: ambient 0.45; sun directional [100,80,80] intensity 2.8; fill [-80,50,-60] 0.65 #cbd5e1. Camera: [0,80,115], target 0, fov 45, near 0.1, far 2000.
 
-## Lander (`models/lander/lander.glb`, ~14.7 MB, 13 meshes, 10 PBR materials, no external textures)
+## Lander (`models/lander/lander.glb`, ~2.5 MB, 13 meshes, 10 PBR materials, 1 embedded WebP texture)
 - Pivot is offset: to put the feet at Y = 0 use `clone.position.set(2.0, 67.037, -67.037)`. Native height ~140 units, leg radius ~80.
 - Scale: 0.016 in the regional South Pole view (~2.24 units tall); 0.032 inspection close-up; 0.010 to 0.015 in the 15 km site scenes.
 - In the regional view: `landerY = groundY + 0.08`; ground ring at `groundY + 0.02`; comm beam from `landerY + 2.2` up to length 7.0.
-- Optional: Draco compression (`gltf-pipeline -d`) would cut it to ~1.5-2 MB.
+- ~450k triangles: the heaviest mesh in the site view. Kept at full detail (no simplification).
 
 ## Celestial (`models/celestial/`)
-- `Earth.glb` (~12.9 MB). Earth sits 1-6 deg above the horizon at the South Pole (libration, ~14-day cycle).
+- `Earth.glb` (~2.3 MB, 4096x3072 WebP color + normal maps). Earth sits 1-6 deg above the horizon at the South Pole (libration, ~14-day cycle).
 - Typical scene values: Earth scale 0.8-1.2 at distance ~120-180, position [-60, 15, -90]; Sun position [120, 8, -60] (grazing ~1.5 deg).
 - These are visual placeholders: real directions must come from the ephemerides.
 
 ## Textures
 - `models/moon_texture/textures/moon_meteor_01_{diff,nor,rough,ao}_2k.jpg`: PBR regolith. Intended for an anti-tiling stochastic shader
   (double rotation ~28 deg) with distance fade beyond ~280 m, anisotropy 16x, applied to the site meshes.
-- `textures/lroc_color_16bit_srgb_8k.tif` (8192x4096 color) and `textures/ldem_16_uint.tif` (16-bit DEM): global Moon sphere.
-  **Git-ignored.** Sphere radius 2.0, 384x384 segments, displacementScale 0.05, displacementBias -0.015, bumpScale 0.03, roughness 0.92,
-  metalness 0.02, rotation [0, -PI/2, 0]. Loaded with `TIFFLoader`.
+- `textures/moon_color_8k.jpg` (8192x4096 sRGB, ~6.8 MB) and `textures/moon_elevation_8bit.png` (5760x2880 grey, ~5.2 MB):
+  global Moon sphere, loaded with `THREE.TextureLoader`. Derived from the git-ignored 16-bit TIFFs
+  `lroc_color_16bit_srgb_8k.tif` (243 MB) and `ldem_16_uint.tif` (33 MB) by plain 16 -> 8 bit scaling (value / 256),
+  same resolution. DEM range after scaling: 8..161. Sphere radius 2.0, 384x384 segments, displacementScale 0.05, displacementBias -0.015, bumpScale 0.03, roughness 0.92,
+  metalness 0.02, rotation [0, -PI/2, 0].
 
 ## Ephemerides (`data/ephemerides/ephemerides_3yr.bin`, 1,683,520 bytes)
 - 210,440 records x 8 bytes (inferred from file size: 2 x float32 each). Hourly 2026-2029, Sun and Earth, 4 sites.
 - Exact layout (field order, record order) is not documented: check the generator script in `backend/app/scripts/` before reading it.
+
+## Optimization (done 2026-11-14, tuned for an integrated AMD Radeon laptop)
+- All GLBs (4 sites, lander, Earth) use `EXT_meshopt_compression` + `KHR_mesh_quantization`
+  (`gltf-transform meshopt --quantize-position 16 --quantize-normal 12 --quantize-texcoord 14`). drei `useGLTF` decodes it.
+  Position precision on site terrains: 15000 m / 2^16 = 0.23 m horizontal, ~0.06 m vertical (far below LOLA's 30 m/px grid).
+  Quantization moves the dequantization into node transforms: do not overwrite node scale/position inside the GLB scenes.
+- Lander and Earth textures re-encoded to WebP (`EXT_texture_webp`): color quality 92, normal maps near-lossless.
+- Originals are in git history (commit before this change). Total GLB size 83 MB -> 12 MB.
 
 ## Known gaps
 - The original configs mention `models/celestial/Sun.glb`, `models/markers/mappin.glb` and `map_pointer.glb`, but those files are not in the folder yet.
