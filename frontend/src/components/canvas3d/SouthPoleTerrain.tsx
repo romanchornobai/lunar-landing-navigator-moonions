@@ -3,11 +3,12 @@ import * as THREE from 'three'
 import { Canvas, useFrame, useLoader } from '@react-three/fiber'
 import { OrbitControls, Stars } from '@react-three/drei'
 import { useNavigate } from 'react-router-dom'
-import { Crosshair } from 'lucide-react'
+import { BarChart3, Crosshair } from 'lucide-react'
 import { LANDING_SITES, getSite3DPosition, getTerrainHeight, scenePointToLunarCoords } from '../../data/sites'
 import { SiteMarker } from './SiteMarker'
 import { TerrainProbeMarker } from './TerrainProbeMarker'
 import { LedButton } from '../ui/LedButton'
+import { SiteComparisonPanel } from '../ui/SiteComparisonPanel'
 
 // Regional South Pole cap (lat -90..-84, ~364 km): LOLA-derived 1200x1200 Float32 elevation grid
 // (meters, NASA Moon Trek). Geometry params from ASSETS.md.
@@ -191,6 +192,7 @@ function Terrain({
 export default function SouthPoleTerrain() {
   const navigate = useNavigate()
   const [isPickerActive, setIsPickerActive] = useState(false)
+  const [isComparisonOpen, setIsComparisonOpen] = useState(false)
   const [hoverPoint, setHoverPoint] = useState<[number, number, number] | null>(null)
   const [probe, setProbe] = useState<{
     position: [number, number, number]
@@ -254,6 +256,8 @@ export default function SouthPoleTerrain() {
         />
       </Canvas>
 
+      {isComparisonOpen && <SiteComparisonPanel onClose={() => setIsComparisonOpen(false)} />}
+
       {/* Top Left: Navigation back to Lunar Globe */}
       <div className="absolute top-6 left-6 z-20">
         <LedButton variant="compact" onClick={() => navigate('/vista-lunar')}>
@@ -262,7 +266,19 @@ export default function SouthPoleTerrain() {
       </div>
 
       {/* Top Right: Coordinate Probe Icon Button */}
-      <div className="absolute top-6 right-6 z-20 flex items-center gap-3">
+      <div className="absolute top-6 right-6 z-40 flex items-center gap-3">
+        {/* Site comparison panel toggle (icon only) */}
+        <button
+          onClick={() => setIsComparisonOpen((prev) => !prev)}
+          className={`group relative flex items-center justify-center w-[38px] h-[38px] rounded transition-all duration-300 backdrop-blur-md select-none cursor-pointer border ${
+            isComparisonOpen
+              ? 'bg-white/20 border-white text-white shadow-[0_0_18px_rgba(255,255,255,0.4)]'
+              : 'bg-black/60 border-white/30 text-neutral-300 hover:text-white hover:border-white/70 hover:bg-black/80'
+          }`}
+          title={isComparisonOpen ? 'Cerrar comparativa' : 'Comparar puntos de aterrizaje'}
+        >
+          <BarChart3 className="w-4 h-4" />
+        </button>
         <button
           onClick={() => {
             setIsPickerActive((prev) => !prev)
