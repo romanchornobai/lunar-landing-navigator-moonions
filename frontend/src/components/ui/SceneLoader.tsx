@@ -1,8 +1,10 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 interface SceneLoaderProps {
-  /** 0-100 */
-  progress: number;
+  /** Minimum time (ms) the bar takes to fill up to 99%. */
+  durationMs: number;
+  /** Loading finished: the bar completes to 100%. */
+  done?: boolean;
   title?: string;
   /** Fades the overlay out (it stays mounted until the fade ends). */
   hidden?: boolean;
@@ -11,8 +13,12 @@ interface SceneLoaderProps {
 /**
  * Full-screen white sci-fi loading screen: concentric rotating reactor rings, technical progress bar
  * and "SYSTEM LOADING... [X%]" text over an isometric grid. Plain DOM overlay (rendered outside the Canvas).
+ *
+ * Smoothness: every moving part (rings, bar) is a CSS transform/transition on an HTML element, which the
+ * browser runs on the compositor thread, so it keeps moving even while the main thread is busy decoding the
+ * next scene's assets. Only the percentage text is driven by JS.
  */
-export const SceneLoader: React.FC<SceneLoaderProps> = ({ progress, title, hidden = false }) => {
+export const SceneLoader: React.FC<SceneLoaderProps> = ({ durationMs, done = false, title, hidden = false }) => {
   // 54 radial ticks of the inner dial
   const radialTicks = useMemo(() => {
     const ticks = [];
@@ -30,7 +36,32 @@ export const SceneLoader: React.FC<SceneLoaderProps> = ({ progress, title, hidde
     return ticks;
   }, []);
 
-  const displayProgress = Math.max(3, Math.min(100, progress));
+  // Bar: starts empty, then (one tick later) a single long linear transition fills it to 99%; `done` finishes it.
+  const [started, setStarted] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setStarted(true), 30);
+    return () => clearTimeout(t);
+  }, []);
+
+  // Percentage text (JS only for the number; the bar itself does not depend on it).
+  const [pct, setPct] = useState(3);
+  useEffect(() => {
+    const start = performance.now();
+    const timer = setInterval(() => {
+      setPct(Math.max(3, Math.min(99, ((performance.now() - start) / durationMs) * 100)));
+    }, 100);
+    return () => clearInterval(timer);
+  }, [durationMs]);
+  const shownPct = done ? 100 : pct;
+
+  const barX = done ? 0 : started ? -1 : -100;
+  const barTransition = done
+    ? 'transform 250ms ease-out'
+    : started
+      ? `transform ${durationMs}ms linear`
+      : 'none';
+
+  const ring: React.CSSProperties = { willChange: 'transform' };
 
   return (
     <div
@@ -40,8 +71,8 @@ export const SceneLoader: React.FC<SceneLoaderProps> = ({ progress, title, hidde
         opacity: hidden ? 0 : 1,
         pointerEvents: hidden ? 'none' : 'auto',
         // Blurred, dimmed view behind the loader instead of a solid black background
-        backdropFilter: 'blur(14px) brightness(0.6)',
-        WebkitBackdropFilter: 'blur(14px) brightness(0.6)',
+        backdropFilter: 'blur(12px) brightness(0.6)',
+        WebkitBackdropFilter: 'blur(12px) brightness(0.6)',
       }}
     >
       <style>{`
@@ -84,59 +115,75 @@ export const SceneLoader: React.FC<SceneLoaderProps> = ({ progress, title, hidde
       />
 
       <div className="relative z-10 flex flex-col items-center justify-center">
-        {/* 1. Concentric holographic reactor ring */}
+        {/* 1. Concentric holographic reactor ring: one HTML layer per ring so each rotates on the compositor */}
         <div
-          className="relative w-44 h-44 sm:w-48 sm:h-48 flex items-center justify-center mb-6"
+          className="relative w-44 h-44 sm:w-48 sm:h-48 mb-6"
           style={{ filter: 'drop-shadow(0 0 6px #ffffff) drop-shadow(0 0 16px rgba(255,255,255,0.65))' }}
         >
-          <svg className="w-full h-full overflow-visible" viewBox="0 0 160 160">
-            {/* Ring 1: fragmented outer arcs (clockwise) */}
-            <g style={{ transformOrigin: '80px 80px', animation: 'loaderSpinClockwise 9s linear infinite' }}>
+          {/* Ring 1: fragmented outer arcs (clockwise) */}
+          <div className="absolute inset-0" style={{ ...ring, animation: 'loaderSpinClockwise 9s linear infinite' }}>
+            <svg className="w-full h-full overflow-visible" viewBox="0 0 160 160">
               <circle cx="80" cy="80" r="71" fill="none" stroke="#ffffff" strokeWidth="1.5"
                 strokeDasharray="90 32 180 45 60 45" strokeLinecap="round" />
               <line x1="80" y1="6" x2="80" y2="11" stroke="#ffffff" strokeWidth="1.5" />
               <line x1="80" y1="149" x2="80" y2="154" stroke="#ffffff" strokeWidth="1.5" />
               <line x1="6" y1="80" x2="11" y2="80" stroke="#ffffff" strokeWidth="1.5" />
               <line x1="149" y1="80" x2="154" y2="80" stroke="#ffffff" strokeWidth="1.5" />
-            </g>
+            </svg>
+          </div>
 
-            {/* Ring 2: broken middle ring (counter-clockwise) */}
-            <g style={{ transformOrigin: '80px 80px', animation: 'loaderSpinCounter 6.5s linear infinite' }}>
+          {/* Ring 2: broken middle ring (counter-clockwise) */}
+          <div className="absolute inset-0" style={{ ...ring, animation: 'loaderSpinCounter 6.5s linear infinite' }}>
+            <svg className="w-full h-full overflow-visible" viewBox="0 0 160 160">
               <circle cx="80" cy="80" r="58" fill="none" stroke="#ffffff" strokeWidth="1.2"
                 strokeDasharray="140 28 110 38 25 15" strokeLinecap="round" strokeOpacity="0.85" />
-            </g>
+            </svg>
+          </div>
 
-            {/* Ring 3: dense radial tick dial (slow clockwise) */}
-            <g style={{ transformOrigin: '80px 80px', animation: 'loaderSpinClockwise 18s linear infinite' }}>
+          {/* Ring 3: dense radial tick dial (slow clockwise) */}
+          <div className="absolute inset-0" style={{ ...ring, animation: 'loaderSpinClockwise 18s linear infinite' }}>
+            <svg className="w-full h-full overflow-visible" viewBox="0 0 160 160">
               {radialTicks.map((tick) => (
                 <line key={tick.id} x1={tick.x1} y1={tick.y1} x2={tick.x2} y2={tick.y2}
                   stroke="#ffffff" strokeWidth="1.3" strokeOpacity="0.9" />
               ))}
-            </g>
+            </svg>
+          </div>
 
-            {/* Ring 4: dotted inner circle (counter-clockwise) */}
-            <g style={{ transformOrigin: '80px 80px', animation: 'loaderSpinCounter 11s linear infinite' }}>
+          {/* Ring 4: dotted inner circle (counter-clockwise) */}
+          <div className="absolute inset-0" style={{ ...ring, animation: 'loaderSpinCounter 11s linear infinite' }}>
+            <svg className="w-full h-full overflow-visible" viewBox="0 0 160 160">
               <circle cx="80" cy="80" r="33" fill="none" stroke="#ffffff" strokeWidth="1.5"
                 strokeDasharray="3 5" strokeLinecap="round" strokeOpacity="0.95" />
-            </g>
+            </svg>
+          </div>
 
-            {/* Ring 5: pulsing core */}
-            <circle cx="80" cy="80" r="25" fill="none" stroke="#ffffff" strokeWidth="0.9" strokeOpacity="0.5"
-              style={{ transformOrigin: '80px 80px', animation: 'loaderPulseCore 2.5s ease-in-out infinite' }} />
-          </svg>
+          {/* Ring 5: pulsing core */}
+          <div className="absolute inset-0" style={{ ...ring, animation: 'loaderPulseCore 2.5s ease-in-out infinite' }}>
+            <svg className="w-full h-full overflow-visible" viewBox="0 0 160 160">
+              <circle cx="80" cy="80" r="25" fill="none" stroke="#ffffff" strokeWidth="0.9" strokeOpacity="0.5" />
+            </svg>
+          </div>
         </div>
 
-        {/* 2. Technical horizontal progress bar */}
+        {/* 2. Technical horizontal progress bar (fill = translateX of a full-width bar, clipped by the frame) */}
         <div className="w-[300px] sm:w-[380px] mb-3">
           <div
             className="w-full h-3.5 sm:h-4 p-[2px] bg-black/80 border border-white/80 rounded-[1px]"
             style={{ boxShadow: '0 0 10px rgba(255,255,255,0.4), inset 0 0 8px rgba(255,255,255,0.15)' }}
           >
-            <div
-              className="h-full bg-white transition-all duration-150 ease-out relative"
-              style={{ width: `${displayProgress}%`, boxShadow: '0 0 10px #ffffff, 0 0 20px rgba(255,255,255,0.85)' }}
-            >
-              <div className="absolute right-0 top-0 bottom-0 w-[2px] bg-white shadow-[0_0_8px_#ffffff]" />
+            <div className="w-full h-full overflow-hidden">
+              <div
+                className="w-full h-full bg-white relative"
+                style={{
+                  transform: `translateX(${barX}%)`,
+                  transition: barTransition,
+                  willChange: 'transform',
+                  boxShadow: '0 0 10px #ffffff, 0 0 20px rgba(255,255,255,0.85)',
+                }}
+              >
+                <div className="absolute right-0 top-0 bottom-0 w-[2px] bg-white shadow-[0_0_8px_#ffffff]" />
+              </div>
             </div>
           </div>
         </div>
@@ -148,7 +195,7 @@ export const SceneLoader: React.FC<SceneLoaderProps> = ({ progress, title, hidde
             style={{ textShadow: '0 0 8px rgba(255,255,255,0.9), 0 0 18px rgba(255,255,255,0.5)' }}
           >
             <span>SYSTEM LOADING...</span>
-            <span className="text-[11px] opacity-75 font-normal ml-1">[{displayProgress.toFixed(0)}%]</span>
+            <span className="text-[11px] opacity-75 font-normal ml-1">[{shownPct.toFixed(0)}%]</span>
           </h2>
 
           {title && <p className="text-[10px] text-neutral-400 tracking-[0.2em] mt-1.5 opacity-80">{title}</p>}
