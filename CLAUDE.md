@@ -25,7 +25,7 @@ Out of scope for now: physical lander mockup / USB hardware.
 - Backend: Python, FastAPI 0.110, Uvicorn 0.28, Pydantic v2, Skyfield 1.48, NumPy 1.26.
 - Data: LOLA DEM; JPL Horizons hourly ephemerides 2026-2029 for the 4 sites (Sun id 10, Earth id 399),
   stored as SQLite in the backend and as a Float32 binary in the frontend (no network calls for interpolation).
-- Commands (run in `frontend/`): `npm install`, `npm run dev` (Vite, port 5173, proxies `/api` to :8000), `npm run build` (tsc + vite build), `npm run preview`. Backend commands: TBD.
+- Commands (run in `frontend/`): `npm install`, `npm run dev` (Vite, port 5173, proxies `/api` to :8000), `npm run build` (tsc + vite build), `npm run preview`. Backend (local only, run in `backend/`): `python -m venv .venv`, `.venv/Scripts/python -m pip install -r requirements.txt`, `.venv/Scripts/python -m uvicorn app.main:app --port 8000` (needs the LOLA DEMs in `data/dem/`, see `DATA_SOURCES.md`).
 
 ## Layout
 - `backend/app/{api,models,scripts,services}`: FastAPI app, data models, data-generation scripts, domain logic.

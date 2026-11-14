@@ -42,6 +42,19 @@ made with `sharp` by scaling 16-bit values to 8-bit (value / 256). See `ASSETS.m
 ## Processing
 All GLBs are meshopt-compressed and quantized with glTF Transform (`@gltf-transform/cli`, MIT); embedded textures re-encoded to WebP. Geometry is not simplified. See `ASSETS.md` > Optimization.
 
+### Best landing point in an area (local backend, `backend/app/`)
+`GET /api/area-search/stream` (Server-Sent Events) and `POST /api/area-search` search a square area (default 15 x 15 km)
+of the cap (center lat <= -84) for the best point. Not part of the public site: it needs the git-ignored LOLA DEMs.
+1. Candidates: the highest LOLA pixel of every 250 m cell; the 150 highest are kept (configurable).
+2. Per candidate (process pool): horizon every 1 deg with 100 km rays and the curvature correction above
+   (`services/terrain.py`; ray samples every 20 m up to 2 km, then every 0.5 % of the distance: max 0.04 deg difference
+   with uniform 20 m sampling on 5 test sites); hourly Sun / Earth directions from the JPL Horizons buffer of the nearest
+   of the 4 sites, re-projected on the candidate's local horizon (`services/ephemeris.py`; Earth parallax error
+   < |distance to that site| / 356,000 km, e.g. 0.002 deg at 15 km); Sun disc fraction (R = 0.266 deg) and DTE line of
+   sight (`services/visibility.py`); ground slope from the DEM (reported, not filtered).
+3. Ranking by share of hours with Sun and Earth visible at once (or Sun mean visible fraction, or DTE).
+Timing on a 12-core laptop: ~6 s for 150 candidates, ~11.5 s for 300.
+
 ## 3D assets and textures: provenance to verify
 These have no recorded origin or license yet. Confirm and fill in before the final submission.
 
