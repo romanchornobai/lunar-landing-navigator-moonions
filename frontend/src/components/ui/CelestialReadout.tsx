@@ -18,6 +18,17 @@ interface CelestialReadoutProps {
   isAbove?: boolean
 }
 
+/** Small transparent canvas with a slowly spinning model (used for Sun, Earth and the lander). */
+export const SpinningModelCanvas: React.FC<{ url: string; earthLight?: boolean }> = ({ url, earthLight }) => (
+  <Canvas camera={{ position: [0, 0, 3.1], fov: 30 }} dpr={[1, 2]} gl={{ alpha: true, antialias: true }}>
+    <ambientLight intensity={earthLight ? 0.9 : 1} />
+    <directionalLight position={[3, 2, 4]} intensity={earthLight ? 2.2 : 1} />
+    <Suspense fallback={null}>
+      <SpinningBody url={url} />
+    </Suspense>
+  </Canvas>
+)
+
 // Slowly spinning model, normalized to a unit-radius sphere (source GLBs use very different scales).
 function SpinningBody({ url }: { url: string }) {
   const { scene } = useGLTF(url)
@@ -65,13 +76,7 @@ const fmt = (v?: number) => (v === undefined ? '--' : `${v > 0 ? '+' : ''}${v.to
 export const CelestialReadout: React.FC<CelestialReadoutProps> = ({ body, azimuth, elevation, isAbove }) => (
   <div className="flex items-center gap-3">
     <div className="w-16 h-16 shrink-0">
-      <Canvas camera={{ position: [0, 0, 3.1], fov: 30 }} dpr={[1, 2]} gl={{ alpha: true, antialias: true }}>
-        <ambientLight intensity={body === 'earth' ? 0.9 : 1} />
-        <directionalLight position={[3, 2, 4]} intensity={body === 'earth' ? 2.2 : 1} />
-        <Suspense fallback={null}>
-          <SpinningBody url={CELESTIAL_MODELS[body]} />
-        </Suspense>
-      </Canvas>
+      <SpinningModelCanvas url={CELESTIAL_MODELS[body]} earthLight={body === 'earth'} />
     </div>
     <div className="text-[15px] leading-tight text-white">
       <div>AZ: {azimuth === undefined ? '--' : `${azimuth.toFixed(1)}°`}</div>
@@ -85,3 +90,4 @@ export const CelestialReadout: React.FC<CelestialReadoutProps> = ({ body, azimut
 
 useGLTF.preload(CELESTIAL_MODELS.sun)
 useGLTF.preload(CELESTIAL_MODELS.earth)
+useGLTF.preload('/models/lander/lander.glb')
