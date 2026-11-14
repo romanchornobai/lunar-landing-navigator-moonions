@@ -3,3 +3,29 @@
 @tailwind utilities;
 
 html, body, #root { height: 100%; margin: 0; background: #000; color: #e2e8f0; }
+
+/* 2D South Pole map (Leaflet) */
+.south-polar-map.probe-mode,
+.south-polar-map.probe-mode .leaflet-interactive { cursor: crosshair; }
+.south-polar-map .probe-anchor { background: none; border: none; overflow: visible; }
+.south-polar-map .leaflet-control-attribution {
+  background: rgba(2, 4, 8, 0.6);
+  color: rgba(255, 255, 255, 0.55);
+  font-family: ui-monospace, monospace;
+  font-size: 10px;
+}
+.south-polar-map .leaflet-control-attribution a { color: rgba(255, 255, 255, 0.75); }
+.polar-site-tooltip {
+  background: rgba(2, 4, 8, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 2px;
+  color: #fff;
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.15);
+}
+.polar-site-tooltip::before { display: none; }
+/* Hide hairline seams between tiles at fractional zoom levels */
+.south-polar-map .leaflet-tile-container img.leaflet-tile { width: 256.5px !important; height: 256.5px !important; }
+/* Probe panel over the bright 2D mosaic needs a dark backing to stay readable */
+.south-polar-map .probe-anchor .backdrop-blur-md { background: rgba(2, 4, 8, 0.82); }

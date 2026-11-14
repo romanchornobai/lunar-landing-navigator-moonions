@@ -8,6 +8,8 @@ import { LANDING_SITES, getSite3DPosition, getTerrainHeight, scenePointToLunarCo
 import { SiteMarker } from './SiteMarker'
 import { TerrainProbeMarker } from './TerrainProbeMarker'
 import { SiteComparisonPanel } from '../ui/SiteComparisonPanel'
+import SouthPolarMap from '../map2d/SouthPolarMap'
+import MiniSouthPoleTerrain from './MiniSouthPoleTerrain'
 
 // Regional South Pole cap (lat -90..-84, ~364 km): LOLA-derived 1200x1200 Float32 elevation grid
 // (meters, NASA Moon Trek). Geometry params from ASSETS.md.
@@ -192,6 +194,7 @@ export default function SouthPoleTerrain() {
   const navigate = useNavigate()
   const [isPickerActive, setIsPickerActive] = useState(false)
   const [isComparisonOpen, setIsComparisonOpen] = useState(false)
+  const [viewMode, setViewMode] = useState<'3d' | '2d'>('3d')
   const [hoverPoint, setHoverPoint] = useState<[number, number, number] | null>(null)
   const [probe, setProbe] = useState<{
     position: [number, number, number]
@@ -224,7 +227,10 @@ export default function SouthPoleTerrain() {
 
   return (
     <div style={{ position: 'relative', width: '100vw', height: '100vh', background: '#020408' }}>
+      {/* 3D view stays mounted (no re-parse of the 1200x1200 mesh); it just stops rendering in 2D. */}
+      <div className={`absolute inset-0 ${viewMode === '3d' ? '' : 'invisible'}`}>
       <Canvas
+        frameloop={viewMode === '3d' ? 'always' : 'never'}
         dpr={[1, 1.5]}
         camera={{ position: [0, 80, 115], fov: 45, near: 0.1, far: 2000 }}
         gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }}
@@ -254,6 +260,13 @@ export default function SouthPoleTerrain() {
           maxDistance={280}
         />
       </Canvas>
+      </div>
+
+      {viewMode === '2d' && (
+        <div className="absolute inset-0 z-10">
+          <SouthPolarMap isPickerActive={isPickerActive} />
+        </div>
+      )}
 
       {isComparisonOpen && <SiteComparisonPanel onClose={() => setIsComparisonOpen(false)} />}
 
@@ -300,6 +313,21 @@ export default function SouthPoleTerrain() {
               isPickerActive ? '' : 'group-hover:rotate-90'
             }`}
           />
+        </button>
+
+        {/* Round view toggle: shows a live preview of the other view (2D map in 3D, spinning terrain in 2D) */}
+        <button
+          onClick={() => setViewMode((m) => (m === '3d' ? '2d' : '3d'))}
+          className="relative w-24 h-24 rounded-full overflow-hidden border border-white/50 bg-[#020408] cursor-pointer transition-all duration-300 active:scale-95 shadow-[0_0_12px_rgba(255,255,255,0.35)] hover:border-white hover:shadow-[0_0_18px_rgba(255,255,255,0.7)]"
+          title={viewMode === '3d' ? 'Ver mapa 2D' : 'Ver terreno 3D'}
+          aria-label={viewMode === '3d' ? 'Ver mapa 2D' : 'Ver terreno 3D'}
+        >
+          <div className="absolute inset-0 pointer-events-none">
+            {viewMode === '3d' ? <SouthPolarMap interactive={false} /> : <MiniSouthPoleTerrain />}
+          </div>
+          <span className="absolute bottom-1.5 left-1/2 -translate-x-1/2 font-mono text-[10px] tracking-widest text-white drop-shadow-[0_0_4px_rgba(0,0,0,1)] pointer-events-none">
+            {viewMode === '3d' ? '2D' : '3D'}
+          </span>
         </button>
       </div>
     </div>
