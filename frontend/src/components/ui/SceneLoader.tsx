@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 
 interface SceneLoaderProps {
   /** Minimum time (ms) the bar takes to fill up to 99%. */
@@ -9,6 +9,19 @@ interface SceneLoaderProps {
   /** Fades the overlay out (it stays mounted until the fade ends). */
   hidden?: boolean;
 }
+
+/** One digit column: a vertical strip 0-9 inside a 1-digit window, slid by a CSS (compositor) animation. */
+const DigitStrip: React.FC<{ animation: string }> = ({ animation }) => (
+  <span className="inline-block overflow-hidden align-middle" style={{ height: '1em', lineHeight: '1em', width: '1ch' }}>
+    <span className="flex flex-col" style={{ animation, willChange: 'transform' }}>
+      {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((d) => (
+        <span key={d} style={{ height: '1em', lineHeight: '1em' }}>
+          {d}
+        </span>
+      ))}
+    </span>
+  </span>
+);
 
 /**
  * Full-screen white sci-fi loading screen: concentric rotating reactor rings, technical progress bar
@@ -36,30 +49,14 @@ export const SceneLoader: React.FC<SceneLoaderProps> = ({ durationMs, done = fal
     return ticks;
   }, []);
 
-  // Bar: starts empty, then (one tick later) a single long linear transition fills it to 99%; `done` finishes it.
-  const [started, setStarted] = useState(false);
-  useEffect(() => {
-    const t = setTimeout(() => setStarted(true), 30);
-    return () => clearTimeout(t);
-  }, []);
-
-  // Percentage text (JS only for the number; the bar itself does not depend on it).
-  const [pct, setPct] = useState(3);
-  useEffect(() => {
-    const start = performance.now();
-    const timer = setInterval(() => {
-      setPct(Math.max(3, Math.min(99, ((performance.now() - start) / durationMs) * 100)));
-    }, 100);
-    return () => clearInterval(timer);
-  }, [durationMs]);
-  const shownPct = done ? 100 : pct;
-
-  const barX = done ? 0 : started ? -1 : -100;
-  const barTransition = done
-    ? 'transform 250ms ease-out'
-    : started
-      ? `transform ${durationMs}ms linear`
-      : 'none';
+  // All of the following are CSS animations that start when the loader mounts, so they stay in sync:
+  //  - bar: translateX -100% -> -1% over durationMs (linear)
+  //  - percentage digits: sliding digit strips (tens steps every durationMs*10/99, ones every durationMs/99)
+  // `done` swaps them for the finished state (bar to 100% in 250 ms, text "100%").
+  const ones = durationMs / 99; // ms per 1%
+  const barAnimation = done
+    ? 'loaderBarFinish 250ms ease-out forwards'
+    : `loaderBarFill ${durationMs}ms linear forwards`;
 
   const ring: React.CSSProperties = { willChange: 'transform' };
 
@@ -83,6 +80,22 @@ export const SceneLoader: React.FC<SceneLoaderProps> = ({ durationMs, done = fal
         @keyframes loaderSpinCounter {
           from { transform: rotate(0deg); }
           to { transform: rotate(-360deg); }
+        }
+        @keyframes loaderBarFill {
+          from { transform: translateX(-100%); }
+          to { transform: translateX(-1%); }
+        }
+        @keyframes loaderBarFinish {
+          from { transform: translateX(-1%); }
+          to { transform: translateX(0%); }
+        }
+        @keyframes loaderDigitsTens {
+          from { transform: translateY(0); }
+          to { transform: translateY(-90%); }
+        }
+        @keyframes loaderDigitsOnes {
+          from { transform: translateY(0); }
+          to { transform: translateY(-100%); }
         }
         @keyframes loaderPulseCore {
           0%, 100% { transform: scale(1); opacity: 0.85; }
@@ -176,8 +189,8 @@ export const SceneLoader: React.FC<SceneLoaderProps> = ({ durationMs, done = fal
               <div
                 className="w-full h-full bg-white relative"
                 style={{
-                  transform: `translateX(${barX}%)`,
-                  transition: barTransition,
+                  transform: 'translateX(-100%)',
+                  animation: barAnimation,
                   willChange: 'transform',
                   boxShadow: '0 0 10px #ffffff, 0 0 20px rgba(255,255,255,0.85)',
                 }}
@@ -195,7 +208,18 @@ export const SceneLoader: React.FC<SceneLoaderProps> = ({ durationMs, done = fal
             style={{ textShadow: '0 0 8px rgba(255,255,255,0.9), 0 0 18px rgba(255,255,255,0.5)' }}
           >
             <span>SYSTEM LOADING...</span>
-            <span className="text-[11px] opacity-75 font-normal ml-1">[{shownPct.toFixed(0)}%]</span>
+            <span className="text-[11px] opacity-75 font-normal ml-1 inline-flex items-center">
+              [
+              {done ? (
+                <span>100</span>
+              ) : (
+                <>
+                  <DigitStrip animation={`loaderDigitsTens ${ones * 9 * 10}ms steps(9, end) forwards`} />
+                  <DigitStrip animation={`loaderDigitsOnes ${ones * 10}ms steps(10, end) infinite`} />
+                </>
+              )}
+              %]
+            </span>
           </h2>
 
           {title && <p className="text-[10px] text-neutral-400 tracking-[0.2em] mt-1.5 opacity-80">{title}</p>}
