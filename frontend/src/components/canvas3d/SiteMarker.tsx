@@ -15,7 +15,6 @@ interface SiteMarkerProps {
 
 const SITE_ROUTE_MAP: Record<string, string> = {
   'shackleton-connecting-ridge': '/vista-sitio/shackleton',
-  'shackleton-center-psr': '/vista-sitio/shackleton',
   'malapert-massif': '/vista-sitio/malapert',
   'de-gerlache-rim': '/vista-sitio/degerlache',
   'nobile-rim-1': '/vista-sitio/nobile',
@@ -23,16 +22,37 @@ const SITE_ROUTE_MAP: Record<string, string> = {
 
 export function SiteMarker({ site, position, lineHeight = 4.5 }: SiteMarkerProps) {
   const navigate = useNavigate()
-  const [isLanderHovered, setIsLanderHovered] = useState(false)
-  const [isOverHud, setIsOverHud] = useState(false)
+  const [isOpen, setIsOpen] = useState(false)
+  const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const landerRef = useRef<THREE.Group>(null)
   const { scene } = useGLTF('/models/lander/lander.glb')
 
-  const isHovered = isLanderHovered || isOverHud
+  const clearCloseTimeout = () => {
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current)
+      closeTimeoutRef.current = null
+    }
+  }
 
-  // Clean up cursor on unmount
+  const handlePointerEnter = () => {
+    clearCloseTimeout()
+    setIsOpen(true)
+    document.body.style.cursor = 'pointer'
+  }
+
+  const handlePointerLeave = () => {
+    clearCloseTimeout()
+    // 600ms grace period to easily move the cursor across to the HUD
+    closeTimeoutRef.current = setTimeout(() => {
+      setIsOpen(false)
+      document.body.style.cursor = 'auto'
+    }, 600)
+  }
+
+  // Clean up timers and cursor on unmount
   useEffect(() => {
     return () => {
+      clearCloseTimeout()
       document.body.style.cursor = 'auto'
     }
   }, [])
@@ -59,9 +79,9 @@ export function SiteMarker({ site, position, lineHeight = 4.5 }: SiteMarkerProps
     return clone
   }, [scene])
 
-  // Gentle rotation on hover
+  // Gentle rotation while open/hovered
   useFrame((_, delta) => {
-    if (landerRef.current && isHovered) {
+    if (landerRef.current && isOpen) {
       landerRef.current.rotation.y += delta * 1.5
     }
   })
@@ -103,17 +123,15 @@ export function SiteMarker({ site, position, lineHeight = 4.5 }: SiteMarkerProps
         position={[0, lineHeight, 0]}
         onPointerOver={(e) => {
           e.stopPropagation()
-          setIsLanderHovered(true)
-          document.body.style.cursor = 'pointer'
+          handlePointerEnter()
         }}
         onPointerOut={() => {
-          setIsLanderHovered(false)
-          document.body.style.cursor = 'auto'
+          handlePointerLeave()
         }}
       >
-        {/* Invisible hit-box to make hover interaction smooth and reliable */}
+        {/* Hit-box around the lander to make hover interaction easy */}
         <mesh visible={false} position={[0, 1.2, 0]}>
-          <sphereGeometry args={[2.5, 12, 12]} />
+          <sphereGeometry args={[2.8, 12, 12]} />
         </mesh>
 
         {/* Small lander model (scale ~0.018, height ~2.5 units) */}
@@ -124,17 +142,32 @@ export function SiteMarker({ site, position, lineHeight = 4.5 }: SiteMarkerProps
         </group>
 
         {/* Aerospace Sci-Fi HUD Panel anchored to the lander */}
-        {isHovered && (
+        {isOpen && (
           <Html position={[0, 1.2, 0]} center style={{ pointerEvents: 'none' }}>
             <div style={{ position: 'relative', width: '1px', height: '1px', pointerEvents: 'auto' }}>
+              {/* Invisible interactive bridge area covering the path from lander to HUD */}
+              <div
+                style={{
+                  position: 'absolute',
+                  left: '-30px',
+                  top: '-40px',
+                  width: '130px',
+                  height: '140px',
+                }}
+                onMouseEnter={handlePointerEnter}
+                onMouseLeave={handlePointerLeave}
+              />
+
               <div
                 className="w-[350px] sm:w-[390px]"
                 style={{ position: 'absolute', left: '88px', top: '-22px' }}
+                onMouseEnter={handlePointerEnter}
+                onMouseLeave={handlePointerLeave}
               >
                 <SciFiHudPanel
                   badgeTitle="TELEMETRÍA"
-                  onMouseEnter={() => setIsOverHud(true)}
-                  onMouseLeave={() => setIsOverHud(false)}
+                  onMouseEnter={handlePointerEnter}
+                  onMouseLeave={handlePointerLeave}
                 >
                   <TerminalCardContent
                     site={siteData}
