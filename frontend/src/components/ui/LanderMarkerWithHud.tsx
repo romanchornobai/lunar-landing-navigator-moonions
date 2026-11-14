@@ -210,7 +210,7 @@ export const LanderMarkerWithHud: React.FC<LanderMarkerWithHudProps> = ({
               <svg
                 style={{
                   position: 'absolute',
-                  top: '-45px',
+                  top: '0px',
                   left: direction === 'right' ? '0px' : '-85px',
                   width: '85px',
                   height: '50px',
