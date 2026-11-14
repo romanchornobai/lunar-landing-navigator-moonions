@@ -1,7 +1,11 @@
+import { Navigate, Route, Routes } from 'react-router-dom'
+import LunarGlobe from './components/canvas3d/LunarGlobe'
+
 export default function App() {
   return (
-    <div className="flex h-full items-center justify-center">
-      <h1 className="font-retro text-xl">Lunar Landing Site Navigator</h1>
-    </div>
+    <Routes>
+      <Route path="/vista-lunar" element={<LunarGlobe />} />
+      <Route path="*" element={<Navigate to="/vista-lunar" replace />} />
+    </Routes>
   )
 }
