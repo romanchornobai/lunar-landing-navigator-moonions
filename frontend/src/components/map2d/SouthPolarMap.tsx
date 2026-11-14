@@ -2,12 +2,15 @@ import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import { CircleMarker, MapContainer, Marker, Polyline, TileLayer, Tooltip, useMap, useMapEvents } from 'react-leaflet'
+import { CircleMarker, MapContainer, Marker, Polyline, Tooltip, useMap, useMapEvents } from 'react-leaflet'
 import {
   CAP_EDGE_LAT,
   CAP_RADIUS_M,
   MOON_SOUTH_POLAR_CRS,
   TREK_LAYERS,
+  loadLocalTileManifest,
+  localTileUrl,
+  trekTileUrl,
   lunarToPolarXY,
   zoomToFitRadius,
 } from '../../lib/moonSouthPolarCrs'
@@ -20,6 +23,40 @@ const ANCHOR_ICON = L.divIcon({ className: 'probe-anchor', html: '', iconSize: [
 
 // -84 deg parallel: edge of the regional cap used by the 3D view.
 const CAP_RING: [number, number][] = Array.from({ length: 181 }, (_, i) => [CAP_EDGE_LAT, -180 + i * 2])
+
+/** Leaflet tile layer that serves pre-downloaded tiles from /public and streams the rest from Trek. */
+class HybridTileLayer extends L.TileLayer {
+  constructor(
+    private layerId: string,
+    private local: Set<string>,
+    options: L.TileLayerOptions,
+  ) {
+    super(trekTileUrl(layerId), options)
+  }
+  getTileUrl(coords: L.Coords): string {
+    const z = (this as unknown as { _getZoomForUrl(): number })._getZoomForUrl()
+    const tpl = this.local.has(`${z}/${coords.y}/${coords.x}`) ? localTileUrl(this.layerId) : trekTileUrl(this.layerId)
+    return L.Util.template(tpl, { z, x: coords.x, y: coords.y })
+  }
+}
+
+function TrekLayer({ layerId, ...options }: { layerId: string } & L.TileLayerOptions) {
+  const map = useMap()
+  useEffect(() => {
+    let layer: L.TileLayer | null = null
+    let alive = true
+    loadLocalTileManifest().then((m) => {
+      if (!alive) return
+      layer = new HybridTileLayer(layerId, m[layerId] ?? new Set(), options).addTo(map)
+    })
+    return () => {
+      alive = false
+      layer?.remove()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [map, layerId])
+  return null
+}
 
 /** Opens the view centered on the pole with the whole -90..-84 cap in frame. */
 function FitCap({ margin }: { margin: number }) {
@@ -162,16 +199,18 @@ export default function SouthPolarMap({ interactive = true, isPickerActive = fal
       style={{ width: '100%', height: '100%', background: '#020408' }}
     >
       <FitCap margin={interactive ? 1.08 : 0.8} />
-      <TileLayer
-        url={TREK_LAYERS.wac.url}
+      <TrekLayer
+        layerId={TREK_LAYERS.wac.id}
+        zIndex={1}
         maxNativeZoom={TREK_LAYERS.wac.maxNativeZoom}
         maxZoom={12}
         errorTileUrl={TRANSPARENT_TILE}
         attribution="NASA Moon Trek · LRO LROC WAC / NAC"
       />
       {interactive && (
-        <TileLayer
-          url={TREK_LAYERS.nac.url}
+        <TrekLayer
+          layerId={TREK_LAYERS.nac.id}
+          zIndex={2}
           minZoom={6}
           maxNativeZoom={TREK_LAYERS.nac.maxNativeZoom}
           maxZoom={12}

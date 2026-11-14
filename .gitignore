@@ -34,3 +34,7 @@ frontend/public/textures/*.tiff
 # Config/notes inside the web app must not be published
 frontend/public/**/*.md
 frontend/public/**/*.txt
+
+# Moon Trek tiles around the landing sites (~100+ MB). Regenerate with
+# python backend/app/scripts/download_trek_tiles.py (see DATA_SOURCES.md)
+frontend/public/tiles/

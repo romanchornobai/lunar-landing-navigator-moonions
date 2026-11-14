@@ -68,10 +68,29 @@ export const CAP_EDGE_LAT = -84
 export const CAP_RADIUS_M = 2 * R_MOON_M * Math.tan(3 * DEG)
 
 const TREK = 'https://trek.nasa.gov/tiles/Moon/SP'
+const LOCAL = '/tiles/moon_sp'
 /** NASA Moon Trek WMTS layers (South Polar Stereographic, REST, 256 px PNG tiles). */
 export const TREK_LAYERS = {
   // LRO LROC WAC mosaic v2, ~100 m/px, to 60 S. Native levels 0-5.
-  wac: { url: `${TREK}/LRO_WAC_Mosaic_SPole60_100m_v02/1.0.0/default/default028mm/{z}/{y}/{x}.png`, maxNativeZoom: 5 },
+  wac: { id: 'LRO_WAC_Mosaic_SPole60_100m_v02', maxNativeZoom: 5 },
   // LRO LROC NAC mosaic, 1 m/px source, to 85.5 S. Native levels 0-11.
-  nac: { url: `${TREK}/LRO_NAC_Mosaic_SPole85.5_1mp/1.0.0/default/default028mm/{z}/{y}/{x}.png`, maxNativeZoom: 11 },
+  nac: { id: 'LRO_NAC_Mosaic_SPole85.5_1mp', maxNativeZoom: 11 },
+}
+
+export const trekTileUrl = (layerId: string) => `${TREK}/${layerId}/1.0.0/default/default028mm/{z}/{y}/{x}.png`
+export const localTileUrl = (layerId: string) => `${LOCAL}/${layerId}/{z}/{y}/{x}.png`
+
+// Tiles pre-downloaded around the landing sites (backend/app/scripts/download_trek_tiles.py).
+// manifest.json: { layers: { <layerId>: ["z/row/col", ...] } }. Missing manifest -> all tiles from Trek.
+let manifest: Promise<Record<string, Set<string>>> | null = null
+export function loadLocalTileManifest(): Promise<Record<string, Set<string>>> {
+  if (!manifest) {
+    manifest = fetch(`${LOCAL}/manifest.json`)
+      .then((r) => (r.ok ? r.json() : { layers: {} }))
+      .then((m: { layers?: Record<string, string[]> }) =>
+        Object.fromEntries(Object.entries(m.layers ?? {}).map(([k, v]) => [k, new Set(v)])),
+      )
+      .catch(() => ({}))
+  }
+  return manifest
 }
