@@ -128,19 +128,12 @@ function Terrain({
         </mesh>
       )}
 
-      {/* Small white point at cursor location while probe mode is active */}
+      {/* Small white stick at cursor location while probe mode is active */}
       {isPickerActive && hoverPoint && (
-        <group position={hoverPoint}>
-          <mesh position={[0, 0.04, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-            <ringGeometry args={[0.2, 0.38, 24]} />
-            <meshBasicMaterial color="#ffffff" side={THREE.DoubleSide} transparent opacity={0.8} />
-          </mesh>
-          <mesh position={[0, 0.25, 0]}>
-            <sphereGeometry args={[0.2, 16, 16]} />
-            <meshBasicMaterial color="#ffffff" toneMapped={false} />
-          </mesh>
-          <pointLight color="#ffffff" intensity={1.5} distance={15} />
-        </group>
+        <mesh position={[hoverPoint[0], hoverPoint[1] + 1.25, hoverPoint[2]]}>
+          <cylinderGeometry args={[0.1, 0.1, 2.5, 8]} />
+          <meshBasicMaterial color="#ffffff" toneMapped={false} />
+        </mesh>
       )}
 
       {sitePositions.map(({ site, position }) => (
@@ -237,7 +230,7 @@ export default function SouthPoleTerrain() {
           onClick={() => {
             setIsPickerActive((prev) => !prev)
           }}
-          className={`group relative flex items-center gap-2 px-3.5 h-[38px] rounded transition-all duration-300 backdrop-blur-md font-mono text-xs select-none cursor-pointer border ${
+          className={`group relative flex items-center justify-center w-[38px] h-[38px] rounded transition-all duration-300 backdrop-blur-md font-mono text-xs select-none cursor-pointer border ${
             isPickerActive
               ? 'bg-white/20 border-white text-white shadow-[0_0_18px_rgba(255,255,255,0.4)]'
               : 'bg-black/60 border-white/30 text-neutral-300 hover:text-white hover:border-white/70 hover:bg-black/80'
@@ -249,9 +242,6 @@ export default function SouthPoleTerrain() {
               isPickerActive ? 'text-white' : 'group-hover:rotate-90'
             }`}
           />
-          <span className="font-semibold tracking-wider uppercase text-[11px]">
-            {isPickerActive ? 'SONDA ACTIVA' : 'SONDA COORDENADAS'}
-          </span>
         </button>
       </div>
     </div>
