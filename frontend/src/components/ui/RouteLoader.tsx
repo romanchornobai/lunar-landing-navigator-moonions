@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom'
 import { useProgress } from '@react-three/drei'
 import { SceneLoader } from './SceneLoader'
 
-const MIN_MS = 2000 // the loader is always shown at least this long
+const MIN_MS = 1500 // the loader is always shown at least this long
 const MAX_MS = 20000 // safety net if an asset never reports as finished
 const FADE_MS = 500
 const FINISH_MS = 300 // time the bar takes to reach 100% before the fade-out starts
