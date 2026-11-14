@@ -4,7 +4,7 @@ import { SciFiHudPanel } from './SciFiHudPanel'
 export interface ProbeCoords {
   latitude: number // deg, planetocentric (IAU Moon)
   longitude: number // deg east, -180..180
-  elevation_m: number // m
+  elevation_m: number | null // m, approx. LOLA height from the regional grid (+-261 m); null outside it
 }
 
 interface ProbeHoloPanelProps {
@@ -22,7 +22,10 @@ interface ProbeHoloPanelProps {
 export function ProbeHoloPanel({ coords, direction, extra, onClose }: ProbeHoloPanelProps) {
   const latStr = `${Math.abs(coords.latitude).toFixed(3)}° ${coords.latitude < 0 ? 'S' : 'N'}`
   const lonStr = `${Math.abs(coords.longitude).toFixed(3)}° ${coords.longitude < 0 ? 'W' : 'E'}`
-  const elevStr = `${coords.elevation_m >= 0 ? '+' : ''}${coords.elevation_m.toLocaleString()} m`
+  const elevStr =
+    coords.elevation_m === null
+      ? 'N/D'
+      : `≈ ${coords.elevation_m >= 0 ? '+' : ''}${coords.elevation_m.toLocaleString()} m`
 
   return (
     <div

@@ -18,14 +18,18 @@ import {
   zoomToFitRadius,
 } from '../../lib/moonSouthPolarCrs'
 import { useSouthPoleElevation } from '../../lib/southPoleElevation'
-import { LANDING_SITES, lunarCoordsToScenePoint, scenePointToLunarCoords } from '../../data/sites'
+import { LANDING_SITES, elevationAtLatLon } from '../../data/sites'
+import { terrainFootprintLatLon } from '../../lib/southPoleGrid'
 import { ProbeHoloPanel, type ProbeCoords } from '../ui/ProbeHoloPanel'
 
 const TRANSPARENT_TILE = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=='
 const ANCHOR_ICON = L.divIcon({ className: 'probe-anchor', html: '', iconSize: [1, 1], iconAnchor: [0, 0] })
 
-// -84 deg parallel: edge of the regional cap used by the 3D view.
-const CAP_RING: [number, number][] = Array.from({ length: 181 }, (_, i) => [CAP_EDGE_LAT, -180 + i * 2])
+// Footprint of the regional 3D terrain (georeferenced square, lib/southPoleGrid.ts). Straight edges in the polar plane.
+const TERRAIN_FOOTPRINT = (() => {
+  const c = terrainFootprintLatLon()
+  return [...c, c[0]]
+})()
 
 /** Leaflet tile layer that serves pre-downloaded tiles from /public and streams the rest from Trek. */
 class HybridTileLayer extends L.TileLayer {
@@ -187,9 +191,8 @@ export default function SouthPolarMap({
 
   const handlePick = (lat: number, lon: number, xPx: number, widthPx: number) => {
     if (!isPickerActive || !elevations || lat > CAP_EDGE_LAT) return
-    // Elevation from the same LOLA grid and calibration as the 3D probe, so both views agree.
-    const [x, y, z] = lunarCoordsToScenePoint(lat, lon, elevations)
-    const { elevation_m } = scenePointToLunarCoords({ x, y, z })
+    // Approximate LOLA height from the same regional grid as the 3D probe (null outside the 3D terrain).
+    const elevation_m = elevationAtLatLon(elevations, lat, lon)
     setProbe({
       lat,
       lon,
@@ -207,7 +210,11 @@ export default function SouthPolarMap({
           radius={interactive ? 6 : 3}
           interactive={interactive}
           bubblingMouseEvents
-          pathOptions={{ color: '#ff2a2a', weight: 1, fillColor: '#ff2a2a', fillOpacity: 1 }}
+          pathOptions={
+            s.kind === 'science'
+              ? { color: '#38bdf8', weight: 1, fillColor: '#38bdf8', fillOpacity: 1 }
+              : { color: '#ff2a2a', weight: 1, fillColor: '#ff2a2a', fillOpacity: 1 }
+          }
         >
           {interactive && (
             <Tooltip direction="right" offset={[8, 0]} className="polar-site-tooltip">
@@ -271,7 +278,7 @@ export default function SouthPolarMap({
         />
       )}
       <Polyline
-        positions={CAP_RING}
+        positions={TERRAIN_FOOTPRINT}
         interactive={false}
         pathOptions={{ color: '#ffffff', weight: 1, opacity: 0.35, dashArray: '4 6' }}
       />

@@ -4,20 +4,17 @@ import { Canvas, useFrame, useLoader } from '@react-three/fiber'
 import { OrbitControls, Stars } from '@react-three/drei'
 import { useNavigate } from 'react-router-dom'
 import { BarChart3, ChevronLeft, Crosshair } from 'lucide-react'
-import { LANDING_SITES, getSite3DPosition, getTerrainHeight, scenePointToLunarCoords } from '../../data/sites'
+import { SITES_IN_3D, getSite3DPosition, scenePointToLunarCoords } from '../../data/sites'
+import { GRID, MEAN_Z, SCALE_Y, TERRAIN_SIZE, getTerrainHeight, mirrorGeometryZ } from '../../lib/southPoleGrid'
 import { SiteMarker } from './SiteMarker'
 import { TerrainProbeMarker } from './TerrainProbeMarker'
 import { SiteComparisonPanel } from '../ui/SiteComparisonPanel'
 import SouthPolarMap, { type MapViewInfo } from '../map2d/SouthPolarMap'
 import MiniSouthPoleTerrain from './MiniSouthPoleTerrain'
 
-// Regional South Pole cap (lat -90..-84, ~364 km): LOLA-derived 1200x1200 Float32 elevation grid
-// (meters, NASA Moon Trek). Geometry params from ASSETS.md.
+// Regional South Pole terrain: NASA Moon Trek (LRO LOLA) 1200x1200 Float32 grid, ~212 x 212 km around Shackleton.
+// Georeference, mirroring and height units: lib/southPoleGrid.ts (registered against LRO LOLA GDR, see DATA_SOURCES.md).
 const BASE = '/models/south_pole'
-const GRID = 1200
-const TERRAIN_SIZE = 150 // scene units
-const MEAN_Z = 24.97 // m, mean elevation subtracted
-const SCALE_Y = (TERRAIN_SIZE / GRID) * 1.3 * 1.5 // 0.24375 scene units per m (exaggerated)
 
 const STICK_HEIGHT = 1.2 // scene units
 const STICK_REST_MS = 350 // cursor must rest this long before the stick grows
@@ -61,9 +58,11 @@ function HoverStick({ point }: { point: [number, number, number] }) {
   )
 }
 
+type ProbeLatLon = { latitude: number; longitude: number; elevation_m: number }
+
 interface TerrainProps {
   isPickerActive: boolean
-  onPickPoint: (point: THREE.Vector3) => void
+  onPickPoint: (point: THREE.Vector3, coords: ProbeLatLon) => void
   probe: {
     position: [number, number, number]
     coords: {
@@ -102,6 +101,7 @@ function Terrain({
     const pos = geom.attributes.position
     for (let i = 0; i < pos.count; i++) pos.setY(i, (elevations[i] - MEAN_Z) * SCALE_Y)
     pos.needsUpdate = true
+    mirrorGeometryZ(geom) // the stored grid is mirrored: show the real geography
     geom.computeVertexNormals()
     return geom
   }, [elevations])
@@ -113,7 +113,7 @@ function Terrain({
     geom.rotateX(-Math.PI / 2)
     const pos = geom.attributes.position
     for (let i = 0; i < pos.count; i++) {
-      pos.setY(i, getTerrainHeight(elevations, pos.getX(i), pos.getZ(i)))
+      pos.setY(i, getTerrainHeight(elevations, pos.getX(i), pos.getZ(i))) // already in the mirrored frame
     }
     pos.needsUpdate = true
     geom.computeVertexNormals()
@@ -122,9 +122,9 @@ function Terrain({
 
   // Calculate the exact 3D positions of the candidate landing sites on the terrain
   const sitePositions = useMemo(() => {
-    return LANDING_SITES.map((site) => ({
+    return SITES_IN_3D.map((site) => ({
       site,
-      position: getSite3DPosition(site, elevations),
+      position: getSite3DPosition(site, elevations) as [number, number, number],
     }))
   }, [elevations])
 
@@ -165,7 +165,8 @@ function Terrain({
           onClick={(e) => {
             e.stopPropagation()
             const exactY = getTerrainHeight(elevations, e.point.x, e.point.z)
-            onPickPoint(new THREE.Vector3(e.point.x, exactY, e.point.z))
+            const picked = new THREE.Vector3(e.point.x, exactY, e.point.z)
+            onPickPoint(picked, scenePointToLunarCoords(picked, elevations))
           }}
         >
           <meshBasicMaterial transparent opacity={0} depthWrite={false} />
@@ -218,8 +219,7 @@ export default function SouthPoleTerrain() {
     }
   }, [isPickerActive])
 
-  const handlePickPoint = (point: THREE.Vector3) => {
-    const coords = scenePointToLunarCoords({ x: point.x, y: point.y, z: point.z })
+  const handlePickPoint = (point: THREE.Vector3, coords: ProbeLatLon) => {
     setProbe({
       position: [point.x, point.y, point.z],
       coords,

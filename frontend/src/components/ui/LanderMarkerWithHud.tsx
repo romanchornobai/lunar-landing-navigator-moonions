@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import * as THREE from 'three';
 import { useGLTF, Html } from '@react-three/drei';
-import { useFrame } from '@react-three/fiber';
+import { useFrame, useThree } from '@react-three/fiber';
 import { SciFiHudPanel } from './SciFiHudPanel';
 import { TerminalCardContent } from './TerminalCardContent';
 
@@ -10,7 +10,12 @@ interface LanderMarkerWithHudProps {
     id: string;
     name: string;
     shortName: string;
+    /** 'science': permanently shadowed region (drawn as a beacon, not a lander). */
+    kind?: 'landing' | 'science';
     description?: string;
+    published?: string;
+    nasaRegion?: string | null;
+    sources?: { label: string; url: string }[];
     coordinates: {
       latitude: number;
       longitude: number;
@@ -19,6 +24,7 @@ interface LanderMarkerWithHudProps {
     groundPos: THREE.Vector3;
     direction?: 'left' | 'right'; // Hacia qué lado se despliega el panel
   };
+  /** Undefined hides the ALUNIZAR button (no first-person terrain for this point yet). */
   onLandOnSite?: (siteId: string) => void;
   lineHeight?: number;
 }
@@ -33,6 +39,9 @@ export const LanderMarkerWithHud: React.FC<LanderMarkerWithHudProps> = ({
   const cardHoverRef = useRef(false);
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const landerMeshRef = useRef<THREE.Group>(null);
+  const { camera, size } = useThree();
+  // Side the card opens to: towards the screen centre, so the card (and its source links) stays on screen.
+  const [screenSide, setScreenSide] = useState<'left' | 'right' | null>(null);
 
   const { scene } = useGLTF('/models/lander/lander.glb');
 
@@ -73,6 +82,8 @@ export const LanderMarkerWithHud: React.FC<LanderMarkerWithHudProps> = ({
 
   const handleLanderEnter = (e: any) => {
     e.stopPropagation();
+    const p = site.groundPos.clone().project(camera);
+    setScreenSide(((p.x + 1) / 2) * size.width > size.width / 2 ? 'left' : 'right');
     if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
     landerHoverRef.current = true;
     updateHover();
@@ -97,7 +108,8 @@ export const LanderMarkerWithHud: React.FC<LanderMarkerWithHudProps> = ({
     closeTimeoutRef.current = setTimeout(() => updateHover(), 90);
   };
 
-  const { groundPos, direction = groundPos.x > 25 ? 'left' : 'right' } = site;
+  const { groundPos } = site;
+  const direction = screenSide ?? site.direction ?? (groundPos.x > 25 ? 'left' : 'right');
 
   return (
     <group position={[groundPos.x, groundPos.y, groundPos.z]}>
@@ -116,7 +128,15 @@ export const LanderMarkerWithHud: React.FC<LanderMarkerWithHudProps> = ({
           onPointerLeave={handleLanderLeave}
         >
           <group ref={landerMeshRef}>
-            <primitive object={clonedScene} />
+            {site.kind === 'science' ? (
+              // Permanently shadowed region: ice-blue beacon instead of a lander (not a landing site)
+              <mesh position={[0, 67, 0]}>
+                <octahedronGeometry args={[55, 0]} />
+                <meshBasicMaterial color="#38bdf8" wireframe toneMapped={false} />
+              </mesh>
+            ) : (
+              <primitive object={clonedScene} />
+            )}
           </group>
           {/* Hitbox transparente para facilitar pasar el ratón */}
           <mesh position={[0, 67, 0]}>
@@ -285,7 +305,7 @@ export const LanderMarkerWithHud: React.FC<LanderMarkerWithHudProps> = ({
                 }}
                 className="w-[350px] sm:w-[390px]"
               >
-                <SciFiHudPanel badgeTitle="TELEMETRÍA">
+                <SciFiHudPanel badgeTitle={site.kind === 'science' ? 'INTERÉS CIENTÍFICO' : 'TELEMETRÍA'}>
                   <TerminalCardContent
                     site={site}
                     actionLabel="ALUNIZAR"

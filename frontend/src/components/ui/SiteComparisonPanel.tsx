@@ -1,14 +1,10 @@
 import React, { useEffect, useState } from 'react'
 import { SciFiHudPanel } from './SciFiHudPanel'
 import { CELESTIAL_MODELS, SpinningModelCanvas } from './CelestialReadout'
+import { SITES_IN_3D } from '../../data/sites'
 
-// Columns follow the candidate site order of data/landing_sites.json.
-const COLUMNS = [
-  { id: 'shackleton-connecting-ridge', label: 'SHACKLETON' },
-  { id: 'malapert-massif', label: 'MALAPERT' },
-  { id: 'nobile-rim-1', label: 'NOBILE' },
-  { id: 'de-gerlache-rim', label: 'DE GERLACHE' },
-]
+// Columns: the published points on the regional 3D terrain (data/landingSites.json), in file order.
+const COLUMNS = SITES_IN_3D.map((s) => ({ id: s.id, label: s.shortName, science: s.kind === 'science' }))
 
 // Rows: Earth and Sun. The comparison data (access time per site) is not filled in yet.
 const ROWS = [
@@ -53,7 +49,7 @@ function DateField({
   )
 }
 
-/** Full-screen dimmed/blurred overlay with an empty site comparison grid (4 sites x Earth/Sun). */
+/** Full-screen dimmed/blurred overlay with an empty site comparison grid (points x Earth/Sun). */
 export const SiteComparisonPanel: React.FC<SiteComparisonPanelProps> = ({ onClose }) => {
   const [startDay, setStartDay] = useState(MIN_DAY)
   const [endDay, setEndDay] = useState(MAX_DAY)
@@ -103,14 +99,17 @@ export const SiteComparisonPanel: React.FC<SiteComparisonPanelProps> = ({ onClos
         <SciFiHudPanel badgeTitle="COMPARATIVA">
           <div
             className="grid font-mono text-white select-none"
-            style={{ gridTemplateColumns: '88px repeat(4, minmax(0, 1fr))' }}
+            style={{ gridTemplateColumns: `88px repeat(${COLUMNS.length}, minmax(0, 1fr))` }}
           >
             {/* Header row: empty corner + site names */}
             <div />
             {COLUMNS.map((c) => (
               <div
                 key={c.id}
-                className="py-3 text-center text-[12px] sm:text-[13px] font-bold tracking-[0.22em] border-b border-white/25"
+                className={`py-3 px-1 text-center text-[11px] sm:text-[12px] font-bold tracking-[0.18em] border-b border-white/25 ${
+                  c.science ? 'text-sky-400' : ''
+                }`}
+                title={c.science ? 'Zona en sombra permanente (interés científico, no aterrizaje)' : undefined}
               >
                 {c.label}
               </div>

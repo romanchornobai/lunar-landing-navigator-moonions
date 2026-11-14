@@ -1,49 +1,125 @@
 [
   {
-    "id": "shackleton-connecting-ridge",
-    "name": "Cráter Shackleton - Borde Iluminado (Connecting Ridge)",
-    "coordinates": {
-      "latitude": -89.54,
-      "longitude": 129.20,
-      "elevation_m": 2100
-    },
-    "description": "Zona de aterrizaje óptima: cresta elevada con iluminación solar cuasi-perpetua y enlace directo hacia la Tierra.",
-    "horizon_max_elevation_deg": 1.2
+    "id": "connecting-ridge-cr1",
+    "name": "Connecting Ridge (CR1)",
+    "shortName": "CR1",
+    "kind": "landing",
+    "coordinates": { "latitude": -89.4395, "longitude": -137.1934, "elevation_m": 1958 },
+    "description": "Cresta que une los cráteres Shackleton y de Gerlache. Punto CR1 (spot 1) del estudio de iluminación con LOLA.",
+    "published": "Iluminado el 92 % del tiempo a 2 m del suelo (media 88,1 %); noche más larga 4,6 días. Simulación de 19 años, LOLA 20 m/px.",
+    "nasa_region": "Connecting Ridge (candidata Artemis III 2022)",
+    "scene_key": null,
+    "sources": [
+      {
+        "label": "Gläser et al. 2014, EPSC Abstracts 9, EPSC2014-136-1",
+        "url": "https://meetingorganizer.copernicus.org/EPSC2014/EPSC2014-136-1.pdf"
+      }
+    ]
   },
   {
-    "id": "malapert-massif",
-    "name": "Macizo de Malapert (Peak A)",
-    "description": "Una de las montañas más altas del Polo Sur Lunar. Ofrece visibilidad directa y continua hacia la Tierra para telecomunicaciones DTE.",
-    "coordinates": {
-      "latitude": -85.99,
-      "longitude": 2.93,
-      "elevation_m": 5050
-    },
-    "scientific_interest": "Ubicación prioritaria para nodos repetidores de comunicación directa con la Tierra.",
-    "horizon_max_elevation_deg": 0.5
+    "id": "shackleton-rim-a",
+    "name": "Borde de Shackleton (Point A)",
+    "shortName": "SHACKLETON A",
+    "kind": "landing",
+    "coordinates": { "latitude": -89.68, "longitude": -166.0, "elevation_m": 1592 },
+    "description": "Punto del borde del cráter Shackleton. Complementario del Point B: cuando uno está a oscuras, el otro suele tener Sol.",
+    "published": "Iluminado más del 80 % del año 2020; junto con el Point B, más del 94 % del tiempo. Topografía Kaguya.",
+    "nasa_region": null,
+    "scene_key": null,
+    "sources": [
+      {
+        "label": "Bussey et al. 2010, Icarus 208, 558-564",
+        "url": "https://doi.org/10.1016/j.icarus.2010.03.028"
+      }
+    ]
   },
   {
-    "id": "nobile-rim-1",
-    "name": "Cresta del Cráter Nobile",
-    "description": "Zona de terreno relativamente suave seleccionada para misiones rover de exploración de recursos.",
-    "coordinates": {
-      "latitude": -85.25,
-      "longitude": 35.80,
-      "elevation_m": 3400
-    },
-    "scientific_interest": "Exploración robótica de depósitos de hielo superficial y subsuperficial.",
-    "horizon_max_elevation_deg": 1.8
+    "id": "peak-near-shackleton-d",
+    "name": "Peak near Shackleton (Point D)",
+    "shortName": "PEAK D",
+    "kind": "landing",
+    "coordinates": { "latitude": -88.74, "longitude": 124.5, "elevation_m": 1454 },
+    "description": "Pequeña cresta que sale del borde de Shackleton a lo largo del meridiano 120° E. El punto más iluminado del estudio de Bussey et al.",
+    "published": "Iluminado el 86 % del año 2020; noche más larga ~11,5 días (invierno). Mahanti et al. 2024 sitúan aquí (88,79° S, 124,5° E) un área iluminada ~80 % del tiempo.",
+    "nasa_region": "Peak near Shackleton (candidata Artemis III 2022)",
+    "scene_key": null,
+    "sources": [
+      {
+        "label": "Bussey et al. 2010, Icarus 208, 558-564",
+        "url": "https://doi.org/10.1016/j.icarus.2010.03.028"
+      },
+      {
+        "label": "Mahanti et al. 2024, Planet. Sci. J. 5, 62",
+        "url": "https://iopscience.iop.org/article/10.3847/PSJ/ad1b50"
+      }
+    ]
   },
   {
     "id": "de-gerlache-rim",
-    "name": "Borde de Faustini / De Gerlache",
-    "description": "Meseta elevada entre cuencas de impacto con iluminación estable y condiciones térmicas moderadas.",
-    "coordinates": {
-      "latitude": -88.71,
-      "longitude": -68.70,
-      "elevation_m": 1800
-    },
-    "scientific_interest": "Bases operativas sostenibles de larga duración.",
-    "horizon_max_elevation_deg": 1.5
+    "name": "Borde de De Gerlache (Point C)",
+    "shortName": "DE GERLACHE C",
+    "kind": "landing",
+    "coordinates": { "latitude": -88.71, "longitude": -68.7, "elevation_m": 1765 },
+    "description": "Punto del borde del cráter de Gerlache con iluminación estable y los eclipses más cortos del estudio.",
+    "published": "Iluminado más del 80 % del año 2020; el eclipse máximo más corto de todos los puntos estudiados (~6 días). Topografía Kaguya.",
+    "nasa_region": null,
+    "scene_key": "degerlache",
+    "sources": [
+      {
+        "label": "Bussey et al. 2010, Icarus 208, 558-564",
+        "url": "https://doi.org/10.1016/j.icarus.2010.03.028"
+      }
+    ]
+  },
+  {
+    "id": "psr-peak-near-shackleton",
+    "name": "Sombra permanente (PSR 4)",
+    "shortName": "PSR 4",
+    "kind": "science",
+    "coordinates": { "latitude": -88.963, "longitude": 129.783, "elevation_m": 975 },
+    "description": "Zona de interés científico, no de aterrizaje: nunca recibe luz solar directa y puede contener hielo de agua. Centro de la región en sombra permanente SP_889630_1297830.",
+    "published": "Región en sombra permanente de 6 km² dentro de la región Peak near Shackleton (tabla 1 del estudio).",
+    "nasa_region": "Peak near Shackleton (candidata Artemis III 2022)",
+    "scene_key": null,
+    "sources": [
+      {
+        "label": "Mahanti et al. 2024, Planet. Sci. J. 5, 62",
+        "url": "https://iopscience.iop.org/article/10.3847/PSJ/ad1b50"
+      }
+    ]
+  },
+  {
+    "id": "malapert-massif",
+    "name": "Macizo de Malapert",
+    "shortName": "MALAPERT",
+    "kind": "landing",
+    "coordinates": { "latitude": -85.99, "longitude": 2.93, "elevation_m": 5127 },
+    "description": "Una de las montañas más altas del Polo Sur lunar, orientada hacia la Tierra. Fuera del terreno 3D regional.",
+    "published": "Región candidata de Artemis III en 2022 y 2024. Coordenada aproximada de la región: NASA no publica un punto concreto.",
+    "nasa_region": "Malapert Massif (candidata Artemis III 2022 y 2024)",
+    "scene_key": "malapert",
+    "sources": [
+      {
+        "label": "NASA 2024, Artemis III landing regions update",
+        "url": "https://www.nasa.gov/news-release/nasa-provides-update-on-artemis-iii-moon-landing-regions/"
+      }
+    ]
+  },
+  {
+    "id": "nobile-rim-1",
+    "name": "Borde del cráter Nobile (Rim 1)",
+    "shortName": "NOBILE",
+    "kind": "landing",
+    "coordinates": { "latitude": -85.25, "longitude": 35.8, "elevation_m": 6504 },
+    "description": "Borde occidental del cráter Nobile, junto a Mons Mouton. Fuera del terreno 3D regional.",
+    "published": "Región candidata de Artemis III en 2022 y 2024. Coordenada aproximada de la región: NASA no publica un punto concreto.",
+    "nasa_region": "Nobile Rim 1 (candidata Artemis III 2022 y 2024)",
+    "scene_key": "nobile",
+    "sources": [
+      {
+        "label": "NASA 2024, Artemis III landing regions update",
+        "url": "https://www.nasa.gov/news-release/nasa-provides-update-on-artemis-iii-moon-landing-regions/"
+      }
+    ]
   }
 ]

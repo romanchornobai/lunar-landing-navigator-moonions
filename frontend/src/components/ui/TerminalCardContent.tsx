@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { ExternalLink } from 'lucide-react';
 import { LedButton } from './LedButton';
 
 interface TerminalCardContentProps {
@@ -7,7 +8,11 @@ interface TerminalCardContentProps {
     name: string;
     shortName: string;
     description?: string;
-    scientificInterest?: string;
+    /** Values as published by the source, with their conditions. */
+    published?: string;
+    nasaRegion?: string | null;
+    /** Publications the point comes from (each one gets a link icon). */
+    sources?: { label: string; url: string }[];
     coordinates: {
       latitude: number;
       longitude: number;
@@ -39,10 +44,8 @@ export const TerminalCardContent: React.FC<TerminalCardContentProps> = ({
 
   const fullTitle = site.name.toUpperCase();
   const fullCoords = formatCoords(site.coordinates.latitude, site.coordinates.longitude);
-  const fullElev =
-    site.coordinates.elevation_m !== undefined
-      ? `+${site.coordinates.elevation_m.toLocaleString()} m`
-      : 'N/D';
+  const elev = site.coordinates.elevation_m;
+  const fullElev = elev !== undefined ? `${elev >= 0 ? '+' : ''}${elev.toLocaleString()} m` : 'N/D';
   const fullDesc = site.description || '';
 
   useEffect(() => {
@@ -136,7 +139,47 @@ export const TerminalCardContent: React.FC<TerminalCardContentProps> = ({
         </div>
       )}
 
-      {/* Botón de acción */}
+      {/* Dato publicado, región NASA y fuente (con enlace a la publicación oficial) */}
+      {isDone && (site.published || site.sources?.length) && (
+        <div className="mb-3 p-2.5 rounded bg-white/[0.04] border border-white/15 space-y-2">
+          {site.published && (
+            <div>
+              <span className="text-[9px] text-neutral-400 block uppercase tracking-widest mb-0.5">DATO PUBLICADO</span>
+              <p className="text-[11px] leading-snug text-neutral-200">{site.published}</p>
+            </div>
+          )}
+          {site.nasaRegion && (
+            <div>
+              <span className="text-[9px] text-neutral-400 block uppercase tracking-widest mb-0.5">REGIÓN NASA</span>
+              <p className="text-[11px] leading-snug text-neutral-200">{site.nasaRegion}</p>
+            </div>
+          )}
+          {site.sources && site.sources.length > 0 && (
+            <div>
+              <span className="text-[9px] text-neutral-400 block uppercase tracking-widest mb-0.5">FUENTE</span>
+              <ul className="space-y-1">
+                {site.sources.map((src) => (
+                  <li key={src.url} className="flex items-center justify-between gap-2">
+                    <span className="text-[11px] leading-snug text-white">{src.label}</span>
+                    <a
+                      href={src.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title={`Abrir publicación: ${src.label}`}
+                      aria-label={`Abrir publicación: ${src.label}`}
+                      className="shrink-0 text-white/75 hover:text-white hover:drop-shadow-[0_0_6px_rgba(255,255,255,0.9)] transition-all"
+                    >
+                      <ExternalLink size={14} strokeWidth={1.8} />
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Botón de acción (solo si el punto tiene terreno 3D de 15 km) */}
       {onAction && (
         <div className={`mt-2 transition-all duration-300 ${isDone ? 'opacity-100 translate-y-0' : 'opacity-80 translate-y-0.5'}`}>
           <LedButton className="w-full h-9 text-xs" onClick={onAction}>

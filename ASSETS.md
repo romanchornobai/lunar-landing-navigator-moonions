@@ -20,17 +20,17 @@ Each folder has `<site>_15km.glb`, `<site>_heightmap_16bit.png` (uint16), `<site
 
 Load: `useGLTF('/models/<site>/<site>_15km.glb')`, `position=[0,0,0]`.
 
-## South Pole regional cap (`models/south_pole/`)
+## South Pole regional terrain (`models/south_pole/`)
 - `lunar_elevation_1200.bin`: Float32Array 1200x1200 (5.76 MB). Plus `lunar_albedo_2k.png`, `lunar_normal_2k.png`, `lunar_ao_2k.png`.
-- Covers lat -90 to -84 (6 deg, ~364 km diameter). Rendered as a PlaneGeometry of 150 units (1199x1199 segments), rotateX(-PI/2).
-- Vertex height: `Y = (elev[i] - 24.97) * 0.24375` (terrainSize 150, exaggeration 1.3, scaleY = 150/1200 * 1.3 * 1.5).
-- Lat/lon to scene XZ:
-  ```
-  r = ((90 - |lat|) / 6) * 75;  ang = (-lon - 60) * PI/180;  x = r*cos(ang);  z = r*sin(ang)
-  gx = clamp(round((x+75)/150*1199), 0, 1199);  gy = clamp(round((z+75)/150*1199), 0, 1199)
-  groundY = (elev[gy*1200 + gx] - 24.97) * 0.24375
-  ```
-- Calibrated scene positions (X, Y, Z): Shackleton (2.50, 2.68, 1.20); Malapert (45.00, 3.86, 52.00); De Gerlache (-22.0, 0.26, -15.0); Nobile (15.00, -0.44, 62.00).
+- **Georeference (measured, the original notes were wrong):** NOT the -90..-84 cap. The grid is a ~212 x 212 km square
+  centred at 89.467 S, 116.25 E (near Shackleton), rotated 359.62 deg and stored mirrored; values are not metres
+  (LOLA height ~= 208.0 * value - 6339 m, +-261 m). Registered against LRO LOLA GDR (r = 0.979), see `DATA_SOURCES.md`.
+  All conversions live in `frontend/src/lib/southPoleGrid.ts` (lat/lon <-> scene, height, footprint).
+- Rendered as a PlaneGeometry of 150 units (1199x1199 segments), rotateX(-PI/2), then mirrored in Z (`mirrorGeometryZ`)
+  so it shows the real geography. Vertex height: `Y = (elev[i] - 24.97) * 0.24375` (visual exaggeration).
+- Scene <-> grid: `column = (x + 75) / 150 * 1199`, `row = (-z + 75) / 150 * 1199`.
+- Site markers are placed from their published lat/lon (`data/landingSites.json`); points outside the square (Malapert,
+  Nobile) are only shown on the 2D map. No hand-calibrated positions any more.
 - Material: roughness 0.92, metalness 0.02, normalScale 1.25, aoMapIntensity 1.2. Keep `castShadow = false` (frustum cuts on large meshes).
 - Lights: ambient 0.45; sun directional [100,80,80] intensity 2.8; fill [-80,50,-60] 0.65 #cbd5e1. Camera: [0,80,115], target 0, fov 45, near 0.1, far 2000.
 
