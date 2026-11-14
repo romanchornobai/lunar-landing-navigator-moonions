@@ -1,27 +1,15 @@
-import { Suspense, useMemo } from 'react'
+import { Suspense, useEffect, useMemo, useState } from 'react'
 import * as THREE from 'three'
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Stars, useGLTF } from '@react-three/drei'
 import { useNavigate } from 'react-router-dom'
 import { LandingTerrainModel } from './LandingTerrainModel'
 import { LedButton } from '../ui/LedButton'
-import { CockpitTelemetryHud, type EphemerisSnapshot, type LandingSiteData } from '../ui/CockpitTelemetryHud'
+import { CockpitTelemetryHud, type LandingSiteData } from '../ui/CockpitTelemetryHud'
+import { FlightDateSelector } from '../ui/FlightDateSelector'
+import { EPHEMERIS_START_MS, getEphemerisAt, loadEphemeridesBuffer } from '@/utils/ephemerisClient'
 
 type Vec3 = [number, number, number]
-
-// Static simulated ephemeris snapshot (Sun & Earth topocentric directions)
-const MOCK_EPHEMERIS: EphemerisSnapshot = {
-  sun: {
-    azimuth: 116.6,
-    elevation: 3.3,
-    isAbove: true,
-  },
-  earth: {
-    azimuth: 24.8,
-    elevation: 1.8,
-    isAbove: true,
-  },
-}
 
 const SITE_INFO_MAP: Record<string, { name: string; shortName: string }> = {
   shackleton: { name: 'Cráter Shackleton - Borde Iluminado', shortName: 'Shackleton' },
@@ -96,6 +84,19 @@ export function LandingSceneClean({
     groundNormal: groundNormal,
   }
 
+  // Mission date (UTC) and Sun/Earth directions from the baked JPL Horizons buffer.
+  const [missionDate, setMissionDate] = useState(() => new Date(EPHEMERIS_START_MS))
+  const [ephemerisReady, setEphemerisReady] = useState(false)
+  useEffect(() => {
+    loadEphemeridesBuffer()
+      .then(() => setEphemerisReady(true))
+      .catch((e) => console.error(e))
+  }, [])
+  const ephemeris = useMemo(
+    () => (ephemerisReady ? getEphemerisAt(siteId, missionDate) : null),
+    [ephemerisReady, siteId, missionDate],
+  )
+
   return (
     <div style={{ width: '100vw', height: '100vh', background: '#000000', position: 'relative' }}>
       <Canvas
@@ -154,8 +155,13 @@ export function LandingSceneClean({
         </LedButton>
       </div>
 
-      {/* Retro Sci-Fi Cockpit Telemetry HUD with simulated ephemeris */}
-      <CockpitTelemetryHud site={siteData} ephemeris={MOCK_EPHEMERIS} />
+      {/* Mission date selector, top center */}
+      <div className="absolute top-5 left-1/2 -translate-x-1/2 z-50">
+        <FlightDateSelector siteId={siteId} currentDate={missionDate} onDateChange={setMissionDate} />
+      </div>
+
+      {/* Retro Sci-Fi Cockpit Telemetry HUD driven by the JPL Horizons ephemerides */}
+      <CockpitTelemetryHud site={siteData} ephemeris={ephemeris} />
     </div>
   )
 }

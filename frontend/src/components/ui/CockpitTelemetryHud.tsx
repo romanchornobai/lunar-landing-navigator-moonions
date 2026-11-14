@@ -23,8 +23,12 @@ export interface LandingSiteData {
 
 interface CockpitTelemetryHudProps {
   site: LandingSiteData;
-  ephemeris: EphemerisSnapshot;
+  /** null while the ephemeris buffer is loading or the date is out of range: values show as "--". */
+  ephemeris: EphemerisSnapshot | null;
 }
+
+const fmtAz = (v?: number) => (v === undefined ? '--' : `${v.toFixed(1)}°`);
+const fmtEl = (v?: number) => (v === undefined ? '--' : `${v > 0 ? '+' : ''}${v.toFixed(1)}°`);
 
 export const CockpitTelemetryHud: React.FC<CockpitTelemetryHudProps> = ({
   site,
@@ -37,14 +41,15 @@ export const CockpitTelemetryHud: React.FC<CockpitTelemetryHudProps> = ({
   const rollDeg = Math.atan2(nx, ny) * (180 / Math.PI);
 
   // 2. Temperatura superficial calculada según la elevación solar real
-  const sunElev = ephemeris.sun.elevation;
-  const isSunDay = ephemeris.sun.isAbove;
+  const hasData = ephemeris !== null;
+  const sunElev = ephemeris?.sun.elevation ?? 0;
+  const isSunDay = ephemeris?.sun.isAbove ?? false;
   const surfaceTempC = isSunDay
     ? Math.round(-35 + sunElev * 18)
     : Math.round(-135 + sunElev * 6);
 
   // 3. Estado del enlace terrestre DTE
-  const isEarthVisible = ephemeris.earth.isAbove;
+  const isEarthVisible = ephemeris?.earth.isAbove ?? false;
 
   // Animación progresiva de terminal (Línea por línea con cursor █)
   const [revealedLinesLeft, setRevealedLinesLeft] = useState(0);
@@ -132,10 +137,12 @@ export const CockpitTelemetryHud: React.FC<CockpitTelemetryHudProps> = ({
             </div>
             {revealedLinesLeft >= 2 ? (
               <div className="text-[14px]">
-                AZ: <span className="text-white font-normal">{ephemeris.sun.azimuth.toFixed(1)}°</span> | 
-                EL: <span className="text-white font-normal">{sunElev > 0 ? '+' : ''}{sunElev.toFixed(1)}°</span>
+                AZ: <span className="text-white font-normal">{fmtAz(ephemeris?.sun.azimuth)}</span> |
+                EL: <span className="text-white font-normal">{fmtEl(ephemeris?.sun.elevation)}</span>
                 <div className="text-[13px] mt-0.5">
-                  {isSunDay ? (
+                  {!hasData ? (
+                    <span className="text-neutral-400">[SIN DATOS]</span>
+                  ) : isSunDay ? (
                     <span className="text-[#a7f3d0]">[LUZ DIRECTA]</span>
                   ) : (
                     <span className="text-neutral-400">[EN SOMBRA]</span>
@@ -157,10 +164,12 @@ export const CockpitTelemetryHud: React.FC<CockpitTelemetryHudProps> = ({
             </div>
             {revealedLinesLeft >= 4 ? (
               <div className="text-[14px]">
-                AZ: <span className="text-white font-normal">{ephemeris.earth.azimuth.toFixed(1)}°</span> | 
-                EL: <span className="text-white font-normal">{ephemeris.earth.elevation > 0 ? '+' : ''}{ephemeris.earth.elevation.toFixed(1)}°</span>
+                AZ: <span className="text-white font-normal">{fmtAz(ephemeris?.earth.azimuth)}</span> |
+                EL: <span className="text-white font-normal">{fmtEl(ephemeris?.earth.elevation)}</span>
                 <div className="text-[13px] mt-0.5">
-                  {isEarthVisible ? (
+                  {!hasData ? (
+                    <span className="text-neutral-400">[SIN DATOS]</span>
+                  ) : isEarthVisible ? (
                     <span className="text-[#a7f3d0]">[VISIBLE EN HORIZONTE]</span>
                   ) : (
                     <span className="text-red-400">[BAJO HORIZONTE]</span>
@@ -183,10 +192,10 @@ export const CockpitTelemetryHud: React.FC<CockpitTelemetryHudProps> = ({
             {revealedLinesLeft >= 6 ? (
               <div className="text-[14px]">
                 ESTADO: <span className={`font-normal ${isEarthVisible ? 'text-white' : 'text-neutral-400'}`}>
-                  {isEarthVisible ? 'CONECTADO' : 'BLACKOUT'}
+                  {!hasData ? '--' : isEarthVisible ? 'CONECTADO' : 'BLACKOUT'}
                 </span>
                 <div className="text-[13px] text-[#a7f3d0]/90 mt-0.5">
-                  RED DSN: <span className="text-white font-normal">{isEarthVisible ? 'ROBLEDO (DSN-63)' : 'SIN SEÑAL (0.0 dB)'}</span>
+                  RED DSN: <span className="text-white font-normal">{!hasData ? '--' : isEarthVisible ? 'ROBLEDO (DSN-63)' : 'SIN SEÑAL (0.0 dB)'}</span>
                 </div>
               </div>
             ) : (
@@ -244,7 +253,7 @@ export const CockpitTelemetryHud: React.FC<CockpitTelemetryHudProps> = ({
             </div>
             {revealedLinesRight >= 4 ? (
               <div className="text-[14px]">
-                SUPERFICIE: <span className="text-white font-normal">{surfaceTempC}°C</span>
+                SUPERFICIE: <span className="text-white font-normal">{hasData ? `${surfaceTempC}°C` : '--'}</span>
                 <div className="text-[13px] mt-0.5">
                   CABINA: <span className="text-white font-normal">+21.0°C</span>
                 </div>

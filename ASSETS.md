@@ -54,9 +54,12 @@ Load: `useGLTF('/models/<site>/<site>_15km.glb')`, `position=[0,0,0]`.
   same resolution. DEM range after scaling: 8..161. Sphere radius 2.0, 384x384 segments, displacementScale 0.05, displacementBias -0.015, bumpScale 0.03, roughness 0.92,
   metalness 0.02, rotation [0, -PI/2, 0].
 
-## Ephemerides (`data/ephemerides/ephemerides_3yr.bin`, 1,683,520 bytes)
-- 210,440 records x 8 bytes (inferred from file size: 2 x float32 each). Hourly 2026-2029, Sun and Earth, 4 sites.
-- Exact layout (field order, record order) is not documented: check the generator script in `backend/app/scripts/` before reading it.
+## Ephemerides (`frontend/public/data/ephemerides/ephemerides_3yr.bin`, 1,683,520 bytes)
+- Little-endian Float32, records of `[azimuth_deg, elevation_deg]` (azimuth clockwise from north, elevation above the spherical horizon, no terrain).
+- Hourly from 2026-11-14T00:00Z to 2029-11-14T00:00Z inclusive: 26,305 hours x 4 sites x 2 bodies = 210,440 records.
+- Order `[site][body][hour]`; sites `shackleton, malapert, nobile, degerlache` (same as `data/landing_sites.json`); bodies `sun, earth`.
+- The generator script is not in the repo. Layout verified from the data (smooth hourly steps; max Sun elevation ~ colatitude + 1.54 deg;
+  Earth azimuth ~ 360 - longitude). Reader: `frontend/src/utils/ephemerisClient.ts` (loaded once, linear interpolation, no network per query).
 
 ## Optimization (done 2026-11-14, tuned for an integrated AMD Radeon laptop)
 - All GLBs (4 sites, lander, Earth) use `EXT_meshopt_compression` + `KHR_mesh_quantization`
