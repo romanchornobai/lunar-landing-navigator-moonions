@@ -288,7 +288,7 @@ export const LanderMarkerWithHud: React.FC<LanderMarkerWithHudProps> = ({
                 <SciFiHudPanel badgeTitle="TELEMETRÍA">
                   <TerminalCardContent
                     site={site}
-                    actionLabel="ALUNIZAR // 15 KM"
+                    actionLabel="ALUNIZAR"
                     delayStartMs={220}
                     onAction={onLandOnSite ? () => onLandOnSite(site.id) : undefined}
                   />

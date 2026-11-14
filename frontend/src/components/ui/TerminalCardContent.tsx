@@ -28,7 +28,7 @@ function formatCoords(lat: number, lon: number): string {
 export const TerminalCardContent: React.FC<TerminalCardContentProps> = ({
   site,
   onAction,
-  actionLabel = 'ALUNIZAR // 15 KM',
+  actionLabel = 'ALUNIZAR',
   delayStartMs = 240,
 }) => {
   const [typedTitle, setTypedTitle] = useState('');
