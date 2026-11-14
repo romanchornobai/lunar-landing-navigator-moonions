@@ -134,7 +134,7 @@ export const SceneLoader: React.FC<SceneLoaderProps> = ({ durationMs, done = fal
           style={{ filter: 'drop-shadow(0 0 6px #ffffff) drop-shadow(0 0 16px rgba(255,255,255,0.65))' }}
         >
           {/* Ring 1: fragmented outer arcs (clockwise) */}
-          <div className="absolute inset-0" style={{ ...ring, animation: 'loaderSpinClockwise 9s linear infinite' }}>
+          <div className="absolute inset-0" style={{ ...ring, animation: 'loaderSpinClockwise 6s linear infinite' }}>
             <svg className="w-full h-full overflow-visible" viewBox="0 0 160 160">
               <circle cx="80" cy="80" r="71" fill="none" stroke="#ffffff" strokeWidth="1.5"
                 strokeDasharray="90 32 180 45 60 45" strokeLinecap="round" />
@@ -146,7 +146,7 @@ export const SceneLoader: React.FC<SceneLoaderProps> = ({ durationMs, done = fal
           </div>
 
           {/* Ring 2: broken middle ring (counter-clockwise) */}
-          <div className="absolute inset-0" style={{ ...ring, animation: 'loaderSpinCounter 6.5s linear infinite' }}>
+          <div className="absolute inset-0" style={{ ...ring, animation: 'loaderSpinCounter 4.5s linear infinite' }}>
             <svg className="w-full h-full overflow-visible" viewBox="0 0 160 160">
               <circle cx="80" cy="80" r="58" fill="none" stroke="#ffffff" strokeWidth="1.2"
                 strokeDasharray="140 28 110 38 25 15" strokeLinecap="round" strokeOpacity="0.85" />
@@ -154,7 +154,7 @@ export const SceneLoader: React.FC<SceneLoaderProps> = ({ durationMs, done = fal
           </div>
 
           {/* Ring 3: dense radial tick dial (slow clockwise) */}
-          <div className="absolute inset-0" style={{ ...ring, animation: 'loaderSpinClockwise 18s linear infinite' }}>
+          <div className="absolute inset-0" style={{ ...ring, animation: 'loaderSpinClockwise 12s linear infinite' }}>
             <svg className="w-full h-full overflow-visible" viewBox="0 0 160 160">
               {radialTicks.map((tick) => (
                 <line key={tick.id} x1={tick.x1} y1={tick.y1} x2={tick.x2} y2={tick.y2}
@@ -164,7 +164,7 @@ export const SceneLoader: React.FC<SceneLoaderProps> = ({ durationMs, done = fal
           </div>
 
           {/* Ring 4: dotted inner circle (counter-clockwise) */}
-          <div className="absolute inset-0" style={{ ...ring, animation: 'loaderSpinCounter 11s linear infinite' }}>
+          <div className="absolute inset-0" style={{ ...ring, animation: 'loaderSpinCounter 7.5s linear infinite' }}>
             <svg className="w-full h-full overflow-visible" viewBox="0 0 160 160">
               <circle cx="80" cy="80" r="33" fill="none" stroke="#ffffff" strokeWidth="1.5"
                 strokeDasharray="3 5" strokeLinecap="round" strokeOpacity="0.95" />
@@ -172,7 +172,7 @@ export const SceneLoader: React.FC<SceneLoaderProps> = ({ durationMs, done = fal
           </div>
 
           {/* Ring 5: pulsing core */}
-          <div className="absolute inset-0" style={{ ...ring, animation: 'loaderPulseCore 2.5s ease-in-out infinite' }}>
+          <div className="absolute inset-0" style={{ ...ring, animation: 'loaderPulseCore 1.8s ease-in-out infinite' }}>
             <svg className="w-full h-full overflow-visible" viewBox="0 0 160 160">
               <circle cx="80" cy="80" r="25" fill="none" stroke="#ffffff" strokeWidth="0.9" strokeOpacity="0.5" />
             </svg>
