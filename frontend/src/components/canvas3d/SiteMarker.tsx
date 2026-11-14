@@ -20,8 +20,6 @@ export function SiteMarker({ site, position, lineHeight = 4.0 }: SiteMarkerProps
       shortName: site.shortName,
       kind: site.kind,
       description: site.description,
-      published: site.published,
-      nasaRegion: site.nasa_region,
       sources: site.sources,
       coordinates: site.coordinates,
       groundPos: new THREE.Vector3(position[0], position[1], position[2]),

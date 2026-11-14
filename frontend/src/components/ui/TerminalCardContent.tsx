@@ -8,9 +8,6 @@ interface TerminalCardContentProps {
     name: string;
     shortName: string;
     description?: string;
-    /** Values as published by the source, with their conditions. */
-    published?: string;
-    nasaRegion?: string | null;
     /** Publications the point comes from (each one gets a link icon). */
     sources?: { label: string; url: string }[];
     coordinates: {
@@ -139,43 +136,27 @@ export const TerminalCardContent: React.FC<TerminalCardContentProps> = ({
         </div>
       )}
 
-      {/* Dato publicado, región NASA y fuente (con enlace a la publicación oficial) */}
-      {isDone && (site.published || site.sources?.length) && (
-        <div className="mb-3 p-2.5 rounded bg-white/[0.04] border border-white/15 space-y-2">
-          {site.published && (
-            <div>
-              <span className="text-[9px] text-neutral-400 block uppercase tracking-widest mb-0.5">DATO PUBLICADO</span>
-              <p className="text-[11px] leading-snug text-neutral-200">{site.published}</p>
-            </div>
-          )}
-          {site.nasaRegion && (
-            <div>
-              <span className="text-[9px] text-neutral-400 block uppercase tracking-widest mb-0.5">REGIÓN NASA</span>
-              <p className="text-[11px] leading-snug text-neutral-200">{site.nasaRegion}</p>
-            </div>
-          )}
-          {site.sources && site.sources.length > 0 && (
-            <div>
-              <span className="text-[9px] text-neutral-400 block uppercase tracking-widest mb-0.5">FUENTE</span>
-              <ul className="space-y-1">
-                {site.sources.map((src) => (
-                  <li key={src.url} className="flex items-center justify-between gap-2">
-                    <span className="text-[11px] leading-snug text-white">{src.label}</span>
-                    <a
-                      href={src.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      title={`Abrir publicación: ${src.label}`}
-                      aria-label={`Abrir publicación: ${src.label}`}
-                      className="shrink-0 text-white/75 hover:text-white hover:drop-shadow-[0_0_6px_rgba(255,255,255,0.9)] transition-all"
-                    >
-                      <ExternalLink size={14} strokeWidth={1.8} />
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+      {/* Fuente: nombre de cada publicación con enlace a su página oficial */}
+      {isDone && site.sources && site.sources.length > 0 && (
+        <div className="mb-3 p-2.5 rounded bg-white/[0.04] border border-white/15">
+          <span className="text-[9px] text-neutral-400 block uppercase tracking-widest mb-0.5">FUENTE</span>
+          <ul className="space-y-1">
+            {site.sources.map((src) => (
+              <li key={src.url} className="flex items-center justify-between gap-2">
+                <span className="text-[11px] leading-snug text-white">{src.label}</span>
+                <a
+                  href={src.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title={`Abrir publicación: ${src.label}`}
+                  aria-label={`Abrir publicación: ${src.label}`}
+                  className="shrink-0 text-white/75 hover:text-white hover:drop-shadow-[0_0_6px_rgba(255,255,255,0.9)] transition-all"
+                >
+                  <ExternalLink size={14} strokeWidth={1.8} />
+                </a>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
 

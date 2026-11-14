@@ -13,8 +13,6 @@ interface LanderMarkerWithHudProps {
     /** 'science': permanently shadowed region (drawn as a beacon, not a lander). */
     kind?: 'landing' | 'science';
     description?: string;
-    published?: string;
-    nasaRegion?: string | null;
     sources?: { label: string; url: string }[];
     coordinates: {
       latitude: number;
