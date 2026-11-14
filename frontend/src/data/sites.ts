@@ -81,3 +81,31 @@ export function getSite3DPosition(
   const y = elevations ? getTerrainHeight(elevations, x, z) : 0
   return [x, y, z]
 }
+
+/**
+ * Inverts the 3D scene point (x, y, z) back into real lunar coordinates (lat, lon, elev).
+ */
+export function scenePointToLunarCoords(point: { x: number; y: number; z: number }): {
+  latitude: number
+  longitude: number
+  elevation_m: number
+} {
+  const r = Math.sqrt(point.x * point.x + point.z * point.z)
+  const polarDist = (r / 75.0) * 6.0
+  const latitude = -90.0 + polarDist
+
+  const angRad = Math.atan2(point.z, point.x)
+  const angDeg = angRad * (180.0 / Math.PI)
+  let longitude = -angDeg - 60.0
+  while (longitude > 180) longitude -= 360
+  while (longitude < -180) longitude += 360
+
+  const rawElev = point.y / SCALE_Y + MEAN_Z
+  const elevation_m = Math.round((rawElev - MEAN_Z) * 218)
+
+  return {
+    latitude: Number(latitude.toFixed(3)),
+    longitude: Number(longitude.toFixed(3)),
+    elevation_m,
+  }
+}

@@ -1,9 +1,13 @@
-import { Suspense, useMemo } from 'react'
+import { Suspense, useMemo, useState, useEffect } from 'react'
 import * as THREE from 'three'
 import { Canvas, useLoader } from '@react-three/fiber'
 import { OrbitControls, Stars } from '@react-three/drei'
-import { LANDING_SITES, getSite3DPosition } from '../../data/sites'
+import { useNavigate } from 'react-router-dom'
+import { Crosshair } from 'lucide-react'
+import { LANDING_SITES, getSite3DPosition, scenePointToLunarCoords } from '../../data/sites'
 import { SiteMarker } from './SiteMarker'
+import { TerrainProbeMarker } from './TerrainProbeMarker'
+import { LedButton } from '../ui/LedButton'
 
 // Regional South Pole cap (lat -90..-84, ~364 km): LOLA-derived 1200x1200 Float32 elevation grid
 // (meters, NASA Moon Trek). Geometry params from ASSETS.md.
@@ -13,7 +17,21 @@ const TERRAIN_SIZE = 150 // scene units
 const MEAN_Z = 24.97 // m, mean elevation subtracted
 const SCALE_Y = (TERRAIN_SIZE / GRID) * 1.3 * 1.5 // 0.24375 scene units per m (exaggerated)
 
-function Terrain() {
+interface TerrainProps {
+  isPickerActive: boolean
+  onPickPoint: (point: THREE.Vector3) => void
+  probe: {
+    position: [number, number, number]
+    coords: {
+      latitude: number
+      longitude: number
+      elevation_m: number
+    }
+  } | null
+  onCloseProbe: () => void
+}
+
+function Terrain({ isPickerActive, onPickPoint, probe, onCloseProbe }: TerrainProps) {
   const buffer = useLoader(THREE.FileLoader, `${BASE}/lunar_elevation_1200.bin`, (loader) => {
     loader.setResponseType('arraybuffer')
   }) as unknown as ArrayBuffer
@@ -49,7 +67,20 @@ function Terrain() {
 
   return (
     <group>
-      <mesh geometry={geometry}>
+      <mesh
+        geometry={geometry}
+        onClick={(e) => {
+          if (!isPickerActive) return
+          e.stopPropagation()
+          onPickPoint(e.point)
+        }}
+        onPointerOver={() => {
+          if (isPickerActive) document.body.style.cursor = 'crosshair'
+        }}
+        onPointerOut={() => {
+          if (isPickerActive) document.body.style.cursor = 'auto'
+        }}
+      >
         <meshStandardMaterial
           map={albedo}
           normalMap={normal}
@@ -60,37 +91,128 @@ function Terrain() {
           metalness={0.02}
         />
       </mesh>
+
       {sitePositions.map(({ site, position }) => (
         <SiteMarker key={site.id} site={site} position={position} />
       ))}
+
+      {probe && (
+        <TerrainProbeMarker
+          position={probe.position}
+          coords={probe.coords}
+          onClose={onCloseProbe}
+        />
+      )}
     </group>
   )
 }
 
 export default function SouthPoleTerrain() {
+  const navigate = useNavigate()
+  const [isPickerActive, setIsPickerActive] = useState(false)
+  const [probe, setProbe] = useState<{
+    position: [number, number, number]
+    coords: {
+      latitude: number
+      longitude: number
+      elevation_m: number
+    }
+  } | null>(null)
+
+  useEffect(() => {
+    if (isPickerActive) {
+      document.body.style.cursor = 'crosshair'
+    } else {
+      document.body.style.cursor = 'auto'
+    }
+    return () => {
+      document.body.style.cursor = 'auto'
+    }
+  }, [isPickerActive])
+
+  const handlePickPoint = (point: THREE.Vector3) => {
+    const coords = scenePointToLunarCoords({ x: point.x, y: point.y, z: point.z })
+    setProbe({
+      position: [point.x, point.y, point.z],
+      coords,
+    })
+  }
+
   return (
-    <Canvas
-      dpr={[1, 1.5]}
-      camera={{ position: [0, 80, 115], fov: 45, near: 0.1, far: 2000 }}
-      gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }}
-      style={{ width: '100vw', height: '100vh' }}
-    >
-      <color attach="background" args={['#020408']} />
-      <ambientLight color="#ffffff" intensity={0.45} />
-      <directionalLight position={[100, 80, 80]} intensity={2.8} color="#ffffff" />
-      <directionalLight position={[-80, 50, -60]} intensity={0.65} color="#cbd5e1" />
-      <Stars radius={180} depth={80} count={4000} factor={4} saturation={0} fade speed={0.3} />
-      <Suspense fallback={null}>
-        <Terrain />
-      </Suspense>
-      <OrbitControls
-        target={[0, 0, 0]}
-        enableDamping
-        dampingFactor={0.05}
-        maxPolarAngle={Math.PI / 2 - 0.02}
-        minDistance={15}
-        maxDistance={280}
-      />
-    </Canvas>
+    <div style={{ position: 'relative', width: '100vw', height: '100vh', background: '#020408' }}>
+      <Canvas
+        dpr={[1, 1.5]}
+        camera={{ position: [0, 80, 115], fov: 45, near: 0.1, far: 2000 }}
+        gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }}
+        style={{ width: '100%', height: '100%' }}
+      >
+        <color attach="background" args={['#020408']} />
+        <ambientLight color="#ffffff" intensity={0.45} />
+        <directionalLight position={[100, 80, 80]} intensity={2.8} color="#ffffff" />
+        <directionalLight position={[-80, 50, -60]} intensity={0.65} color="#cbd5e1" />
+        <Stars radius={180} depth={80} count={4000} factor={4} saturation={0} fade speed={0.3} />
+        <Suspense fallback={null}>
+          <Terrain
+            isPickerActive={isPickerActive}
+            onPickPoint={handlePickPoint}
+            probe={probe}
+            onCloseProbe={() => setProbe(null)}
+          />
+        </Suspense>
+        <OrbitControls
+          target={[0, 0, 0]}
+          enableDamping
+          dampingFactor={0.05}
+          maxPolarAngle={Math.PI / 2 - 0.02}
+          minDistance={15}
+          maxDistance={280}
+        />
+      </Canvas>
+
+      {/* Top Left: Navigation back to Lunar Globe */}
+      <div className="absolute top-6 left-6 z-20">
+        <LedButton variant="compact" onClick={() => navigate('/vista-lunar')}>
+          GLOBO LUNAR
+        </LedButton>
+      </div>
+
+      {/* Top Right: Coordinate Probe Icon Button */}
+      <div className="absolute top-6 right-6 z-20 flex items-center gap-3">
+        <button
+          onClick={() => {
+            setIsPickerActive((prev) => !prev)
+          }}
+          className={`group relative flex items-center gap-2 px-3.5 h-[38px] rounded transition-all duration-300 backdrop-blur-md font-mono text-xs select-none cursor-pointer border ${
+            isPickerActive
+              ? 'bg-[#031526]/90 border-[#38bdf8] text-[#38bdf8] shadow-[0_0_18px_rgba(56,189,248,0.5)]'
+              : 'bg-black/60 border-white/30 text-neutral-300 hover:text-white hover:border-white/70 hover:bg-black/80'
+          }`}
+          title={isPickerActive ? 'Desactivar selector de coordenadas' : 'Activar selector de coordenadas'}
+        >
+          <Crosshair
+            className={`w-4 h-4 transition-transform duration-300 ${
+              isPickerActive ? 'text-[#38bdf8] animate-spin' : 'group-hover:rotate-90'
+            }`}
+            style={{ animationDuration: isPickerActive ? '10s' : '0s' }}
+          />
+          <span className="font-semibold tracking-wider uppercase text-[11px]">
+            {isPickerActive ? 'SONDA ACTIVA' : 'SONDA COORDENADAS'}
+          </span>
+          {isPickerActive && (
+            <span className="w-2 h-2 rounded-full bg-[#38bdf8] shadow-[0_0_8px_#38bdf8] animate-ping" />
+          )}
+        </button>
+      </div>
+
+      {/* Indicator hint badge when coordinate probe mode is active */}
+      {isPickerActive && (
+        <div className="absolute top-20 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
+          <div className="bg-black/85 border border-[#38bdf8]/50 text-[#38bdf8] font-mono text-[11px] px-4 py-1.5 rounded-full backdrop-blur-md shadow-[0_0_15px_rgba(56,189,248,0.3)] flex items-center gap-2.5">
+            <span className="w-2 h-2 rounded-full bg-[#38bdf8] animate-ping" />
+            <span className="tracking-wide">HAZ CLIC EN CUALQUIER PUNTO DEL RELIEVE PARA MEDIR COORDENADAS</span>
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
