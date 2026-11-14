@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { SciFiHudPanel } from './SciFiHudPanel'
 import { CELESTIAL_MODELS, SpinningModelCanvas } from './CelestialReadout'
 
@@ -20,8 +20,54 @@ interface SiteComparisonPanelProps {
   onClose: () => void
 }
 
+// Range covered by the baked JPL Horizons ephemerides (see utils/ephemerisClient.ts), as YYYY-MM-DD (UTC).
+const MIN_DAY = '2026-11-14'
+const MAX_DAY = '2029-11-14'
+
+function DateField({
+  label,
+  value,
+  min,
+  max,
+  onChange,
+}: {
+  label: string
+  value: string
+  min: string
+  max: string
+  onChange: (v: string) => void
+}) {
+  return (
+    <label className="flex items-center gap-3">
+      <span className="text-[11px] tracking-[0.26em] text-neutral-400">{label}</span>
+      <input
+        type="date"
+        value={value}
+        min={min}
+        max={max}
+        onChange={(e) => e.target.value && onChange(e.target.value)}
+        className="bg-black/40 border border-white/30 hover:border-white/70 focus:border-white focus:outline-none focus:shadow-[0_0_14px_rgba(255,255,255,0.3)] text-white text-[13px] tracking-[0.12em] font-bold px-3 h-[34px] rounded-sm transition-all cursor-pointer"
+        style={{ colorScheme: 'dark', fontFamily: 'inherit' }}
+      />
+    </label>
+  )
+}
+
 /** Full-screen dimmed/blurred overlay with an empty site comparison grid (4 sites x Earth/Sun). */
 export const SiteComparisonPanel: React.FC<SiteComparisonPanelProps> = ({ onClose }) => {
+  const [startDay, setStartDay] = useState(MIN_DAY)
+  const [endDay, setEndDay] = useState(MAX_DAY)
+
+  // Keep start <= end: moving one bound past the other drags the other along.
+  const changeStart = (v: string) => {
+    setStartDay(v)
+    if (v > endDay) setEndDay(v)
+  }
+  const changeEnd = (v: string) => {
+    setEndDay(v)
+    if (v < startDay) setStartDay(v)
+  }
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
@@ -38,6 +84,20 @@ export const SiteComparisonPanel: React.FC<SiteComparisonPanelProps> = ({ onClos
     >
       <div className="w-[min(1000px,92vw)]" onClick={(e) => e.stopPropagation()}>
         <SciFiHudPanel badgeTitle="COMPARATIVA">
+          {/* Date range + start button (the button does nothing yet) */}
+          <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 font-mono text-white pb-5 mb-1 border-b border-white/15">
+            <DateField label="INICIO" value={startDay} min={MIN_DAY} max={MAX_DAY} onChange={changeStart} />
+            <span className="text-neutral-500 text-lg select-none">→</span>
+            <DateField label="FIN" value={endDay} min={MIN_DAY} max={MAX_DAY} onChange={changeEnd} />
+            <button
+              type="button"
+              className="h-[34px] px-6 bg-white text-black text-[12px] font-black tracking-[0.3em] uppercase cursor-pointer transition-all hover:shadow-[0_0_18px_rgba(255,255,255,0.7)] active:scale-95"
+              style={{ clipPath: 'polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%)' }}
+            >
+              EMPEZAR
+            </button>
+          </div>
+
           <div
             className="grid font-mono text-white select-none"
             style={{ gridTemplateColumns: '88px repeat(4, minmax(0, 1fr))' }}
