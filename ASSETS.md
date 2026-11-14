@@ -61,6 +61,11 @@ Load: `useGLTF('/models/<site>/<site>_15km.glb')`, `position=[0,0,0]`.
 - The generator script is not in the repo. Layout verified from the data (smooth hourly steps; max Sun elevation ~ colatitude + 1.54 deg;
   Earth azimuth ~ 360 - longitude). Reader: `frontend/src/utils/ephemerisClient.ts` (loaded once, linear interpolation, no network per query).
 
+## HUD icons (`models/icons/`)
+- `sun_model.glb` (731 KB, was 28.8 MB): joined, simplified to ~3% of the original ~1M vertices (unlit material), meshopt-compressed.
+- `earth.glb` (624 KB): converted from `KHR_materials_pbrSpecularGlossiness` (not supported by three r162, rendered grey) to metal-rough, meshopt-compressed.
+- Both are normalized at runtime to a unit sphere (`CelestialReadout.tsx`), shown at ~64 px, spinning slowly.
+
 ## Optimization (done 2026-11-14, tuned for an integrated AMD Radeon laptop)
 - All GLBs (4 sites, lander, Earth) use `EXT_meshopt_compression` + `KHR_mesh_quantization`
   (`gltf-transform meshopt --quantize-position 16 --quantize-normal 12 --quantize-texcoord 14`). drei `useGLTF` decodes it.

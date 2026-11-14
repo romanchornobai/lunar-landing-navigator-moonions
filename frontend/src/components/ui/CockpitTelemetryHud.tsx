@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { CelestialReadout } from './CelestialReadout';
 
 // Tipos requeridos para los datos astronómicos y de terreno
 export interface EphemerisSnapshot {
@@ -26,9 +27,6 @@ interface CockpitTelemetryHudProps {
   /** null while the ephemeris buffer is loading or the date is out of range: values show as "--". */
   ephemeris: EphemerisSnapshot | null;
 }
-
-const fmtAz = (v?: number) => (v === undefined ? '--' : `${v.toFixed(1)}°`);
-const fmtEl = (v?: number) => (v === undefined ? '--' : `${v > 0 ? '+' : ''}${v.toFixed(1)}°`);
 
 export const CockpitTelemetryHud: React.FC<CockpitTelemetryHudProps> = ({
   site,
@@ -131,56 +129,22 @@ export const CockpitTelemetryHud: React.FC<CockpitTelemetryHudProps> = ({
 
         {/* BLOQUE 1: SOL (Azimut, Elevación y Luz Directa) */}
         {revealedLinesLeft >= 1 && (
-          <div className="relative pl-3 border-l-2 border-[#38ef7d]/70 group-hover:border-[#38ef7d]">
-            <div className="text-[#a7f3d0] font-normal tracking-wider text-[15px]">
-              ┌ // SOL
-            </div>
-            {revealedLinesLeft >= 2 ? (
-              <div className="text-[14px]">
-                AZ: <span className="text-white font-normal">{fmtAz(ephemeris?.sun.azimuth)}</span> |
-                EL: <span className="text-white font-normal">{fmtEl(ephemeris?.sun.elevation)}</span>
-                <div className="text-[13px] mt-0.5">
-                  {!hasData ? (
-                    <span className="text-neutral-400">[SIN DATOS]</span>
-                  ) : isSunDay ? (
-                    <span className="text-[#a7f3d0]">[LUZ DIRECTA]</span>
-                  ) : (
-                    <span className="text-neutral-400">[EN SOMBRA]</span>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <span className="text-white">{cursorBlink ? '█' : ' '}</span>
-            )}
-            <div className="text-[12px] text-[#38ef7d]/70 leading-none">└</div>
-          </div>
+          <CelestialReadout
+            body="sun"
+            azimuth={ephemeris?.sun.azimuth}
+            elevation={ephemeris?.sun.elevation}
+            isAbove={ephemeris?.sun.isAbove}
+          />
         )}
 
         {/* BLOQUE 2: TIERRA (Azimut, Elevación y Visibilidad) */}
         {revealedLinesLeft >= 3 && (
-          <div className="relative pl-3 border-l-2 border-[#38ef7d]/70 group-hover:border-[#38ef7d]">
-            <div className="text-[#a7f3d0] font-normal tracking-wider text-[15px]">
-              ┌ // TIERRA
-            </div>
-            {revealedLinesLeft >= 4 ? (
-              <div className="text-[14px]">
-                AZ: <span className="text-white font-normal">{fmtAz(ephemeris?.earth.azimuth)}</span> |
-                EL: <span className="text-white font-normal">{fmtEl(ephemeris?.earth.elevation)}</span>
-                <div className="text-[13px] mt-0.5">
-                  {!hasData ? (
-                    <span className="text-neutral-400">[SIN DATOS]</span>
-                  ) : isEarthVisible ? (
-                    <span className="text-[#a7f3d0]">[VISIBLE EN HORIZONTE]</span>
-                  ) : (
-                    <span className="text-red-400">[BAJO HORIZONTE]</span>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <span className="text-white">{cursorBlink ? '█' : ' '}</span>
-            )}
-            <div className="text-[12px] text-[#38ef7d]/70 leading-none">└</div>
-          </div>
+          <CelestialReadout
+            body="earth"
+            azimuth={ephemeris?.earth.azimuth}
+            elevation={ephemeris?.earth.elevation}
+            isAbove={ephemeris?.earth.isAbove}
+          />
         )}
 
         {/* BLOQUE 3: ENLACE DTE (Conectado / Blackout) */}
