@@ -55,18 +55,22 @@ function SpinningBody({ url }: { url: string }) {
   )
 }
 
+// Outlined status icons (ring + mark) with a soft neon glow: green check = lit, red cross = not.
 const CheckIcon = () => (
-  <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#4ade80" strokeWidth="3.2"
+  <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#4ade80" strokeWidth="1.6"
     strokeLinecap="round" strokeLinejoin="round"
-    style={{ filter: 'drop-shadow(0 0 4px #4ade80) drop-shadow(0 0 9px rgba(74,222,128,0.7))' }}>
-    <path d="M4 12.5l5.5 5.5L20 6.5" />
+    style={{ filter: 'drop-shadow(0 0 3px #4ade80) drop-shadow(0 0 8px rgba(74,222,128,0.75))' }}>
+    <circle cx="12" cy="12" r="9.5" />
+    <path d="M7.5 12.5l3 3 6-6.5" />
   </svg>
 )
 
 const CrossIcon = () => (
-  <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#ef4444" strokeWidth="3.2"
-    strokeLinecap="round" strokeLinejoin="round">
-    <path d="M6 6l12 12M18 6L6 18" />
+  <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#f87171" strokeWidth="1.6"
+    strokeLinecap="round" strokeLinejoin="round"
+    style={{ filter: 'drop-shadow(0 0 3px #ef4444) drop-shadow(0 0 8px rgba(239,68,68,0.7))' }}>
+    <circle cx="12" cy="12" r="9.5" />
+    <path d="M8.5 8.5l7 7M15.5 8.5l-7 7" />
   </svg>
 )
 
