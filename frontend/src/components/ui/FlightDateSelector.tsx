@@ -32,6 +32,8 @@ const MONTH_NAMES = [
 // Range covered by the baked JPL Horizons ephemerides (see utils/ephemerisClient.ts).
 const MIN_DATE = new Date('2026-11-14T00:00:00Z');
 const MAX_DATE = new Date('2029-11-14T00:00:00Z');
+const MIN_DAY = '2026-11-14';
+const MAX_DAY = '2029-11-14';
 
 export const FlightDateSelector: React.FC<FlightDateSelectorProps> = ({
   currentDate,
@@ -42,6 +44,7 @@ export const FlightDateSelector: React.FC<FlightDateSelectorProps> = ({
   const [playDirection, setPlayDirection] = useState<'idle' | 'forward' | 'backward'>('idle');
   const [isSpeedMenuOpen, setIsSpeedMenuOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const dateInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     loadEphemeridesBuffer().catch((e) => console.error(e));
@@ -100,6 +103,18 @@ export const FlightDateSelector: React.FC<FlightDateSelectorProps> = ({
     setIsSpeedMenuOpen(false);
   };
 
+  // Jump to a picked day keeping the current UTC time of day, clamped to the ephemeris range.
+  const isoDay = currentDate.toISOString().slice(0, 10);
+  const pickDay = (value: string) => {
+    if (!value) return;
+    const hh = String(currentDate.getUTCHours()).padStart(2, '0');
+    const picked = new Date(`${value}T${hh}:00:00Z`).getTime();
+    if (Number.isNaN(picked)) return;
+    const clamped = Math.min(Math.max(picked, MIN_DATE.getTime()), MAX_DATE.getTime());
+    setPlayDirection('idle');
+    onDateChange(new Date(clamped));
+  };
+
   // Clean terminal-style date (UTC)
   const day = String(currentDate.getUTCDate()).padStart(2, '0');
   const month = MONTH_NAMES[currentDate.getUTCMonth()];
@@ -133,8 +148,27 @@ export const FlightDateSelector: React.FC<FlightDateSelectorProps> = ({
 
         {/* Large centered date */}
         <div className="flex items-center gap-2.5 text-base sm:text-xl md:text-2xl font-black tracking-[0.16em] text-white whitespace-nowrap">
-          <span>
+          {/* Clicking the date opens the native date picker (limited to the ephemeris range) */}
+          <span className="relative cursor-pointer hover:drop-shadow-[0_0_8px_#ffffff] transition-all" title="Elegir fecha">
             {day} {month} {year}
+            <input
+              ref={dateInputRef}
+              type="date"
+              value={isoDay}
+              min={MIN_DAY}
+              max={MAX_DAY}
+              onClick={(e) => {
+                try {
+                  e.currentTarget.showPicker()
+                } catch {
+                  /* browsers without showPicker open it from the native click */
+                }
+              }}
+              onChange={(e) => pickDay(e.target.value)}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              style={{ colorScheme: 'dark' }}
+              aria-label="Elegir fecha"
+            />
           </span>
           <span className="text-white ml-2">
             {hours}:{minutes}
