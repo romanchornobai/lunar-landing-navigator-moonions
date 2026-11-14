@@ -9,7 +9,13 @@ function LandingSiteRoute() {
   const { siteKey } = useParams()
   const key = (siteKey && siteKey in SITES ? siteKey : 'shackleton') as SiteKey
   const site = SITES[key]
-  return <LandingSceneClean modelPath={site.glb} groundNormal={[...site.normal] as [number, number, number]} />
+  return (
+    <LandingSceneClean
+      siteId={key}
+      modelPath={site.glb}
+      groundNormal={[...site.normal] as [number, number, number]}
+    />
+  )
 }
 
 export default function App() {

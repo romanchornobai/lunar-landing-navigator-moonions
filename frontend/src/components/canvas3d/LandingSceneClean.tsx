@@ -5,8 +5,30 @@ import { OrbitControls, Stars, useGLTF } from '@react-three/drei'
 import { useNavigate } from 'react-router-dom'
 import { LandingTerrainModel } from './LandingTerrainModel'
 import { LedButton } from '../ui/LedButton'
+import { CockpitTelemetryHud, type EphemerisSnapshot, type LandingSiteData } from '../ui/CockpitTelemetryHud'
 
 type Vec3 = [number, number, number]
+
+// Static simulated ephemeris snapshot (Sun & Earth topocentric directions)
+const MOCK_EPHEMERIS: EphemerisSnapshot = {
+  sun: {
+    azimuth: 116.6,
+    elevation: 3.3,
+    isAbove: true,
+  },
+  earth: {
+    azimuth: 24.8,
+    elevation: 1.8,
+    isAbove: true,
+  },
+}
+
+const SITE_INFO_MAP: Record<string, { name: string; shortName: string }> = {
+  shackleton: { name: 'Cráter Shackleton - Borde Iluminado', shortName: 'Shackleton' },
+  malapert: { name: 'Macizo de Malapert (Peak A)', shortName: 'Malapert' },
+  degerlache: { name: 'Borde de Faustini / De Gerlache', shortName: 'De Gerlache' },
+  nobile: { name: 'Cresta del Cráter Nobile', shortName: 'Nobile' },
+}
 
 // Artemis lunar lander centered on the ground at [0,0,0]
 function ArtemisLander({ groundNormal = [-0.2871, 0.9229, -0.2567] }: { groundNormal?: Vec3 }) {
@@ -52,6 +74,8 @@ function ArtemisLander({ groundNormal = [-0.2871, 0.9229, -0.2567] }: { groundNo
 }
 
 interface LandingSceneCleanProps {
+  /** Site identifier key. Defaults to 'shackleton'. */
+  siteId?: string
   /** Terrain GLB. Defaults to Shackleton Connecting Ridge. */
   modelPath?: string
   /** Ground normal at the site center (scene axes, Y up). Defaults to Shackleton's. */
@@ -59,10 +83,19 @@ interface LandingSceneCleanProps {
 }
 
 export function LandingSceneClean({
+  siteId = 'shackleton',
   modelPath = '/models/shackleton_rim/shackleton_rim_15km.glb',
   groundNormal = [-0.2871, 0.9229, -0.2567],
 }: LandingSceneCleanProps) {
   const navigate = useNavigate()
+  const info = SITE_INFO_MAP[siteId] || { name: 'Cráter Shackleton - Borde Iluminado', shortName: 'Shackleton' }
+  const siteData: LandingSiteData = {
+    id: siteId,
+    name: info.name,
+    shortName: info.shortName,
+    groundNormal: groundNormal,
+  }
+
   return (
     <div style={{ width: '100vw', height: '100vh', background: '#000000', position: 'relative' }}>
       <Canvas
@@ -120,6 +153,9 @@ export function LandingSceneClean({
           POLO SUR
         </LedButton>
       </div>
+
+      {/* Retro Sci-Fi Cockpit Telemetry HUD with simulated ephemeris */}
+      <CockpitTelemetryHud site={siteData} ephemeris={MOCK_EPHEMERIS} />
     </div>
   )
 }
