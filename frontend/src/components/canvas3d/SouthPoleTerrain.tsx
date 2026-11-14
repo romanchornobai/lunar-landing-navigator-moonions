@@ -274,29 +274,30 @@ export default function SouthPoleTerrain() {
         {/* Site comparison panel toggle (icon only) */}
         <button
           onClick={() => setIsComparisonOpen((prev) => !prev)}
-          className={`group relative flex items-center justify-center w-[38px] h-[38px] rounded transition-all duration-300 backdrop-blur-md select-none cursor-pointer border ${
+          className={`group relative flex items-center justify-center w-10 h-10 transition-all duration-300 select-none cursor-pointer active:scale-90 ${
             isComparisonOpen
-              ? 'bg-white/20 border-white text-white shadow-[0_0_18px_rgba(255,255,255,0.4)]'
-              : 'bg-black/60 border-white/30 text-neutral-300 hover:text-white hover:border-white/70 hover:bg-black/80'
+              ? 'text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.95)]'
+              : 'text-white/80 drop-shadow-[0_0_6px_rgba(255,255,255,0.6)] hover:text-white hover:drop-shadow-[0_0_10px_rgba(255,255,255,0.95)]'
           }`}
           title={isComparisonOpen ? 'Cerrar comparativa' : 'Comparar puntos de aterrizaje'}
         >
-          <BarChart3 className="w-4 h-4" />
+          <BarChart3 className="w-7 h-7" strokeWidth={1.5} />
         </button>
         <button
           onClick={() => {
             setIsPickerActive((prev) => !prev)
           }}
-          className={`group relative flex items-center justify-center w-[38px] h-[38px] rounded transition-all duration-300 backdrop-blur-md font-mono text-xs select-none cursor-pointer border ${
+          className={`group relative flex items-center justify-center w-10 h-10 transition-all duration-300 select-none cursor-pointer active:scale-90 ${
             isPickerActive
-              ? 'bg-white/20 border-white text-white shadow-[0_0_18px_rgba(255,255,255,0.4)]'
-              : 'bg-black/60 border-white/30 text-neutral-300 hover:text-white hover:border-white/70 hover:bg-black/80'
+              ? 'text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.95)]'
+              : 'text-white/80 drop-shadow-[0_0_6px_rgba(255,255,255,0.6)] hover:text-white hover:drop-shadow-[0_0_10px_rgba(255,255,255,0.95)]'
           }`}
           title={isPickerActive ? 'Desactivar selector de coordenadas' : 'Activar selector de coordenadas'}
         >
           <Crosshair
-            className={`w-4 h-4 transition-transform duration-300 ${
-              isPickerActive ? 'text-white' : 'group-hover:rotate-90'
+            strokeWidth={1.5}
+            className={`w-7 h-7 transition-transform duration-300 ${
+              isPickerActive ? '' : 'group-hover:rotate-90'
             }`}
           />
         </button>
