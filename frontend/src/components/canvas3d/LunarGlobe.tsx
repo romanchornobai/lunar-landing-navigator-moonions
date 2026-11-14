@@ -2,6 +2,8 @@ import { Suspense } from 'react'
 import * as THREE from 'three'
 import { Canvas, useLoader, useThree } from '@react-three/fiber'
 import { OrbitControls, Stars } from '@react-three/drei'
+import { useNavigate } from 'react-router-dom'
+import { LedButton } from '../ui/LedButton'
 
 // NASA SVS CGI Moon Kit (https://svs.gsfc.nasa.gov/4720/): LROC WAC color + LOLA DEM.
 // Browser-native 8-bit derivatives of the 16-bit TIFFs (same resolution; see DATA_SOURCES.md),
@@ -34,22 +36,28 @@ function Moon() {
 }
 
 export default function LunarGlobe() {
+  const navigate = useNavigate()
   return (
-    <Canvas
-      dpr={[1, 1.5]}
-      camera={{ position: [0, -1.2, 4.0], fov: 45 }}
-      gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }}
-      style={{ width: '100vw', height: '100vh' }}
-    >
-      <color attach="background" args={['#000000']} />
-      <ambientLight intensity={0.25} />
-      <directionalLight position={[8, 4, 6]} intensity={2.8} />
-      <directionalLight position={[-8, -2, -6]} intensity={0.3} />
-      <Stars radius={100} depth={50} count={3000} factor={4} saturation={0} fade speed={0.5} />
-      <Suspense fallback={null}>
-        <Moon />
-      </Suspense>
-      <OrbitControls enableDamping dampingFactor={0.05} minDistance={2.4} maxDistance={10.0} />
-    </Canvas>
+    <div style={{ position: 'relative', width: '100vw', height: '100vh' }}>
+      <Canvas
+        dpr={[1, 1.5]}
+        camera={{ position: [0, -1.2, 4.0], fov: 45 }}
+        gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }}
+        style={{ width: '100%', height: '100%' }}
+      >
+        <color attach="background" args={['#000000']} />
+        <ambientLight intensity={0.25} />
+        <directionalLight position={[8, 4, 6]} intensity={2.8} />
+        <directionalLight position={[-8, -2, -6]} intensity={0.3} />
+        <Stars radius={100} depth={50} count={3000} factor={4} saturation={0} fade speed={0.5} />
+        <Suspense fallback={null}>
+          <Moon />
+        </Suspense>
+        <OrbitControls enableDamping dampingFactor={0.05} minDistance={2.4} maxDistance={10.0} />
+      </Canvas>
+      <div className="absolute bottom-8 left-1/2 z-10 -translate-x-1/2">
+        <LedButton onClick={() => navigate('/vista-polar')}>POLO SUR</LedButton>
+      </div>
+    </div>
   )
 }

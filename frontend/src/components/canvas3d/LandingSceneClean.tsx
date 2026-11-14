@@ -2,7 +2,9 @@ import { Suspense, useMemo } from 'react'
 import * as THREE from 'three'
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Stars, useGLTF } from '@react-three/drei'
+import { useNavigate } from 'react-router-dom'
 import { LandingTerrainModel } from './LandingTerrainModel'
+import { LedButton } from '../ui/LedButton'
 
 type Vec3 = [number, number, number]
 
@@ -60,6 +62,7 @@ export function LandingSceneClean({
   modelPath = '/models/shackleton_rim/shackleton_rim_15km.glb',
   groundNormal = [-0.2871, 0.9229, -0.2567],
 }: LandingSceneCleanProps) {
+  const navigate = useNavigate()
   return (
     <div style={{ width: '100vw', height: '100vh', background: '#000000', position: 'relative' }}>
       <Canvas
@@ -112,6 +115,9 @@ export function LandingSceneClean({
           maxDistance={350.0}
         />
       </Canvas>
+      <div className="absolute bottom-8 left-1/2 z-10 -translate-x-1/2">
+        <LedButton onClick={() => navigate('/vista-polar')}>POLO SUR</LedButton>
+      </div>
     </div>
   )
 }
