@@ -3,11 +3,10 @@ import * as THREE from 'three'
 import { Canvas, useFrame, useLoader } from '@react-three/fiber'
 import { OrbitControls, Stars } from '@react-three/drei'
 import { useNavigate } from 'react-router-dom'
-import { BarChart3, Crosshair } from 'lucide-react'
+import { BarChart3, ChevronLeft, Crosshair } from 'lucide-react'
 import { LANDING_SITES, getSite3DPosition, getTerrainHeight, scenePointToLunarCoords } from '../../data/sites'
 import { SiteMarker } from './SiteMarker'
 import { TerrainProbeMarker } from './TerrainProbeMarker'
-import { LedButton } from '../ui/LedButton'
 import { SiteComparisonPanel } from '../ui/SiteComparisonPanel'
 
 // Regional South Pole cap (lat -90..-84, ~364 km): LOLA-derived 1200x1200 Float32 elevation grid
@@ -260,9 +259,14 @@ export default function SouthPoleTerrain() {
 
       {/* Top Left: Navigation back to Lunar Globe */}
       <div className="absolute top-6 left-6 z-20">
-        <LedButton variant="compact" onClick={() => navigate('/vista-lunar')}>
-          GLOBO LUNAR
-        </LedButton>
+        <button
+          onClick={() => navigate('/vista-lunar')}
+          title="Volver al globo lunar"
+          aria-label="Volver al globo lunar"
+          className="w-10 h-10 flex items-center justify-center text-white/80 hover:text-white cursor-pointer transition-all hover:-translate-x-0.5 active:scale-90 drop-shadow-[0_0_6px_rgba(255,255,255,0.7)]"
+        >
+          <ChevronLeft size={34} strokeWidth={1.5} />
+        </button>
       </div>
 
       {/* Top Right: Coordinate Probe Icon Button */}
