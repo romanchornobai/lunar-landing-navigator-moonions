@@ -1,6 +1,6 @@
-import { Suspense, useMemo, useState, useEffect } from 'react'
+import { Suspense, useMemo, useState, useEffect, useRef } from 'react'
 import * as THREE from 'three'
-import { Canvas, useLoader } from '@react-three/fiber'
+import { Canvas, useFrame, useLoader } from '@react-three/fiber'
 import { OrbitControls, Stars } from '@react-three/drei'
 import { useNavigate } from 'react-router-dom'
 import { Crosshair } from 'lucide-react'
@@ -16,6 +16,48 @@ const GRID = 1200
 const TERRAIN_SIZE = 150 // scene units
 const MEAN_Z = 24.97 // m, mean elevation subtracted
 const SCALE_Y = (TERRAIN_SIZE / GRID) * 1.3 * 1.5 // 0.24375 scene units per m (exaggerated)
+
+const STICK_HEIGHT = 1.2 // scene units
+const STICK_REST_MS = 350 // cursor must rest this long before the stick grows
+
+function HoverStick({ point }: { point: [number, number, number] }) {
+  const stick = useRef<THREE.Mesh>(null)
+  const grow = useRef({ value: 0, target: 0 })
+
+  // Moving the cursor collapses the stick; resting on a point grows it.
+  useEffect(() => {
+    grow.current.value = 0
+    grow.current.target = 0
+    const timer = setTimeout(() => {
+      grow.current.target = 1
+    }, STICK_REST_MS)
+    return () => clearTimeout(timer)
+  }, [point[0], point[2]])
+
+  useFrame((_, dt) => {
+    const g = grow.current
+    g.value += (g.target - g.value) * Math.min(1, dt * 9)
+    if (stick.current) {
+      const s = Math.max(g.value, 0.0001)
+      stick.current.scale.y = s
+      stick.current.position.y = (STICK_HEIGHT * s) / 2
+      stick.current.visible = g.value > 0.01
+    }
+  })
+
+  return (
+    <group position={point}>
+      <mesh position={[0, 0.1, 0]}>
+        <sphereGeometry args={[0.1, 12, 12]} />
+        <meshBasicMaterial color="#ffffff" toneMapped={false} />
+      </mesh>
+      <mesh ref={stick} visible={false}>
+        <cylinderGeometry args={[0.06, 0.06, STICK_HEIGHT, 8]} />
+        <meshBasicMaterial color="#ffffff" toneMapped={false} />
+      </mesh>
+    </group>
+  )
+}
 
 interface TerrainProps {
   isPickerActive: boolean
@@ -128,13 +170,8 @@ function Terrain({
         </mesh>
       )}
 
-      {/* Small white stick at cursor location while probe mode is active */}
-      {isPickerActive && hoverPoint && (
-        <mesh position={[hoverPoint[0], hoverPoint[1] + 1.25, hoverPoint[2]]}>
-          <cylinderGeometry args={[0.1, 0.1, 2.5, 8]} />
-          <meshBasicMaterial color="#ffffff" toneMapped={false} />
-        </mesh>
-      )}
+      {/* White dot at the cursor; a short stick grows from it once the cursor rests */}
+      {isPickerActive && hoverPoint && <HoverStick point={hoverPoint} />}
 
       {sitePositions.map(({ site, position }) => (
         <SiteMarker key={site.id} site={site} position={position} />
