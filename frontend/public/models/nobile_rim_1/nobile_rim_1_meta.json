@@ -1,0 +1,41 @@
+{
+  "site_key": "nobile_rim_1",
+  "name": "Nobile Rim 1",
+  "aliases": [
+    "nobile-rim-1",
+    "nobile"
+  ],
+  "coordinates": {
+    "lat": -85.25,
+    "lon": 35.8
+  },
+  "polar_projection_meters": {
+    "cx": 84303.2,
+    "cy": 116889.27
+  },
+  "area_size_meters": {
+    "width": 15000,
+    "height": 15000,
+    "span_km": 15.0
+  },
+  "grid_size": [
+    501,
+    501
+  ],
+  "resolution_meters_per_pixel": 30.0,
+  "elevation": {
+    "datum": "IAU_2000_Moon_Sphere_1737400m",
+    "center_abs_meters": 6504.0,
+    "min_abs_meters": 3854.0,
+    "max_abs_meters": 6800.0,
+    "relief_span_meters": 2946.0,
+    "relative_at_center": 0.0
+  },
+  "mesh": {
+    "vertices": 251001,
+    "triangles": 500000,
+    "glb_file": "nobile_rim_1_15km.glb",
+    "glb_size_mb": 13.38,
+    "color_material": "LunarRegolith_PBR_Gray"
+  }
+}
