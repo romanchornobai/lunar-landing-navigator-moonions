@@ -14,7 +14,7 @@ function Moon() {
   colorMap.colorSpace = THREE.SRGBColorSpace
 
   return (
-    <mesh rotation={[0, -Math.PI / 2, 0]} castShadow receiveShadow>
+    <mesh rotation={[0, -Math.PI / 2, 0]}>
       <sphereGeometry args={[2, 384, 384]} />
       <meshStandardMaterial
         map={colorMap}
@@ -33,14 +33,14 @@ function Moon() {
 export default function LunarGlobe() {
   return (
     <Canvas
-      shadows
+      dpr={[1, 1.5]}
       camera={{ position: [0, -1.2, 4.0], fov: 45 }}
-      gl={{ antialias: true, alpha: false }}
+      gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }}
       style={{ width: '100vw', height: '100vh' }}
     >
       <color attach="background" args={['#000000']} />
       <ambientLight intensity={0.25} />
-      <directionalLight position={[8, 4, 6]} intensity={2.8} castShadow />
+      <directionalLight position={[8, 4, 6]} intensity={2.8} />
       <directionalLight position={[-8, -2, -6]} intensity={0.3} />
       <Stars radius={100} depth={50} count={3000} factor={4} saturation={0} fade speed={0.5} />
       <Suspense fallback={null}>
