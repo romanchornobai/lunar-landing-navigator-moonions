@@ -1,0 +1,60 @@
+[
+  {
+    "id": "shackleton-connecting-ridge",
+    "name": "Cráter Shackleton - Borde Iluminado (Connecting Ridge)",
+    "coordinates": {
+      "latitude": -89.54,
+      "longitude": 129.20,
+      "elevation_m": 2100
+    },
+    "description": "Zona de aterrizaje óptima: cresta elevada con iluminación solar cuasi-perpetua y enlace directo hacia la Tierra.",
+    "horizon_max_elevation_deg": 1.2
+  },
+  {
+    "id": "shackleton-center-psr",
+    "name": "Cráter Shackleton - Fondo en Sombra (IAU Center)",
+    "coordinates": {
+      "latitude": -89.63,
+      "longitude": 132.32,
+      "elevation_m": -2000
+    },
+    "description": "Centro geométrico en oscuridad permanente (PSR). Alta concentración de hielo de agua, pero nula generación solar.",
+    "horizon_max_elevation_deg": 18.5
+  },
+  {
+    "id": "malapert-massif",
+    "name": "Macizo de Malapert (Peak A)",
+    "description": "Una de las montañas más altas del Polo Sur Lunar. Ofrece visibilidad directa y continua hacia la Tierra para telecomunicaciones DTE.",
+    "coordinates": {
+      "latitude": -85.99,
+      "longitude": 2.93,
+      "elevation_m": 5050
+    },
+    "scientific_interest": "Ubicación prioritaria para nodos repetidores de comunicación directa con la Tierra.",
+    "horizon_max_elevation_deg": 0.5
+  },
+  {
+    "id": "nobile-rim-1",
+    "name": "Cresta del Cráter Nobile",
+    "description": "Zona de terreno relativamente suave seleccionada para misiones rover de exploración de recursos.",
+    "coordinates": {
+      "latitude": -85.25,
+      "longitude": 35.80,
+      "elevation_m": 3400
+    },
+    "scientific_interest": "Exploración robótica de depósitos de hielo superficial y subsuperficial.",
+    "horizon_max_elevation_deg": 1.8
+  },
+  {
+    "id": "de-gerlache-rim",
+    "name": "Borde de Faustini / De Gerlache",
+    "description": "Meseta elevada entre cuencas de impacto con iluminación estable y condiciones térmicas moderadas.",
+    "coordinates": {
+      "latitude": -88.71,
+      "longitude": -68.70,
+      "elevation_m": 1800
+    },
+    "scientific_interest": "Bases operativas sostenibles de larga duración.",
+    "horizon_max_elevation_deg": 1.5
+  }
+]

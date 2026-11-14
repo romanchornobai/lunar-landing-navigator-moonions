@@ -1,0 +1,54 @@
+{
+  "shackleton-connecting-ridge": {
+    "id": "shackleton-connecting-ridge",
+    "key": "shackleton_rim",
+    "name": "Shackleton Connecting Ridge",
+    "shortName": "Shackleton",
+    "lat": -89.54,
+    "lon": 129.20,
+    "centerElevationM": -2318,
+    "reliefSpanM": 4182,
+    "glbPath": "/models/shackleton_rim/shackleton_rim_15km.glb",
+    "description": "Cresta elevada con luz solar continua y enlace con la Tierra.",
+    "groundNormal": [-0.2871, 0.9229, -0.2567]
+  },
+  "malapert-massif": {
+    "id": "malapert-massif",
+    "key": "malapert_massif",
+    "name": "Malapert Massif",
+    "shortName": "Malapert",
+    "lat": -85.99,
+    "lon": 2.93,
+    "centerElevationM": 5128,
+    "reliefSpanM": 3156,
+    "glbPath": "/models/malapert_massif/malapert_massif_15km.glb",
+    "description": "Cumbre de más de 5.000 m con visibilidad de 360°.",
+    "groundNormal": [0.0742, 0.9965, -0.0373]
+  },
+  "de-gerlache-rim": {
+    "id": "de-gerlache-rim",
+    "key": "de_gerlache_rim",
+    "name": "Faustini / De Gerlache",
+    "shortName": "De Gerlache",
+    "lat": -88.71,
+    "lon": -68.70,
+    "centerElevationM": 1766,
+    "reliefSpanM": 2521,
+    "glbPath": "/models/de_gerlache_rim/de_gerlache_rim_15km.glb",
+    "description": "Meseta elevada entre cuencas de impacto.",
+    "groundNormal": [0.0076, 0.9953, 0.0965]
+  },
+  "nobile-rim-1": {
+    "id": "nobile-rim-1",
+    "key": "nobile_rim_1",
+    "name": "Nobile Rim",
+    "shortName": "Nobile",
+    "lat": -85.25,
+    "lon": 35.80,
+    "centerElevationM": 6504,
+    "reliefSpanM": 2946,
+    "glbPath": "/models/nobile_rim_1/nobile_rim_1_15km.glb",
+    "description": "Cordillera sobre el cráter Nobile.",
+    "groundNormal": [-0.2347, 0.9716, -0.0312]
+  }
+}

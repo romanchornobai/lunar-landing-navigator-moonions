@@ -2,6 +2,8 @@ import { Suspense, useMemo } from 'react'
 import * as THREE from 'three'
 import { Canvas, useLoader } from '@react-three/fiber'
 import { OrbitControls, Stars } from '@react-three/drei'
+import { LANDING_SITES, getSite3DPosition } from '../../data/sites'
+import { SiteMarker } from './SiteMarker'
 
 // Regional South Pole cap (lat -90..-84, ~364 km): LOLA-derived 1200x1200 Float32 elevation grid
 // (meters, NASA Moon Trek). Geometry params from ASSETS.md.
@@ -21,8 +23,9 @@ function Terrain() {
     `${BASE}/lunar_ao_2k.png`,
   ])
 
+  const elevations = useMemo(() => new Float32Array(buffer), [buffer])
+
   const geometry = useMemo(() => {
-    const elevations = new Float32Array(buffer)
     const geom = new THREE.PlaneGeometry(TERRAIN_SIZE, TERRAIN_SIZE, GRID - 1, GRID - 1)
     geom.rotateX(-Math.PI / 2)
     const pos = geom.attributes.position
@@ -30,24 +33,37 @@ function Terrain() {
     pos.needsUpdate = true
     geom.computeVertexNormals()
     return geom
-  }, [buffer])
+  }, [elevations])
+
+  // Calculate the exact 3D positions of the candidate landing sites on the terrain
+  const sitePositions = useMemo(() => {
+    return LANDING_SITES.map((site) => ({
+      site,
+      position: getSite3DPosition(site, elevations),
+    }))
+  }, [elevations])
 
   albedo.colorSpace = THREE.SRGBColorSpace
   normal.colorSpace = THREE.NoColorSpace
   ao.colorSpace = THREE.NoColorSpace
 
   return (
-    <mesh geometry={geometry}>
-      <meshStandardMaterial
-        map={albedo}
-        normalMap={normal}
-        normalScale={new THREE.Vector2(1.25, 1.25)}
-        aoMap={ao}
-        aoMapIntensity={1.2}
-        roughness={0.92}
-        metalness={0.02}
-      />
-    </mesh>
+    <group>
+      <mesh geometry={geometry}>
+        <meshStandardMaterial
+          map={albedo}
+          normalMap={normal}
+          normalScale={new THREE.Vector2(1.25, 1.25)}
+          aoMap={ao}
+          aoMapIntensity={1.2}
+          roughness={0.92}
+          metalness={0.02}
+        />
+      </mesh>
+      {sitePositions.map(({ site, position }) => (
+        <SiteMarker key={site.id} site={site} position={position} />
+      ))}
+    </group>
   )
 }
 
