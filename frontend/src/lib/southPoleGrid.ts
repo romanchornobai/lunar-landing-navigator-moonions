@@ -9,13 +9,13 @@
  *   - rotated 359.62 deg, and stored mirrored: row index grows towards polar +Y.
  *   - values are not metres: LOLA height [m] ~= 208.0 * value - 6339 (residual std 261 m).
  *
- * Scene frame used by the 3D view: PlaneGeometry of TERRAIN_SIZE units, rotated to the XZ plane, then mirrored in Z
- * (mirrorGeometryZ) so the terrain shows the real, non-mirrored geography seen from above. In that frame:
- *   column = (x + 75) / 150 * 1199,   row = (-z + 75) / 150 * 1199.
+ * Scene frame used by the 3D view: PlaneGeometry of TERRAIN_SIZE units rotated to the XZ plane, rendered as stored
+ * (look and lighting unchanged), so the 3D terrain shows the geography mirrored with respect to the 2D polar map.
+ * Markers and probes are converted with the mirror taken into account, so they sit on the right terrain features:
+ *   column = (x + 75) / 150 * 1199,   row = (z + 75) / 150 * 1199.
  * Polar stereographic frame (IAU2000:30120, R = 1737.4 km, lon 0 towards +Y, lon 90 E towards +X): see moonSouthPolarCrs.
  * Horizontal accuracy of the registration ~1 km (grid pixel ~177 m).
  */
-import * as THREE from 'three'
 import { lunarToPolarXY, polarXYToLunar } from './moonSouthPolarCrs'
 
 export const GRID = 1200
@@ -35,11 +35,11 @@ export const ELEVATION_UNCERTAINTY_M = 261
 const half = TERRAIN_SIZE / 2
 
 function sceneToGrid(x: number, z: number): { col: number; row: number } {
-  return { col: ((x + half) / TERRAIN_SIZE) * (GRID - 1), row: ((-z + half) / TERRAIN_SIZE) * (GRID - 1) }
+  return { col: ((x + half) / TERRAIN_SIZE) * (GRID - 1), row: ((z + half) / TERRAIN_SIZE) * (GRID - 1) }
 }
 
 function gridToScene(col: number, row: number): { x: number; z: number } {
-  return { x: (col / (GRID - 1)) * TERRAIN_SIZE - half, z: -((row / (GRID - 1)) * TERRAIN_SIZE - half) }
+  return { x: (col / (GRID - 1)) * TERRAIN_SIZE - half, z: (row / (GRID - 1)) * TERRAIN_SIZE - half }
 }
 
 /** Scene (x, z) -> polar stereographic (x, y) in metres. */
@@ -102,25 +102,4 @@ export function terrainFootprintLatLon(): [number, number][] {
     const { lat, lon } = sceneToLatLon(x, z)
     return [lat, lon] as [number, number]
   })
-}
-
-/**
- * Mirrors a PlaneGeometry (already rotated to XZ) in Z so the stored, mirrored grid displays the real geography.
- * Triangle winding is reversed to keep the faces pointing up; UVs stay attached, so textures follow the terrain.
- */
-export function mirrorGeometryZ(geom: THREE.BufferGeometry): THREE.BufferGeometry {
-  const pos = geom.attributes.position
-  for (let i = 0; i < pos.count; i++) pos.setZ(i, -pos.getZ(i))
-  pos.needsUpdate = true
-  const index = geom.index
-  if (index) {
-    const arr = index.array as Uint16Array | Uint32Array
-    for (let i = 0; i < arr.length; i += 3) {
-      const t = arr[i + 1]
-      arr[i + 1] = arr[i + 2]
-      arr[i + 2] = t
-    }
-    index.needsUpdate = true
-  }
-  return geom
 }

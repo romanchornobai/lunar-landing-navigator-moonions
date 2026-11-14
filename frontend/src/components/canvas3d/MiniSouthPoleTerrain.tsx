@@ -2,7 +2,6 @@ import { Suspense, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { Canvas, useFrame, useLoader } from '@react-three/fiber'
 import { useSouthPoleElevation } from '../../lib/southPoleElevation'
-import { mirrorGeometryZ } from '../../lib/southPoleGrid'
 
 // Low-poly preview of the regional South Pole terrain (same LOLA grid as the main 3D view,
 // decimated 1200 -> 150 samples per side). Used inside the round view toggle.
@@ -28,7 +27,6 @@ function Terrain({ elevations }: { elevations: Float32Array }) {
       pos.setY(i, (elevations[row * GRID + col] - MEAN_Z) * SCALE_Y)
     }
     pos.needsUpdate = true
-    mirrorGeometryZ(geom) // stored grid is mirrored (see lib/southPoleGrid.ts)
     geom.computeVertexNormals()
     return geom
   }, [elevations])

@@ -36,6 +36,7 @@ The Moon Trek grid had no usable metadata (its notes claimed the -90..-84 cap). 
 DEMs above by maximising the Pearson correlation of heights over the whole grid (scale, rotation, mirror and centre
 offset): r = 0.979. Result: 2 x 105.95 km square, centre at polar stereographic (14.50, -7.15) km, rotation 359.62 deg,
 mirrored rows; height [m] = 208.0 * value - 6339 (residual std 261 m). Implemented in `frontend/src/lib/southPoleGrid.ts`.
+The terrain is rendered as stored (mirrored, to keep its original look); site and probe coordinates include the mirror.
 
 ### Getting the git-ignored LOLA DEMs and recomputing the horizons
 From the repo root (~920 MB):

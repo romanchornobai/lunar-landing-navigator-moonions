@@ -26,9 +26,10 @@ Load: `useGLTF('/models/<site>/<site>_15km.glb')`, `position=[0,0,0]`.
   centred at 89.467 S, 116.25 E (near Shackleton), rotated 359.62 deg and stored mirrored; values are not metres
   (LOLA height ~= 208.0 * value - 6339 m, +-261 m). Registered against LRO LOLA GDR (r = 0.979), see `DATA_SOURCES.md`.
   All conversions live in `frontend/src/lib/southPoleGrid.ts` (lat/lon <-> scene, height, footprint).
-- Rendered as a PlaneGeometry of 150 units (1199x1199 segments), rotateX(-PI/2), then mirrored in Z (`mirrorGeometryZ`)
-  so it shows the real geography. Vertex height: `Y = (elev[i] - 24.97) * 0.24375` (visual exaggeration).
-- Scene <-> grid: `column = (x + 75) / 150 * 1199`, `row = (-z + 75) / 150 * 1199`.
+- Rendered as stored (look and lighting unchanged): PlaneGeometry of 150 units (1199x1199 segments), rotateX(-PI/2).
+  The 3D terrain therefore shows the geography mirrored with respect to the 2D map; markers and probes account for it.
+  Vertex height: `Y = (elev[i] - 24.97) * 0.24375` (visual exaggeration).
+- Scene <-> grid: `column = (x + 75) / 150 * 1199`, `row = (z + 75) / 150 * 1199`.
 - Site markers are placed from their published lat/lon (`data/landingSites.json`); points outside the square (Malapert,
   Nobile) are only shown on the 2D map. No hand-calibrated positions any more.
 - Material: roughness 0.92, metalness 0.02, normalScale 1.25, aoMapIntensity 1.2. Keep `castShadow = false` (frustum cuts on large meshes).

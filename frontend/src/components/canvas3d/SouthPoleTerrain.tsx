@@ -5,7 +5,7 @@ import { OrbitControls, Stars } from '@react-three/drei'
 import { useNavigate } from 'react-router-dom'
 import { BarChart3, ChevronLeft, Crosshair } from 'lucide-react'
 import { SITES_IN_3D, getSite3DPosition, scenePointToLunarCoords } from '../../data/sites'
-import { GRID, MEAN_Z, SCALE_Y, TERRAIN_SIZE, getTerrainHeight, mirrorGeometryZ } from '../../lib/southPoleGrid'
+import { GRID, MEAN_Z, SCALE_Y, TERRAIN_SIZE, getTerrainHeight } from '../../lib/southPoleGrid'
 import { SiteMarker } from './SiteMarker'
 import { TerrainProbeMarker } from './TerrainProbeMarker'
 import { SiteComparisonPanel } from '../ui/SiteComparisonPanel'
@@ -101,7 +101,6 @@ function Terrain({
     const pos = geom.attributes.position
     for (let i = 0; i < pos.count; i++) pos.setY(i, (elevations[i] - MEAN_Z) * SCALE_Y)
     pos.needsUpdate = true
-    mirrorGeometryZ(geom) // the stored grid is mirrored: show the real geography
     geom.computeVertexNormals()
     return geom
   }, [elevations])
@@ -113,7 +112,7 @@ function Terrain({
     geom.rotateX(-Math.PI / 2)
     const pos = geom.attributes.position
     for (let i = 0; i < pos.count; i++) {
-      pos.setY(i, getTerrainHeight(elevations, pos.getX(i), pos.getZ(i))) // already in the mirrored frame
+      pos.setY(i, getTerrainHeight(elevations, pos.getX(i), pos.getZ(i)))
     }
     pos.needsUpdate = true
     geom.computeVertexNormals()
