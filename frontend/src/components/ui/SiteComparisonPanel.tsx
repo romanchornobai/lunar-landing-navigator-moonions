@@ -82,22 +82,25 @@ export const SiteComparisonPanel: React.FC<SiteComparisonPanelProps> = ({ onClos
       style={{ backdropFilter: 'blur(10px) brightness(0.55)', WebkitBackdropFilter: 'blur(10px) brightness(0.55)' }}
       onClick={onClose}
     >
+      {/* Date range + start button, top center of the page (the button does nothing yet) */}
+      <div
+        className="absolute top-6 left-1/2 -translate-x-1/2 w-max max-w-[calc(100vw-260px)] flex flex-wrap items-center justify-center gap-x-8 gap-y-3 font-mono text-white"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <DateField label="INICIO" value={startDay} min={MIN_DAY} max={MAX_DAY} onChange={changeStart} />
+        <span className="text-neutral-500 text-lg select-none">→</span>
+        <DateField label="FIN" value={endDay} min={MIN_DAY} max={MAX_DAY} onChange={changeEnd} />
+        <button
+          type="button"
+          className="h-[34px] px-6 bg-white text-black text-[12px] font-black tracking-[0.3em] uppercase cursor-pointer transition-all hover:shadow-[0_0_18px_rgba(255,255,255,0.7)] active:scale-95"
+          style={{ clipPath: 'polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%)' }}
+        >
+          EMPEZAR
+        </button>
+      </div>
+
       <div className="w-[min(1000px,92vw)]" onClick={(e) => e.stopPropagation()}>
         <SciFiHudPanel badgeTitle="COMPARATIVA">
-          {/* Date range + start button (the button does nothing yet) */}
-          <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 font-mono text-white pb-5 mb-1 border-b border-white/15">
-            <DateField label="INICIO" value={startDay} min={MIN_DAY} max={MAX_DAY} onChange={changeStart} />
-            <span className="text-neutral-500 text-lg select-none">→</span>
-            <DateField label="FIN" value={endDay} min={MIN_DAY} max={MAX_DAY} onChange={changeEnd} />
-            <button
-              type="button"
-              className="h-[34px] px-6 bg-white text-black text-[12px] font-black tracking-[0.3em] uppercase cursor-pointer transition-all hover:shadow-[0_0_18px_rgba(255,255,255,0.7)] active:scale-95"
-              style={{ clipPath: 'polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%)' }}
-            >
-              EMPEZAR
-            </button>
-          </div>
-
           <div
             className="grid font-mono text-white select-none"
             style={{ gridTemplateColumns: '88px repeat(4, minmax(0, 1fr))' }}
