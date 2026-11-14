@@ -35,6 +35,9 @@ frontend/public/textures/*.tiff
 frontend/public/**/*.md
 frontend/public/**/*.txt
 
+# LRO LOLA polar DEMs from PDS (~920 MB). Download instructions in DATA_SOURCES.md
+data/dem/
+
 # Moon Trek tiles around the landing sites (~100+ MB). Regenerate with
 # python backend/app/scripts/download_trek_tiles.py (see DATA_SOURCES.md)
 frontend/public/tiles/
