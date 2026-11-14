@@ -55,11 +55,11 @@ function SpinningBody({ url }: { url: string }) {
   )
 }
 
-// Outlined status icons (ring + mark) with a soft neon glow: green check = lit, red cross = not.
+// Status icons with a soft glow: white check = lit, red cross = not.
 const CheckIcon = () => (
-  <svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="#4ade80" strokeWidth="2"
+  <svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="#ffffff" strokeWidth="2"
     strokeLinecap="round" strokeLinejoin="round"
-    style={{ filter: 'drop-shadow(0 0 3px #4ade80) drop-shadow(0 0 8px rgba(74,222,128,0.75))' }}>
+    style={{ filter: 'drop-shadow(0 0 3px #ffffff) drop-shadow(0 0 8px rgba(255,255,255,0.75))' }}>
     <path d="M3.5 12.5l5.5 5.5L20.5 6" />
   </svg>
 )
