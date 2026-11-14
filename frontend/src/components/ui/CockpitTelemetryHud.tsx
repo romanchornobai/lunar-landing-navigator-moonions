@@ -63,7 +63,7 @@ export const CockpitTelemetryHud: React.FC<CockpitTelemetryHudProps> = ({
       {/* LEFT: Sun and Earth readouts */}
       <div
         style={egaTerminalStyle}
-        className="absolute left-6 top-[38%] -translate-y-1/2 z-40 select-none text-white pointer-events-none space-y-4"
+        className="absolute left-6 bottom-6 z-40 select-none text-white pointer-events-none space-y-4"
       >
         <CelestialReadout
           body="sun"
@@ -82,7 +82,7 @@ export const CockpitTelemetryHud: React.FC<CockpitTelemetryHudProps> = ({
       {/* RIGHT: spinning lander and its (simulated) data */}
       <div
         style={egaTerminalStyle}
-        className="absolute right-6 top-[38%] -translate-y-1/2 z-40 select-none text-white pointer-events-none flex flex-col items-center gap-2"
+        className="absolute right-6 bottom-6 z-40 select-none text-white pointer-events-none flex flex-col items-center gap-2"
       >
         <div className="w-40 h-40">
           <SpinningModelCanvas url={LANDER_URL} />
