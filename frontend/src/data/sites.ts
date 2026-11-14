@@ -56,6 +56,100 @@ export function getTerrainHeight(elevations: Float32Array, x: number, z: number)
   return (rawElev - MEAN_Z) * SCALE_Y
 }
 
+// Lunar radius in meters (IAU datum)
+const R_MOON = 1737400
+
+// Calibrated Thin Plate Spline anchor points (NASA LOLA polar stereographic km <-> 3D scene units)
+const ANCHORS_KM: [number, number][] = [
+  [0, 0],
+  [10809.56 / 1000, -8816.06 / 1000],
+  [6218.06 / 1000, 121487.27 / 1000],
+  [-36446.62 / 1000, 14209.94 / 1000],
+  [84303.20 / 1000, 116889.27 / 1000],
+]
+
+const ANCHORS_SCENE: [number, number][] = [
+  [0, 0],
+  [2.5, 1.2],
+  [45.0, 52.0],
+  [-22.0, -15.0],
+  [15.0, 62.0],
+]
+
+const W_X = [
+  0.003044470875911884,
+  0.0009275428352333713,
+  0.0027641396203631004,
+  -0.0044775666381862336,
+  -0.002258586693322096,
+  61.44457717661443,
+  0.058631551253655684,
+  0.27780449305250027,
+]
+
+const W_Z = [
+  0.0016714389634988492,
+  -0.00006052647194489851,
+  0.001010273260165871,
+  -0.0017834119458427016,
+  -0.0008377738058771173,
+  24.754068021182363,
+  0.3091558761561245,
+  0.38534725243465673,
+]
+
+const W_CX = [
+  -0.19984709182983518,
+  0.2052703265947391,
+  -0.013648358121606809,
+  0.0006047716585158638,
+  0.007620351698187182,
+  141.19455620218386,
+  -1.072060991638734,
+  1.6277968126425018,
+]
+
+const W_CY = [
+  0.175932102390562,
+  -0.18347857967803294,
+  0.013346498239084301,
+  0.0014836664132299587,
+  -0.007283687364843465,
+  -145.87835641496082,
+  -0.2122316749324305,
+  1.8586173725387445,
+]
+
+function evalTPS(pts: [number, number][], weights: number[], u: number, v: number): number {
+  let val = weights[5] + weights[6] * u + weights[7] * v
+  for (let i = 0; i < 5; i++) {
+    const r = Math.hypot(u - pts[i][0], v - pts[i][1])
+    if (r > 1e-6) val += weights[i] * (r * r * Math.log(r + 1e-5))
+  }
+  return val
+}
+
+/**
+ * Projects real Lunar coordinates (latitude, longitude) into 3D scene [X, Y, Z] units.
+ * Calibrated against NASA LRO LOLA polar stereographic projection.
+ */
+export function lunarCoordsToScenePoint(
+  latitude: number,
+  longitude: number,
+  elevations?: Float32Array,
+): [number, number, number] {
+  const theta = ((90 + latitude) * Math.PI) / 180
+  const rMeters = 2 * R_MOON * Math.tan(theta / 2)
+  const lonRad = (longitude * Math.PI) / 180
+  const cxKM = (rMeters * Math.sin(lonRad)) / 1000
+  const cyKM = (rMeters * Math.cos(lonRad)) / 1000
+
+  const x = evalTPS(ANCHORS_KM, W_X, cxKM, cyKM)
+  const z = evalTPS(ANCHORS_KM, W_Z, cxKM, cyKM)
+  const y = elevations ? getTerrainHeight(elevations, x, z) : 0
+  return [x, y, z]
+}
+
 /**
  * Computes the exact [X, Y, Z] 3D coordinates for a candidate landing site.
  */
@@ -64,22 +158,11 @@ export function getSite3DPosition(
   elevations?: Float32Array,
 ): [number, number, number] {
   const calibrated = CALIBRATED_SITE_XZ[site.id]
-  let x: number
-  let z: number
-
   if (calibrated) {
-    ;[x, z] = calibrated
-  } else {
-    // Polar stereographic projection formula from CONFIG_HACKATHON.txt
-    const polarDist = 90.0 - Math.abs(site.coordinates.latitude)
-    const r = (polarDist / 6.0) * (150.0 / 2.0)
-    const angRad = (-site.coordinates.longitude - 60.0) * (Math.PI / 180.0)
-    x = r * Math.cos(angRad)
-    z = r * Math.sin(angRad)
+    const y = elevations ? getTerrainHeight(elevations, calibrated[0], calibrated[1]) : 0
+    return [calibrated[0], y, calibrated[1]]
   }
-
-  const y = elevations ? getTerrainHeight(elevations, x, z) : 0
-  return [x, y, z]
+  return lunarCoordsToScenePoint(site.coordinates.latitude, site.coordinates.longitude, elevations)
 }
 
 /**
@@ -90,22 +173,22 @@ export function scenePointToLunarCoords(point: { x: number; y: number; z: number
   longitude: number
   elevation_m: number
 } {
-  const r = Math.sqrt(point.x * point.x + point.z * point.z)
-  const polarDist = (r / 75.0) * 6.0
-  const latitude = -90.0 + polarDist
+  const cxMeters = evalTPS(ANCHORS_SCENE, W_CX, point.x, point.z) * 1000
+  const cyMeters = evalTPS(ANCHORS_SCENE, W_CY, point.x, point.z) * 1000
 
-  const angRad = Math.atan2(point.z, point.x)
-  const angDeg = angRad * (180.0 / Math.PI)
-  let longitude = -angDeg - 60.0
-  while (longitude > 180) longitude -= 360
-  while (longitude < -180) longitude += 360
+  const r = Math.sqrt(cxMeters * cxMeters + cyMeters * cyMeters)
+  const theta = 2 * Math.atan(r / (2 * R_MOON))
+  const lat = -90 + (theta * 180) / Math.PI
+  let lon = (Math.atan2(cxMeters, cyMeters) * 180) / Math.PI
+  while (lon > 180) lon -= 360
+  while (lon < -180) lon += 360
 
   const rawElev = point.y / SCALE_Y + MEAN_Z
-  const elevation_m = Math.round((rawElev - MEAN_Z) * 218)
+  const elevation_m = Math.round((rawElev - MEAN_Z) * 220 + 2000)
 
   return {
-    latitude: Number(latitude.toFixed(3)),
-    longitude: Number(longitude.toFixed(3)),
+    latitude: Number(lat.toFixed(3)),
+    longitude: Number(lon.toFixed(3)),
     elevation_m,
   }
 }

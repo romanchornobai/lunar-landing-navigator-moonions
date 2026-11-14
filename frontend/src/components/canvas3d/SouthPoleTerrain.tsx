@@ -29,9 +29,18 @@ interface TerrainProps {
     }
   } | null
   onCloseProbe: () => void
+  hoverPoint: [number, number, number] | null
+  onHoverPoint: (pt: [number, number, number] | null) => void
 }
 
-function Terrain({ isPickerActive, onPickPoint, probe, onCloseProbe }: TerrainProps) {
+function Terrain({
+  isPickerActive,
+  onPickPoint,
+  probe,
+  onCloseProbe,
+  hoverPoint,
+  onHoverPoint,
+}: TerrainProps) {
   const buffer = useLoader(THREE.FileLoader, `${BASE}/lunar_elevation_1200.bin`, (loader) => {
     loader.setResponseType('arraybuffer')
   }) as unknown as ArrayBuffer
@@ -101,6 +110,14 @@ function Terrain({ isPickerActive, onPickPoint, probe, onCloseProbe }: TerrainPr
       {isPickerActive && (
         <mesh
           geometry={proxyGeometry}
+          onPointerMove={(e) => {
+            e.stopPropagation()
+            const exactY = getTerrainHeight(elevations, e.point.x, e.point.z)
+            onHoverPoint([e.point.x, exactY, e.point.z])
+          }}
+          onPointerLeave={() => {
+            onHoverPoint(null)
+          }}
           onClick={(e) => {
             e.stopPropagation()
             const exactY = getTerrainHeight(elevations, e.point.x, e.point.z)
@@ -109,6 +126,21 @@ function Terrain({ isPickerActive, onPickPoint, probe, onCloseProbe }: TerrainPr
         >
           <meshBasicMaterial transparent opacity={0} depthWrite={false} />
         </mesh>
+      )}
+
+      {/* Small white point at cursor location while probe mode is active */}
+      {isPickerActive && hoverPoint && (
+        <group position={hoverPoint}>
+          <mesh position={[0, 0.04, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+            <ringGeometry args={[0.2, 0.38, 24]} />
+            <meshBasicMaterial color="#ffffff" side={THREE.DoubleSide} transparent opacity={0.8} />
+          </mesh>
+          <mesh position={[0, 0.25, 0]}>
+            <sphereGeometry args={[0.2, 16, 16]} />
+            <meshBasicMaterial color="#ffffff" toneMapped={false} />
+          </mesh>
+          <pointLight color="#ffffff" intensity={1.5} distance={15} />
+        </group>
       )}
 
       {sitePositions.map(({ site, position }) => (
@@ -129,6 +161,7 @@ function Terrain({ isPickerActive, onPickPoint, probe, onCloseProbe }: TerrainPr
 export default function SouthPoleTerrain() {
   const navigate = useNavigate()
   const [isPickerActive, setIsPickerActive] = useState(false)
+  const [hoverPoint, setHoverPoint] = useState<[number, number, number] | null>(null)
   const [probe, setProbe] = useState<{
     position: [number, number, number]
     coords: {
@@ -143,6 +176,7 @@ export default function SouthPoleTerrain() {
       document.body.style.cursor = 'crosshair'
     } else {
       document.body.style.cursor = 'auto'
+      setHoverPoint(null)
     }
     return () => {
       document.body.style.cursor = 'auto'
@@ -176,6 +210,8 @@ export default function SouthPoleTerrain() {
             onPickPoint={handlePickPoint}
             probe={probe}
             onCloseProbe={() => setProbe(null)}
+            hoverPoint={hoverPoint}
+            onHoverPoint={setHoverPoint}
           />
         </Suspense>
         <OrbitControls
@@ -203,35 +239,21 @@ export default function SouthPoleTerrain() {
           }}
           className={`group relative flex items-center gap-2 px-3.5 h-[38px] rounded transition-all duration-300 backdrop-blur-md font-mono text-xs select-none cursor-pointer border ${
             isPickerActive
-              ? 'bg-[#031526]/90 border-[#38bdf8] text-[#38bdf8] shadow-[0_0_18px_rgba(56,189,248,0.5)]'
+              ? 'bg-white/20 border-white text-white shadow-[0_0_18px_rgba(255,255,255,0.4)]'
               : 'bg-black/60 border-white/30 text-neutral-300 hover:text-white hover:border-white/70 hover:bg-black/80'
           }`}
           title={isPickerActive ? 'Desactivar selector de coordenadas' : 'Activar selector de coordenadas'}
         >
           <Crosshair
             className={`w-4 h-4 transition-transform duration-300 ${
-              isPickerActive ? 'text-[#38bdf8] animate-spin' : 'group-hover:rotate-90'
+              isPickerActive ? 'text-white' : 'group-hover:rotate-90'
             }`}
-            style={{ animationDuration: isPickerActive ? '10s' : '0s' }}
           />
           <span className="font-semibold tracking-wider uppercase text-[11px]">
             {isPickerActive ? 'SONDA ACTIVA' : 'SONDA COORDENADAS'}
           </span>
-          {isPickerActive && (
-            <span className="w-2 h-2 rounded-full bg-[#38bdf8] shadow-[0_0_8px_#38bdf8] animate-ping" />
-          )}
         </button>
       </div>
-
-      {/* Indicator hint badge when coordinate probe mode is active */}
-      {isPickerActive && (
-        <div className="absolute top-20 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
-          <div className="bg-black/85 border border-[#38bdf8]/50 text-[#38bdf8] font-mono text-[11px] px-4 py-1.5 rounded-full backdrop-blur-md shadow-[0_0_15px_rgba(56,189,248,0.3)] flex items-center gap-2.5">
-            <span className="w-2 h-2 rounded-full bg-[#38bdf8] animate-ping" />
-            <span className="tracking-wide">HAZ CLIC EN CUALQUIER PUNTO DEL RELIEVE PARA MEDIR COORDENADAS</span>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
