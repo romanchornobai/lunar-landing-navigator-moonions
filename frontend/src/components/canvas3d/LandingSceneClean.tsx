@@ -109,27 +109,27 @@ export function LandingSceneClean({
         <Stars radius={28000} depth={4000} count={6000} factor={6} saturation={0} fade speed={0.1} />
 
         {/* 1. Base ambient light */}
-        <ambientLight intensity={0.38} color="#ffffff" />
+        <ambientLight intensity={0.52} color="#ffffff" />
 
-        {/* 2. Main sun light with a wide orthographic shadow box to avoid black cut-offs */}
+        {/* 2. Main overhead light so the entire terrain and lander are clearly illuminated */}
         <directionalLight
-          position={[280, 80, 140]}
-          intensity={2.8}
+          position={[350, 3200, 250]}
+          intensity={2.7}
           color="#ffffff"
           castShadow
           shadow-mapSize-width={2048}
           shadow-mapSize-height={2048}
           shadow-bias={-0.00015}
-          shadow-camera-near={5}
-          shadow-camera-far={12000}
+          shadow-camera-near={10}
+          shadow-camera-far={10000}
           shadow-camera-left={-4000}
           shadow-camera-right={4000}
           shadow-camera-top={4000}
           shadow-camera-bottom={-4000}
         />
 
-        {/* 3. Secondary fill light (removes the black horizon shadows) */}
-        <directionalLight position={[-3000, 1000, -2500]} intensity={0.42} color="#94a3b8" />
+        {/* 3. Secondary overhead fill light to soften contrast and eliminate dark crevices */}
+        <directionalLight position={[-1500, 2500, -1200]} intensity={0.65} color="#cbd5e1" />
 
         {/* 3D content */}
         <Suspense fallback={null}>
