@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Build output and caches
+dist/
+build/
+.vite/
+.cache/
+*.log
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+.claude/settings.local.json
+
+# Large source rasters (NASA CGI Moon Kit, see DATA_SOURCES.md)
+frontend/public/textures/*.tif
+frontend/public/textures/*.tiff
+
+# Config/notes inside the web app must not be published
+frontend/public/**/*.md
+frontend/public/**/*.txt

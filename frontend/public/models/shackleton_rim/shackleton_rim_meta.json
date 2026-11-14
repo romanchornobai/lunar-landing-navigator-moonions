@@ -1,0 +1,41 @@
+{
+  "site_key": "shackleton_rim",
+  "name": "Shackleton Connecting Ridge",
+  "aliases": [
+    "shackleton-connecting-ridge",
+    "shackleton"
+  ],
+  "coordinates": {
+    "lat": -89.54,
+    "lon": 129.2
+  },
+  "polar_projection_meters": {
+    "cx": 10809.56,
+    "cy": -8816.06
+  },
+  "area_size_meters": {
+    "width": 15000,
+    "height": 15000,
+    "span_km": 15.0
+  },
+  "grid_size": [
+    501,
+    501
+  ],
+  "resolution_meters_per_pixel": 30.0,
+  "elevation": {
+    "datum": "IAU_2000_Moon_Sphere_1737400m",
+    "center_abs_meters": -2318.0,
+    "min_abs_meters": -2871.5,
+    "max_abs_meters": 1311.0,
+    "relief_span_meters": 4182.5,
+    "relative_at_center": 0.0
+  },
+  "mesh": {
+    "vertices": 251001,
+    "triangles": 500000,
+    "glb_file": "shackleton_rim_15km.glb",
+    "glb_size_mb": 13.38,
+    "color_material": "LunarRegolith_PBR_Gray"
+  }
+}
