@@ -11,17 +11,6 @@
     "horizon_max_elevation_deg": 1.2
   },
   {
-    "id": "shackleton-center-psr",
-    "name": "Cráter Shackleton - Fondo en Sombra (IAU Center)",
-    "coordinates": {
-      "latitude": -89.63,
-      "longitude": 132.32,
-      "elevation_m": -2000
-    },
-    "description": "Centro geométrico en oscuridad permanente (PSR). Alta concentración de hielo de agua, pero nula generación solar.",
-    "horizon_max_elevation_deg": 18.5
-  },
-  {
     "id": "malapert-massif",
     "name": "Macizo de Malapert (Peak A)",
     "description": "Una de las montañas más altas del Polo Sur Lunar. Ofrece visibilidad directa y continua hacia la Tierra para telecomunicaciones DTE.",

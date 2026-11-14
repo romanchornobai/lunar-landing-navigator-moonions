@@ -38,7 +38,6 @@ export const SITE_SCENES_15KM: Record<string, SiteScene3D> = rawSiteScenes as un
 // Y is sampled dynamically from the Float32Array elevation grid.
 export const CALIBRATED_SITE_XZ: Record<string, [number, number]> = {
   'shackleton-connecting-ridge': [2.5, 1.2],
-  'shackleton-center-psr': [-3.32, 1.31], // Center floor of Shackleton crater (PSR)
   'malapert-massif': [45.0, 52.0],
   'nobile-rim-1': [15.0, 62.0],
   'de-gerlache-rim': [-22.0, -15.0],
