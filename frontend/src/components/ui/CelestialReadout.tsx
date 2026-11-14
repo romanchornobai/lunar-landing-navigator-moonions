@@ -92,4 +92,3 @@ export const CelestialReadout: React.FC<CelestialReadoutProps> = ({ body, azimut
 
 useGLTF.preload(CELESTIAL_MODELS.sun)
 useGLTF.preload(CELESTIAL_MODELS.earth)
-useGLTF.preload('/models/lander/lander.glb')

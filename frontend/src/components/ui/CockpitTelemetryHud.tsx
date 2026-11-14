@@ -1,6 +1,6 @@
 import React from 'react';
 import { Thermometer } from 'lucide-react';
-import { CelestialReadout, SpinningModelCanvas } from './CelestialReadout';
+import { CelestialReadout } from './CelestialReadout';
 
 // Types for the astronomical data and site info
 export interface EphemerisSnapshot {
@@ -28,8 +28,6 @@ interface CockpitTelemetryHudProps {
   /** null while the ephemeris buffer is loading or the date is out of range: values show as "--". */
   ephemeris: EphemerisSnapshot | null;
 }
-
-const LANDER_URL = '/models/lander/lander.glb';
 
 // IBM EGA 8x8 terminal font, shared by both panels
 const egaTerminalStyle: React.CSSProperties = {
@@ -84,9 +82,6 @@ export const CockpitTelemetryHud: React.FC<CockpitTelemetryHudProps> = ({
         style={egaTerminalStyle}
         className="absolute right-6 bottom-6 z-40 select-none text-white pointer-events-none flex flex-col items-center gap-2"
       >
-        <div className="w-40 h-40">
-          <SpinningModelCanvas url={LANDER_URL} />
-        </div>
         <div className="text-[15px] leading-tight space-y-1">
           <div>PENDIENTE: {slopeDeg.toFixed(1)}°</div>
           <div className="flex items-center gap-1.5">
