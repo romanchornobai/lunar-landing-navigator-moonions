@@ -2,7 +2,10 @@ import { useMemo, useRef, useState, useEffect } from 'react'
 import * as THREE from 'three'
 import { useFrame } from '@react-three/fiber'
 import { Html, useGLTF } from '@react-three/drei'
-import { type LandingSite } from '../../data/sites'
+import { useNavigate } from 'react-router-dom'
+import { type LandingSite, SITE_SCENES_15KM } from '../../data/sites'
+import { SciFiHudPanel } from '../ui/SciFiHudPanel'
+import { TerminalCardContent } from '../ui/TerminalCardContent'
 
 interface SiteMarkerProps {
   site: LandingSite
@@ -10,10 +13,22 @@ interface SiteMarkerProps {
   lineHeight?: number
 }
 
+const SITE_ROUTE_MAP: Record<string, string> = {
+  'shackleton-connecting-ridge': '/vista-sitio/shackleton',
+  'shackleton-center-psr': '/vista-sitio/shackleton',
+  'malapert-massif': '/vista-sitio/malapert',
+  'de-gerlache-rim': '/vista-sitio/degerlache',
+  'nobile-rim-1': '/vista-sitio/nobile',
+}
+
 export function SiteMarker({ site, position, lineHeight = 4.5 }: SiteMarkerProps) {
-  const [hovered, setHovered] = useState(false)
+  const navigate = useNavigate()
+  const [isLanderHovered, setIsLanderHovered] = useState(false)
+  const [isOverHud, setIsOverHud] = useState(false)
   const landerRef = useRef<THREE.Group>(null)
   const { scene } = useGLTF('/models/lander/lander.glb')
+
+  const isHovered = isLanderHovered || isOverHud
 
   // Clean up cursor on unmount
   useEffect(() => {
@@ -46,10 +61,31 @@ export function SiteMarker({ site, position, lineHeight = 4.5 }: SiteMarkerProps
 
   // Gentle rotation on hover
   useFrame((_, delta) => {
-    if (landerRef.current && hovered) {
+    if (landerRef.current && isHovered) {
       landerRef.current.rotation.y += delta * 1.5
     }
   })
+
+  // Format site data for TerminalCardContent
+  const siteData = useMemo(() => {
+    return {
+      id: site.id,
+      name: site.name,
+      shortName: SITE_SCENES_15KM[site.id]?.shortName || site.name.split('-')[0].trim(),
+      description: site.description,
+      scientificInterest: site.scientific_interest,
+      coordinates: site.coordinates,
+    }
+  }, [site])
+
+  const handleAction = () => {
+    const route = SITE_ROUTE_MAP[site.id]
+    if (route) {
+      navigate(route)
+    } else {
+      alert(`Iniciando aproximación a ${site.name}`)
+    }
+  }
 
   return (
     <group position={position}>
@@ -67,11 +103,11 @@ export function SiteMarker({ site, position, lineHeight = 4.5 }: SiteMarkerProps
         position={[0, lineHeight, 0]}
         onPointerOver={(e) => {
           e.stopPropagation()
-          setHovered(true)
+          setIsLanderHovered(true)
           document.body.style.cursor = 'pointer'
         }}
         onPointerOut={() => {
-          setHovered(false)
+          setIsLanderHovered(false)
           document.body.style.cursor = 'auto'
         }}
       >
@@ -87,30 +123,26 @@ export function SiteMarker({ site, position, lineHeight = 4.5 }: SiteMarkerProps
           </group>
         </group>
 
-        {/* Hover tooltip displaying site name and coordinates */}
-        {hovered && (
-          <Html
-            position={[0, 3.2, 0]}
-            center
-            distanceFactor={85}
-            style={{ pointerEvents: 'none' }}
-          >
-            <div className="bg-[#030712]/95 border border-white/80 px-3 py-2 rounded shadow-2xl backdrop-blur-md pointer-events-none text-white whitespace-nowrap font-mono select-none">
-              <div className="text-xs font-bold text-white tracking-wider uppercase mb-1 drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]">
-                {site.name}
+        {/* Aerospace Sci-Fi HUD Panel anchored to the lander */}
+        {isHovered && (
+          <Html position={[0, 1.2, 0]} center style={{ pointerEvents: 'none' }}>
+            <div style={{ position: 'relative', width: '1px', height: '1px', pointerEvents: 'auto' }}>
+              <div
+                className="w-[350px] sm:w-[390px]"
+                style={{ position: 'absolute', left: '88px', top: '-22px' }}
+              >
+                <SciFiHudPanel
+                  badgeTitle="TELEMETRÍA"
+                  onMouseEnter={() => setIsOverHud(true)}
+                  onMouseLeave={() => setIsOverHud(false)}
+                >
+                  <TerminalCardContent
+                    site={siteData}
+                    actionLabel="ALUNIZAR // 15 KM"
+                    onAction={handleAction}
+                  />
+                </SciFiHudPanel>
               </div>
-              <div className="text-[11px] text-cyan-300 font-mono flex items-center gap-3">
-                <span>LAT: {site.coordinates.latitude.toFixed(2)}°</span>
-                <span>LON: {site.coordinates.longitude.toFixed(2)}°</span>
-                <span>
-                  ELEV: {site.coordinates.elevation_m > 0 ? `+${site.coordinates.elevation_m}` : site.coordinates.elevation_m}m
-                </span>
-              </div>
-              {site.description && (
-                <div className="text-[10px] text-slate-300 max-w-[280px] mt-1 font-sans leading-tight border-t border-white/20 pt-1">
-                  {site.description}
-                </div>
-              )}
             </div>
           </Html>
         )}
