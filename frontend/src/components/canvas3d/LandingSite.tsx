@@ -96,7 +96,9 @@ function Terrain({ glb }: { glb: string }) {
         const m = o as THREE.Mesh
         m.material = material
         m.receiveShadow = true
-        m.castShadow = true
+        // The terrain is a 30 m/px heightfield: it cannot self-shadow within the 60 m shadow window, and
+        // casting would re-draw the whole mesh into the shadow map every frame. Only the lander casts.
+        m.castShadow = false
       }
     })
     return clone

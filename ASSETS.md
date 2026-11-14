@@ -5,8 +5,9 @@ Paths are relative to `frontend/public/`.
 
 ## Candidate landing sites (`models/<site>/`)
 Each folder has `<site>_15km.glb`, `<site>_heightmap_16bit.png` (uint16), `<site>_preview.png`, `<site>_meta.json`.
-- 15 km x 15 km at 1:1 scale (meters), 501x501 grid (30 m/px), 251,001 vertices, 500k triangles, ~1.7 MB each
-  (meshopt-compressed, see "Optimization" below).
+- 15 km x 15 km at 1:1 scale (meters), source grid 501x501 (30 m/px, 251,001 vertices, 500k triangles).
+  The shipped GLBs are simplified to 81k-146k triangles (max geometric error ~1 m) and meshopt-compressed (0.4-0.8 MB each),
+  see "Optimization" below.
 - Origin is the exact site center at [0, 0, 0]: the lander sits at Y = 0. Elevations are relative to the site center.
 - Source: LRO LOLA GDR polar stereographic, datum = lunar sphere R 1737.4 km (see `DATA_SOURCES.md`).
 
@@ -37,7 +38,7 @@ Load: `useGLTF('/models/<site>/<site>_15km.glb')`, `position=[0,0,0]`.
 - Pivot is offset: to put the feet at Y = 0 use `clone.position.set(2.0, 67.037, -67.037)`. Native height ~140 units, leg radius ~80.
 - Scale: 0.016 in the regional South Pole view (~2.24 units tall); 0.032 inspection close-up; 0.010 to 0.015 in the 15 km site scenes.
 - In the regional view: `landerY = groundY + 0.08`; ground ring at `groundY + 0.02`; comm beam from `landerY + 2.2` up to length 7.0.
-- ~450k triangles: the heaviest mesh in the site view. Kept at full detail (no simplification).
+- Simplified from ~450k to ~110k triangles (max error ~3.6 mm at scale 0.1), ~1 MB.
 
 ## Celestial (`models/celestial/`)
 - `Earth.glb` (~2.3 MB, 4096x3072 WebP color + normal maps). Earth sits 1-6 deg above the horizon at the South Pole (libration, ~14-day cycle).
@@ -63,6 +64,11 @@ Load: `useGLTF('/models/<site>/<site>_15km.glb')`, `position=[0,0,0]`.
   Position precision on site terrains: 15000 m / 2^16 = 0.23 m horizontal, ~0.06 m vertical (far below LOLA's 30 m/px grid).
   Quantization moves the dequantization into node transforms: do not overwrite node scale/position inside the GLB scenes.
 - Lander and Earth textures re-encoded to WebP (`EXT_texture_webp`): color quality 92, normal maps near-lossless.
+- Performance pass (site view, Radeon 680M, 1920x1080): 953k -> 266k triangles per frame, ~30 FPS -> 60 FPS (vsync).
+  Cause: the 500k-triangle terrain was vertex-bound (sub-pixel triangles far away) and was also re-drawn into the shadow map every frame.
+  Fixes: `gltf-transform simplify` (terrain `--error 0.0001` = ~1 m of the ~10.6 km mesh radius, `--lock-border`; lander `--error 0.0003` = ~3.6 mm after scale),
+  vertex normals/UVs are kept from the original so shading and micro-texture are unchanged. Terrain no longer casts shadows (only the lander does).
+  LOLA vertical accuracy is ~1 m, so the simplification error is within the data uncertainty.
 - Originals are in git history (commit before this change). Total GLB size 83 MB -> 12 MB.
 
 ## Known gaps
