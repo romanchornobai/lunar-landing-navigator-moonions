@@ -115,8 +115,10 @@ export function LandingSceneClean({
           maxDistance={350.0}
         />
       </Canvas>
-      <div className="absolute bottom-8 left-1/2 z-10 -translate-x-1/2">
-        <LedButton onClick={() => navigate('/vista-polar')}>POLO SUR</LedButton>
+      <div className="absolute top-6 left-6 z-10">
+        <LedButton variant="compact" onClick={() => navigate('/vista-polar')}>
+          POLO SUR
+        </LedButton>
       </div>
     </div>
   )
