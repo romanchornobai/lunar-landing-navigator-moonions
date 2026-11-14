@@ -4,7 +4,7 @@ import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Stars, useGLTF } from '@react-three/drei'
 import { useNavigate } from 'react-router-dom'
 import { LandingTerrainModel } from './LandingTerrainModel'
-import { LedButton } from '../ui/LedButton'
+import { ChevronLeft } from 'lucide-react'
 import { CockpitTelemetryHud, type LandingSiteData } from '../ui/CockpitTelemetryHud'
 import { FlightDateSelector } from '../ui/FlightDateSelector'
 import { EPHEMERIS_START_MS, getEphemerisAt, loadEphemeridesBuffer } from '@/utils/ephemerisClient'
@@ -150,9 +150,14 @@ export function LandingSceneClean({
         />
       </Canvas>
       <div className="absolute top-6 left-6 z-10">
-        <LedButton variant="compact" onClick={() => navigate('/vista-polar')}>
-          POLO SUR
-        </LedButton>
+        <button
+          onClick={() => navigate('/vista-polar')}
+          title="Volver al polo sur"
+          aria-label="Volver al polo sur"
+          className="w-10 h-10 flex items-center justify-center text-white/80 hover:text-white cursor-pointer transition-all hover:-translate-x-0.5 active:scale-90 drop-shadow-[0_0_6px_rgba(255,255,255,0.7)]"
+        >
+          <ChevronLeft size={34} strokeWidth={1.5} />
+        </button>
       </div>
 
       {/* Mission date selector, top center */}
