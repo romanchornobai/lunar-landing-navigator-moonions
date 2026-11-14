@@ -120,6 +120,19 @@ const W_CY = [
   1.8586173725387445,
 ]
 
+// Calibrated elevation datum weights: ensures elevation matches NASA landing site metadata
+// and preserves realistic local crater/mountain relief.
+const W_ELEV_DATUM = [
+  13.417694320520374,
+  -12.996683347344252,
+  0.5392825766022693,
+  -0.6115782612955242,
+  -0.34871528848286715,
+  -2527.7567164755847,
+  -57.779652523858665,
+  79.80181280648988,
+]
+
 function evalTPS(pts: [number, number][], weights: number[], u: number, v: number): number {
   let val = weights[5] + weights[6] * u + weights[7] * v
   for (let i = 0; i < 5; i++) {
@@ -184,7 +197,8 @@ export function scenePointToLunarCoords(point: { x: number; y: number; z: number
   while (lon < -180) lon += 360
 
   const rawElev = point.y / SCALE_Y + MEAN_Z
-  const elevation_m = Math.round((rawElev - MEAN_Z) * 220 + 2000)
+  const datum = evalTPS(ANCHORS_SCENE, W_ELEV_DATUM, point.x, point.z)
+  const elevation_m = Math.round(datum + (rawElev - MEAN_Z) * 180)
 
   return {
     latitude: Number(lat.toFixed(3)),

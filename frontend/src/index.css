@@ -27,3 +27,10 @@ html, body, #root { height: 100%; margin: 0; background: #000; color: #e2e8f0; }
 .polar-site-tooltip::before { display: none; }
 /* Hide hairline seams between tiles at fractional zoom levels */
 .south-polar-map .leaflet-tile-container img.leaflet-tile { width: 256.5px !important; height: 256.5px !important; }
+/* Probe panel over the bright 2D mosaic: opaque gray background, white text (readable on any imagery). */
+.south-polar-map .probe-anchor #sciFiHudGlass stop { stop-color: #2b2e35; stop-opacity: 1; }
+.south-polar-map .probe-anchor .text-neutral-400,
+.south-polar-map .probe-anchor .text-neutral-300,
+.south-polar-map .probe-anchor .text-neutral-100 { color: #ffffff; }
+/* Leaflet CSS gives every svg inside its panes z-index 200, which put the panel glass above its own text */
+.south-polar-map .probe-anchor svg { z-index: 0; }
