@@ -2,7 +2,7 @@
  * Client of the local area-search backend (backend/app/api/area.py, FastAPI on :8000, proxied by Vite at /api).
  * GET /api/area-search/stream?lat=&lon=  ->  Server-Sent Events 'start', 'candidate' (progress), 'result', 'error'.
  * The backend evaluates the highest LOLA pixel of every 250 m cell of a 15 x 15 km square centred at (lat, lon):
- * 100 km horizon, hourly Sun / Earth from JPL Horizons 2026-11-14..2029-11-14, 2 m mast (see DATA_SOURCES.md).
+ * 200 km horizon, hourly Sun / Earth from JPL Horizons 2026-11-14..2029-11-14, 2 m mast (see DATA_SOURCES.md).
  */
 
 export interface AreaCandidateStats {
