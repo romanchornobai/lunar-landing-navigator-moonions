@@ -215,7 +215,8 @@ export function LandingSceneClean({ siteId = 'cr1' }: LandingSceneCleanProps) {
       >
       <Canvas
         shadows
-        camera={{ position: CAMERA_END, fov: 50, near: 0.5, far: 35000.0 }}
+        // initial position = start of SiteIntroCamera (no jump when the scene finishes loading)
+        camera={{ position: [-75.2, 81.5, 89.6], fov: 50, near: 0.5, far: 35000.0 }}
         gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }}
       >
         <color attach="background" args={['#010306']} />
