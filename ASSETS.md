@@ -53,7 +53,7 @@ at a site of longitude `lon` is scene `(sin lon, 0, -cos lon)`, so a body at (az
 - Simplified from ~450k to ~110k triangles (max error ~3.6 mm at scale 0.1), ~1 MB.
 
 ## Celestial (`models/celestial/`)
-- `Earth.glb` (~145 KB, 1024x768 WebP color + normal maps, downsampled from 4096x3072: Earth is ~1 deg wide on screen). Earth sits 1-6 deg above the horizon at the South Pole (libration, ~14-day cycle).
+- `Earth.glb` (~116 KB, 1024x768 WebP color + normal maps, downsampled from 4096x3072: Earth is ~1 deg wide on screen). Earth sits 1-6 deg above the horizon at the South Pole (libration, ~14-day cycle).
 - Site 3D view (`components/canvas3d/SkyBodies.tsx`): Earth.glb normalized to radius 25 km x tan(0.95 deg) at 25 km,
   north pole pointing down, custom shader lit only by the Sun direction (correct phase); Sun = sphere of 30 km x
   tan(0.266 deg) at 30 km plus two additive glow sprites. Directions from the JPL Horizons buffer.
@@ -77,8 +77,8 @@ at a site of longitude `lon` is scene `(sin lon, 0, -cos lon)`, so a body at (az
 
 ## HUD icons (`models/icons/`)
 - Embedded textures downsampled to 512 px for load time (shown at ~64 px).
-- `sun_model.glb` (527 KB, was 28.8 MB): joined, simplified to ~3% of the original ~1M vertices (unlit material), meshopt-compressed.
-- `earth.glb` (149 KB): converted from `KHR_materials_pbrSpecularGlossiness` (not supported by three r162, rendered grey) to metal-rough, meshopt-compressed.
+- `sun_model.glb` (229 KB, was 28.8 MB): joined, simplified to ~3% of the original ~1M vertices (unlit material), meshopt-compressed.
+- `earth.glb` (96 KB): converted from `KHR_materials_pbrSpecularGlossiness` (not supported by three r162, rendered grey) to metal-rough, meshopt-compressed.
 - Both are normalized at runtime to a unit sphere (`CelestialReadout.tsx`), shown at ~64 px, spinning slowly.
 
 ## Optimization (done 2026-11-14, tuned for an integrated AMD Radeon laptop)
