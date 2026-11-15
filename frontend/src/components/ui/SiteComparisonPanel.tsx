@@ -15,7 +15,7 @@ const ROWS = [
   { key: 'sun' as const, url: CELESTIAL_MODELS.sun, earthLight: false },
 ]
 
-const ANIMATION_MS = 7000 // the whole period is played in this time, whatever its length
+const ANIMATION_MS = 3500 // the whole period is played in this time, whatever its length
 const REVEAL_MS = 450 // bars cascade in before the playback starts
 const STAGGER_MS = 60 // delay between consecutive columns
 const HOUR_MS = 3600 * 1000
