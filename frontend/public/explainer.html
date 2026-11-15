@@ -114,12 +114,12 @@
   /* the whole part (title, animation, text, sources) fits the visible window without scrolling: the frame takes the
      full width unless the window is too short for it, then it shrinks, keeping 16:9. ~300 px is the room for the
      title, the two text blocks and the PROCEED button. */
-  html.embed section.scene.active { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 10px; padding: 64px 16px 16px; overflow: hidden; }
-  html.embed section.scene.active > * { width: min(calc(100vw - 32px), calc((100vh - 300px) * 16 / 9)); margin: 0; }
+  html.embed section.scene.active { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 8px; padding: 56px 16px 12px; overflow: hidden; }
+  html.embed section.scene.active > * { width: min(calc(100vw - 32px), calc((100vh - 250px) * 16 / 9)); margin: 0; }
   html.embed .scene-dur { display: none; }
   html.embed .scene-head { display: flex; margin: 0; }
-  html.embed .caption { display: block; margin: 0; font-size: 15px; line-height: 1.5; }
-  html.embed .note { display: block; margin: 0; font-size: 12px; line-height: 1.55; }
+  html.embed .caption { display: block; margin: 0; font-size: 14px; line-height: 1.4; }
+  html.embed .note { display: block; margin: 0; font-size: 11.5px; line-height: 1.45; }
   html.embed .note a { color: var(--accent); }
   html.embed .frame { width: 100%; }
   html.embed .frame::after { display: none; }
