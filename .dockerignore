@@ -1,0 +1,9 @@
+.git
+.claude
+**/node_modules
+**/.venv
+**/__pycache__
+frontend/dist
+data/dem
+frontend/public/tiles
+frontend/public/textures/*.tif

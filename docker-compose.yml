@@ -1,0 +1,19 @@
+# Public deployment (VPS): web (nginx + built frontend) on 127.0.0.1:5680, api (FastAPI) on the internal network.
+# Git-ignored data stay in the clone and are mounted read-only: data/dem (LOLA DEMs), frontend/public/tiles (Moon Trek).
+# Update: deploy/update.sh
+services:
+  api:
+    build: { context: ., dockerfile: deploy/Dockerfile.api }
+    restart: unless-stopped
+    environment:
+      AREA_SEARCH_WORKERS: "${AREA_SEARCH_WORKERS:-2}"
+    volumes:
+      - ./data/dem:/app/data/dem:ro
+  web:
+    build: { context: ., dockerfile: deploy/Dockerfile.web }
+    restart: unless-stopped
+    depends_on: [api]
+    ports:
+      - "127.0.0.1:5680:80"
+    volumes:
+      - ./frontend/public/tiles:/usr/share/nginx/html/tiles:ro
