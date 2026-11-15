@@ -44,15 +44,16 @@ interface SkyBodiesProps {
   earth: BodyState
 }
 
-function glowTexture(): THREE.Texture {
+/** Radial glow; rgb = 'r,g,b' (default warm white for the Sun). */
+function glowTexture(rgb = '255,236,200'): THREE.Texture {
   const c = document.createElement('canvas')
   c.width = c.height = 256
   const g = c.getContext('2d')!
   const grad = g.createRadialGradient(128, 128, 0, 128, 128, 128)
-  grad.addColorStop(0, 'rgba(255,248,230,1)')
-  grad.addColorStop(0.15, 'rgba(255,240,205,0.55)')
-  grad.addColorStop(0.45, 'rgba(255,225,170,0.12)')
-  grad.addColorStop(1, 'rgba(255,220,160,0)')
+  grad.addColorStop(0, `rgba(${rgb},1)`)
+  grad.addColorStop(0.15, `rgba(${rgb},0.55)`)
+  grad.addColorStop(0.45, `rgba(${rgb},0.12)`)
+  grad.addColorStop(1, `rgba(${rgb},0)`)
   g.fillStyle = grad
   g.fillRect(0, 0, 256, 256)
   const t = new THREE.CanvasTexture(c)
@@ -125,19 +126,21 @@ const earthVertex = /* glsl */ `
 const earthFragment = /* glsl */ `
   uniform sampler2D map;
   uniform vec3 sunDir;
+  uniform float ambient;
   varying vec2 vUv;
   varying vec3 vNormalW;
   void main() {
     float lambert = max(dot(normalize(vNormalW), sunDir), 0.0);
-    vec3 c = texture2D(map, vUv).rgb * (1.25 * lambert + 0.015);
+    vec3 c = texture2D(map, vUv).rgb * (1.25 * lambert + ambient);
     gl_FragColor = vec4(c, 1.0);
     #include <colorspace_fragment>
   }
 `
 
-function Earth({ dir, sunDir }: { dir: THREE.Vector3; sunDir: THREE.Vector3 }) {
+function Earth({ dir, sunDir, night }: { dir: THREE.Vector3; sunDir: THREE.Vector3; night: boolean }) {
   const { scene } = useGLTF(EARTH_URL)
-  const uniforms = useMemo(() => ({ sunDir: { value: new THREE.Vector3() } }), [])
+  const glow = useMemo(() => glowTexture('170,205,255'), [])
+  const uniforms = useMemo(() => ({ sunDir: { value: new THREE.Vector3() }, ambient: { value: 0.015 } }), [])
   const model = useMemo(() => {
     const m = scene.clone(true)
     m.traverse((o) => {
@@ -145,7 +148,7 @@ function Earth({ dir, sunDir }: { dir: THREE.Vector3; sunDir: THREE.Vector3 }) {
       if (!mesh.isMesh) return
       const src = mesh.material as THREE.MeshStandardMaterial
       mesh.material = new THREE.ShaderMaterial({
-        uniforms: { map: { value: src.map }, sunDir: uniforms.sunDir },
+        uniforms: { map: { value: src.map }, sunDir: uniforms.sunDir, ambient: uniforms.ambient },
         vertexShader: earthVertex,
         fragmentShader: earthFragment,
       })
@@ -158,11 +161,25 @@ function Earth({ dir, sunDir }: { dir: THREE.Vector3; sunDir: THREE.Vector3 }) {
     setNorm({ center: box.getCenter(new THREE.Vector3()), radius: box.getSize(new THREE.Vector3()).x / 2 })
   }, [model])
   uniforms.sunDir.value.copy(sunDir)
+  // Night vision: the unlit side is lifted (legibility, not physical) and a halo makes the Earth easy to find.
+  uniforms.ambient.value = night ? 1.1 : 0.015
 
   const r = EARTH_DIST * Math.tan(EARTH_RADIUS_DEG * DEG)
   const s = norm ? r / norm.radius : 0
   return (
     <group position={dir.clone().multiplyScalar(EARTH_DIST)} rotation={[Math.PI, 0, 0]}>
+      {night && (
+        <>
+          <sprite scale={[r * 6, r * 6, 1]}>
+            <spriteMaterial map={glow} transparent opacity={1} blending={THREE.AdditiveBlending}
+              depthWrite={false} toneMapped={false} />
+          </sprite>
+          <sprite scale={[r * 16, r * 16, 1]}>
+            <spriteMaterial map={glow} transparent opacity={0.6} blending={THREE.AdditiveBlending}
+              depthWrite={false} toneMapped={false} />
+          </sprite>
+        </>
+      )}
       {norm && (
         <group scale={s}>
           <primitive object={model} position={norm.center.clone().negate()} />
@@ -188,6 +205,8 @@ function Lights({ sunDir, sunFraction, earthDir, earthVisible, earthPhase }: {
       {/* Soft fill so shadowed terrain stays readable (the Moon has no sky light: this is for legibility). */}
       <ambientLight color="#c9d1dc" intensity={night ? 0.95 : 0.42} />
       <hemisphereLight args={['#aab4c3', '#3a3d44', night ? 0.6 : 0.25]} />
+      {/* Night vision: a soft light over the lander's surroundings makes the nearby relief glow and read. */}
+      {night && <pointLight position={[0, 8, 0]} color="#d6e4ff" intensity={60} distance={180} decay={1.2} />}
       <directionalLight
         position={sunPos}
         color="#fff4e2"
@@ -300,7 +319,7 @@ export function SkyBodies({ siteLonDeg, horizonDeg, sun, earth }: SkyBodiesProps
         earthPhase={phase} />
       {horizonDeg && <HorizonRing horizonDeg={horizonDeg} siteLonDeg={siteLonDeg} />}
       <Sun dir={sunDir} fraction={sun.discFraction} />
-      <Earth dir={earthDir} sunDir={sunDir} />
+      <Earth dir={earthDir} sunDir={sunDir} night={sun.discFraction <= 0} />
       <BodyMarker dir={sunDir} radiusDeg={SUN_RADIUS_DEG} name="SOL" lines={sunLines} hidden={!sun.visible} />
       <BodyMarker dir={earthDir} radiusDeg={EARTH_RADIUS_DEG} name="TIERRA" lines={earthLines} hidden={!earth.visible} />
     </>
