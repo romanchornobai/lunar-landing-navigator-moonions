@@ -75,7 +75,7 @@ function ArtemisLander({ groundNormal = [-0.2871, 0.9229, -0.2567] }: { groundNo
 }
 
 /** Resting camera (scene units, metres) and orbit target next to the lander. */
-const CAMERA_END: Vec3 = [0, 23.4, -85.8] // looking from the opposite side (azimuth 180 deg)
+const CAMERA_END: Vec3 = [-42.9, 23.4, -74.3] // azimuth 210 deg (atan2(x, z)), same distance and height
 const CAMERA_TARGET: Vec3 = [0, 1.5, 0]
 const INTRO_S = 2.6
 
@@ -216,7 +216,7 @@ export function LandingSceneClean({ siteId = 'cr1' }: LandingSceneCleanProps) {
       <Canvas
         shadows
         // initial position = start of SiteIntroCamera (no jump when the scene finishes loading)
-        camera={{ position: [75.2, 81.5, -89.6], fov: 50, near: 0.5, far: 35000.0 }}
+        camera={{ position: [20.3, 81.5, -115.1], fov: 50, near: 0.5, far: 35000.0 }}
         gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }}
       >
         <color attach="background" args={['#010306']} />
