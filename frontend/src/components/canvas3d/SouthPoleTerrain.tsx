@@ -126,7 +126,7 @@ function Terrain({
   }, [elevations])
 
   // Intro flight: markers pop up one by one, in the order the orbiting camera sweeps past them
-  // (azimuth atan2(x, z) measured from the flight's start azimuth), between 30 % and 85 % of the flight.
+  // (azimuth atan2(x, z) measured from the flight's start azimuth), between 45 % and 95 % of the flight.
   const [revealed, setRevealed] = useState(0)
   const revealRank = useMemo(() => {
     const ranked = sitePositions
@@ -140,7 +140,7 @@ function Terrain({
   const handleIntroProgress = useCallback(
     (t: number) => {
       const n = sitePositions.length
-      const count = n === 0 ? 0 : Math.min(n, Math.floor(((t - 0.3) / 0.55) * n) + 1)
+      const count = n === 0 ? 0 : Math.min(n, Math.floor(((t - 0.45) / 0.5) * n) + 1)
       setRevealed((prev) => (count > prev ? count : prev))
     },
     [sitePositions.length],
