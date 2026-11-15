@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Moon, SatelliteDish } from 'lucide-react'
 import { SciFiHudPanel } from './SciFiHudPanel'
 import { CELESTIAL_MODELS, SpinningModelCanvas } from './CelestialReadout'
 import { SITES_IN_3D } from '../../data/sites'
@@ -110,32 +110,23 @@ function SiteDetail({ siteId, run, onBack }: { siteId: string; run: ComparisonRu
     const earth = run.lit[siteId].earth[n - 1]
     return { n, sun, earth, both, nightMax: longestGap(s.sun), noEarthMax: longestGap(s.earth) }
   }, [s, run, siteId])
-  const pct = (v: number) => `${Math.round((v / stats.n) * 100)}%`
   const endDate = new Date(run.startMs + (stats.n - 1) * HOUR_MS).toISOString().slice(0, 10)
   const startDate = new Date(run.startMs).toISOString().slice(0, 10)
   const { latitude, longitude, elevation_m } = site.coordinates
   // Entrance: each block fades/slides in a little after the previous one
-  const enter = (i: number): React.CSSProperties => ({ animation: `cmpDetailIn 0.4s cubic-bezier(0.16,1,0.3,1) ${i * 70}ms both` })
-
-  const metrics = [
-    { label: 'SOL VISIBLE', value: pct(stats.sun), sub: `${stats.sun} h` },
-    { label: 'TIERRA VISIBLE (DTE)', value: pct(stats.earth), sub: `${stats.earth} h` },
-    { label: 'SOL + TIERRA', value: pct(stats.both), sub: `${stats.both} h` },
-    { label: 'NOCHE MÁS LARGA', value: fmtHours(stats.nightMax), sub: 'sin Sol seguido' },
-    { label: 'SIN TIERRA MÁS LARGO', value: fmtHours(stats.noEarthMax), sub: 'sin enlace DTE seguido' },
-  ]
+  const enter = (i: number): React.CSSProperties => ({ animation: `cmpDetailIn 0.4s cubic-bezier(0.16,1,0.3,1) ${i * 80}ms both` })
 
   return (
     <div className="font-mono text-white select-none">
       <style>{`@keyframes cmpDetailIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }`}</style>
 
-      {/* Title bar: back arrow + site name */}
+      {/* Title bar: back arrow + site name + LOLA position */}
       <div className="flex items-center gap-4 pb-3 border-b border-white/25" style={enter(0)}>
         <button
           type="button"
           onClick={onBack}
           aria-label="Volver a la comparativa"
-          className="w-9 h-9 flex items-center justify-center border border-white/40 hover:border-white hover:bg-white hover:text-black transition-colors cursor-pointer"
+          className="w-9 h-9 shrink-0 flex items-center justify-center border border-white/40 hover:border-white hover:bg-white hover:text-black transition-colors cursor-pointer"
         >
           <ArrowLeft size={18} />
         </button>
@@ -143,75 +134,117 @@ function SiteDetail({ siteId, run, onBack }: { siteId: string; run: ComparisonRu
           <div className={`text-[16px] font-bold tracking-[0.18em] truncate ${site.kind === 'science' ? 'text-sky-400' : ''}`}>
             {site.name.toUpperCase()}
           </div>
-          <div className="text-[10px] tracking-[0.22em] text-neutral-400">
-            {site.kind === 'science' ? 'ZONA EN SOMBRA PERMANENTE · INTERÉS CIENTÍFICO' : 'CANDIDATO DE ATERRIZAJE'}
-            {site.nasa_region ? ` · ${site.nasa_region.toUpperCase()}` : ''}
+          <div className="text-[10px] tracking-[0.2em] text-neutral-400 tabular-nums">
+            {latitude.toFixed(2)}° · {longitude.toFixed(2)}° · {elevation_m} M
           </div>
         </div>
       </div>
 
-      <div className="grid md:grid-cols-[1fr_1.35fr] gap-x-8 gap-y-5 pt-5">
-        {/* Left: site facts from the cited publication + LOLA */}
-        <div className="flex flex-col gap-4 text-[12px] leading-relaxed">
-          <div className="grid grid-cols-3 gap-2" style={enter(1)}>
-            {[
-              ['LAT', `${latitude.toFixed(3)}°`],
-              ['LON', `${longitude.toFixed(3)}°`],
-              ['ALTURA', `${elevation_m} m`],
-            ].map(([k, v]) => (
-              <div key={k} className="border border-white/15 px-2 py-1.5">
-                <div className="text-[9px] tracking-[0.25em] text-neutral-500">{k}</div>
-                <div className="text-[13px] tabular-nums">{v}</div>
-              </div>
-            ))}
-          </div>
-          <p className="text-neutral-300" style={enter(2)}>{site.description}</p>
-          <div style={enter(3)}>
-            <div className="text-[9px] tracking-[0.25em] text-neutral-500 mb-1">PUBLICADO</div>
-            <p className="text-neutral-300">{site.published}</p>
-          </div>
-          <div className="flex flex-col gap-1" style={enter(4)}>
-            {site.sources.map((src) => (
-              <a
-                key={src.url}
-                href={src.url}
-                target="_blank"
-                rel="noreferrer"
-                className="text-[10px] tracking-[0.08em] text-neutral-400 hover:text-white underline underline-offset-2"
-              >
-                {src.label}
-              </a>
-            ))}
-          </div>
-        </div>
+      {/* Rings: share of the period with Sun / Earth / both visible */}
+      <div className="flex flex-wrap justify-center gap-x-10 gap-y-4 pt-6">
+        <Ring label="SOL" value={stats.sun / stats.n} delay={1} model={CELESTIAL_MODELS.sun} style={enter(1)} />
+        <Ring label="TIERRA" value={stats.earth / stats.n} delay={2} model={CELESTIAL_MODELS.earth} earthLight style={enter(2)} />
+        <Ring label="SOL + TIERRA" value={stats.both / stats.n} delay={3} style={enter(3)} />
+      </div>
 
-        {/* Right: what this run computed for the site (LOLA horizon + JPL Horizons, hourly) */}
-        <div className="flex flex-col gap-4">
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            {metrics.map((m, i) => (
-              <div key={m.label} className="border border-white/15 px-3 py-2" style={enter(1 + i)}>
-                <div className="text-[9px] tracking-[0.22em] text-neutral-500">{m.label}</div>
-                <div className="text-[22px] font-light leading-tight tabular-nums">{m.value}</div>
-                <div className="text-[9px] tracking-[0.15em] text-neutral-500">{m.sub}</div>
-              </div>
-            ))}
-          </div>
-          <div className="flex flex-col gap-2" style={enter(6)}>
-            {(['sun', 'earth'] as const).map((k) => (
-              <div key={k} className="flex items-center gap-3">
-                <span className="w-14 text-[9px] tracking-[0.22em] text-neutral-400">{k === 'sun' ? 'SOL' : 'TIERRA'}</span>
-                <div className="flex-1 min-w-0">
-                  <TimelineStrip data={s[k]} />
-                </div>
-              </div>
-            ))}
-            <div className="flex justify-between pl-[68px] text-[9px] tracking-[0.15em] text-neutral-500 tabular-nums">
-              <span>{startDate}</span>
-              <span>{endDate}</span>
+      {/* Longest stretches without Sun / without Earth */}
+      <div className="flex flex-wrap justify-center gap-3 pt-5" style={enter(4)}>
+        <div className="flex items-center gap-2 border border-white/15 px-3 py-1.5">
+          <Moon size={14} className="text-neutral-400" />
+          <span className="text-[9px] tracking-[0.22em] text-neutral-400">NOCHE MÁS LARGA</span>
+          <span className="text-[14px] tabular-nums">{fmtHours(stats.nightMax)}</span>
+        </div>
+        <div className="flex items-center gap-2 border border-white/15 px-3 py-1.5">
+          <SatelliteDish size={14} className="text-neutral-400" />
+          <span className="text-[9px] tracking-[0.22em] text-neutral-400">SIN TIERRA MÁS LARGO</span>
+          <span className="text-[14px] tabular-nums">{fmtHours(stats.noEarthMax)}</span>
+        </div>
+      </div>
+
+      {/* Timeline of the whole period: white = visible, red = hidden */}
+      <div className="flex flex-col gap-2 pt-6" style={enter(5)}>
+        {(['sun', 'earth'] as const).map((k) => (
+          <div key={k} className="flex items-center gap-3">
+            <span className="w-14 text-[9px] tracking-[0.22em] text-neutral-400">{k === 'sun' ? 'SOL' : 'TIERRA'}</span>
+            <div className="flex-1 min-w-0">
+              <TimelineStrip data={s[k]} />
             </div>
           </div>
+        ))}
+        <div className="flex justify-between pl-[68px] text-[9px] tracking-[0.15em] text-neutral-500 tabular-nums">
+          <span>{startDate}</span>
+          <span>{endDate}</span>
         </div>
       </div>
+
+      {site.sources[0] && (
+        <a
+          href={site.sources[0].url}
+          target="_blank"
+          rel="noreferrer"
+          className="block pt-4 text-center text-[9px] tracking-[0.08em] text-neutral-500 hover:text-white underline underline-offset-2"
+          style={enter(6)}
+        >
+          {site.sources[0].label}
+        </a>
+      )}
+    </div>
+  )
+}
+
+/** Ring gauge: white arc = share of the period with visibility, red track = without. Fills in on mount. */
+function Ring({
+  label,
+  value,
+  delay,
+  model,
+  earthLight = false,
+  style,
+}: {
+  label: string
+  value: number
+  delay: number
+  model?: string
+  earthLight?: boolean
+  style?: React.CSSProperties
+}) {
+  const [shown, setShown] = useState(0)
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setShown(value))
+    return () => cancelAnimationFrame(id)
+  }, [value])
+  const r = 52
+  const len = 2 * Math.PI * r
+  return (
+    <div className="flex flex-col items-center gap-2" style={style}>
+      <div className="relative w-[132px] h-[132px]">
+        <svg viewBox="0 0 132 132" className="absolute inset-0 -rotate-90">
+          <circle cx="66" cy="66" r={r} fill="none" stroke="rgba(239,68,68,0.55)" strokeWidth="7" />
+          <circle
+            cx="66"
+            cy="66"
+            r={r}
+            fill="none"
+            stroke="#fff"
+            strokeWidth="7"
+            strokeDasharray={len}
+            strokeDashoffset={len * (1 - shown)}
+            style={{
+              transition: `stroke-dashoffset 1.1s cubic-bezier(0.16,1,0.3,1) ${delay * 80 + 150}ms`,
+              filter: 'drop-shadow(0 0 5px rgba(255,255,255,0.6))',
+            }}
+          />
+        </svg>
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          {model && (
+            <div className="w-9 h-9">
+              <SpinningModelCanvas url={model} earthLight={earthLight} />
+            </div>
+          )}
+          <span className="text-[22px] font-light leading-none tabular-nums">{Math.round(value * 100)}%</span>
+        </div>
+      </div>
+      <span className="text-[10px] tracking-[0.25em] text-neutral-400">{label}</span>
     </div>
   )
 }
