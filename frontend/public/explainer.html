@@ -979,16 +979,24 @@
       document.documentElement.classList.add("embed");  // also set by the inline script in <head>
       const STEPS = [[2.9, 4.1, 6], [2.6, 5.0, 7], [4.4, 7], [2.2, 4.4, 6]];
       const flat = STEPS.flatMap((st, si) => st.map((_, k) => [si, k]));
-      let tw = null;
+      let tw = null, startTimer = 0;
       const show = (n) => {
         if (tw) tw.kill();
+        clearTimeout(startTimer);  // a quick second step must cancel the previous pending start
         if (n < 0) { scenes.forEach((s) => { s.root.classList.remove("active"); s.tl.pause(0); }); return; }
         const [si, k] = flat[Math.min(n, flat.length - 1)], from = k ? STEPS[si][k - 1] : 0, to = STEPS[si][k];
         scenes.forEach((s, i) => { s.root.classList.toggle("active", i === si); if (i !== si) s.tl.pause(0); });
         const s = scenes[si];
         s.tl.pause(from);
-        setTimeout(() => { s.resize(); tw = s.tl.tweenFromTo(from, to, { ease: "none" }); }, 60);
+        startTimer = setTimeout(() => { s.resize(); tw = s.tl.tweenFromTo(from, to, { ease: "none" }); }, 60);
       };
+      // keys pressed while the iframe has focus never reach the parent window: forward them
+      window.addEventListener("keydown", (e) => {
+        if (e.code === "Space" || e.key === "ArrowRight" || e.key === "ArrowLeft") {
+          e.preventDefault();
+          parent.postMessage({ type: "explainer-key", code: e.code, key: e.key, repeat: e.repeat }, "*");
+        }
+      });
       window.addEventListener("message", (e) => { if (e.data && e.data.type === "explainer-step") show(e.data.index | 0); });
       parent.postMessage({ type: "explainer-ready", total: flat.length }, "*");
       return;

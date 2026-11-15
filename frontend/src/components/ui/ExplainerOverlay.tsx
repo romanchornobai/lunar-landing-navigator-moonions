@@ -42,15 +42,21 @@ export function ExplainerOverlay({ progress, onPlay }: ExplainerOverlayProps) {
         send(part)
       }
     }
-    const onKey = (e: KeyboardEvent) => {
+    const onKey = (e: { code?: string; key?: string; repeat?: boolean; preventDefault?: () => void }) => {
       if (e.code === 'Space' || e.key === 'ArrowRight') go(1)
       else if (e.key === 'ArrowLeft') go(-1)
       else return
-      e.preventDefault()
+      e.preventDefault?.()
     }
+    // keys pressed while the iframe has focus are forwarded by explainer.html
+    const onFrameKey = (e: MessageEvent) => {
+      if (e.data?.type === 'explainer-key' && !e.data.repeat) onKey(e.data)
+    }
+    window.addEventListener('message', onFrameKey)
     window.addEventListener('message', onMessage)
     window.addEventListener('keydown', onKey)
     return () => {
+      window.removeEventListener('message', onFrameKey)
       window.removeEventListener('message', onMessage)
       window.removeEventListener('keydown', onKey)
     }
