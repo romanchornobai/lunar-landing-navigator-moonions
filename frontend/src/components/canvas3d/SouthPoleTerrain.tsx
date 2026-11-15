@@ -347,8 +347,8 @@ export default function SouthPoleTerrain() {
       <div className="absolute top-6 left-6 z-20">
         <button
           onClick={() => navigate('/vista-lunar')}
-          title="Volver al globo lunar"
-          aria-label="Volver al globo lunar"
+          title="Back to the lunar globe"
+          aria-label="Back to the lunar globe"
           className="w-10 h-10 flex items-center justify-center text-white/80 hover:text-white cursor-pointer transition-all hover:-translate-x-0.5 active:scale-90 drop-shadow-[0_0_6px_rgba(255,255,255,0.7)]"
         >
           <ChevronLeft size={34} strokeWidth={1.5} />
@@ -365,7 +365,7 @@ export default function SouthPoleTerrain() {
               ? 'text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.95)]'
               : 'text-white/80 drop-shadow-[0_0_6px_rgba(255,255,255,0.6)] hover:text-white hover:drop-shadow-[0_0_10px_rgba(255,255,255,0.95)]'
           }`}
-          title={isComparisonOpen ? 'Cerrar comparativa' : 'Comparar puntos de aterrizaje'}
+          title={isComparisonOpen ? 'Close comparison' : 'Compare landing sites'}
         >
           <BarChart3 className="w-7 h-7" strokeWidth={1.5} />
         </button>
@@ -381,11 +381,11 @@ export default function SouthPoleTerrain() {
           title={
             viewMode === '3d'
               ? isPickerActive
-                ? 'Desactivar selector de área'
-                : 'Seleccionar un área de 15 × 15 km'
+                ? 'Disable area selector'
+                : 'Select a 15 × 15 km area'
               : isPickerActive
-                ? 'Desactivar selector de coordenadas'
-                : 'Activar selector de coordenadas'
+                ? 'Disable coordinate picker'
+                : 'Enable coordinate picker'
           }
         >
           <Crosshair

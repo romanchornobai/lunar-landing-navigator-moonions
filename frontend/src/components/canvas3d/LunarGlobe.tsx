@@ -129,7 +129,7 @@ function engrave(
   return tex
 }
 
-/** EMPEZAR exit: the globe spins fast (ease-in) so the engraving turns away, then the next view opens. */
+/** START exit: the globe spins fast (ease-in) so the engraving turns away, then the next view opens. */
 const SPIN_S = 0.9
 const SPIN_RAD = Math.PI * 1.25
 
@@ -204,7 +204,7 @@ export default function LunarGlobe() {
       </Canvas>
       <div className="absolute bottom-8 left-1/2 z-10 -translate-x-1/2">
         <LedButton variant="compact" className="min-w-[190px]" onClick={() => setLeaving(true)}>
-          EMPEZAR
+          START
         </LedButton>
       </div>
     </div>

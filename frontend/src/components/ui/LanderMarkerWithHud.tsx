@@ -20,7 +20,7 @@ interface LanderMarkerWithHudProps {
       elevation_m?: number;
     };
     groundPos: THREE.Vector3;
-    direction?: 'left' | 'right'; // Hacia qué lado se despliega el panel
+    direction?: 'left' | 'right'; // Side the panel unfolds to
   };
   /** Undefined hides the ALUNIZAR button (no first-person terrain for this point yet). */
   onLandOnSite?: (siteId: string) => void;
@@ -75,7 +75,7 @@ export const LanderMarkerWithHud: React.FC<LanderMarkerWithHudProps> = ({
   const colorDone = useRef(false);
   const tmpColor = useRef(new THREE.Color());
 
-  // Rotación suave del lander cuando está en hover
+  // Smooth lander rotation while hovered
   useFrame((_, delta) => {
     // Pop-in: vertical stretch first (line grows from the ground), width follows with a little overshoot
     const root = rootRef.current;
@@ -174,7 +174,7 @@ export const LanderMarkerWithHud: React.FC<LanderMarkerWithHudProps> = ({
         <meshBasicMaterial ref={glowMatRef} color={revealed ? '#ffffff' : BEAM_START} transparent opacity={0.12} depthWrite={false} toneMapped={false} />
       </mesh>
 
-      {/* 1. Módulo Lunar con su Hitbox */}
+      {/* 1. Lunar module with its hitbox */}
       <group position={[0, lineHeight, 0]}>
         <group
           scale={LANDER_SCALE}
@@ -192,14 +192,14 @@ export const LanderMarkerWithHud: React.FC<LanderMarkerWithHudProps> = ({
               <primitive object={clonedScene} />
             )}
           </group>
-          {/* Hitbox transparente para facilitar pasar el ratón */}
+          {/* Transparent hitbox to make hovering easier */}
           <mesh position={[0, 67, 0]}>
             <cylinderGeometry args={[110, 110, 150, 16]} />
             <meshBasicMaterial transparent opacity={0.0} depthWrite={false} />
           </mesh>
         </group>
 
-        {/* 2. Tarjeta Holográfica proyectada al hacer Hover */}
+        {/* 2. Holographic card projected on hover */}
         {isHovered && (
           <Html position={[0, 2.0, 0]} center style={{ pointerEvents: 'none' }}>
             <div
@@ -213,7 +213,7 @@ export const LanderMarkerWithHud: React.FC<LanderMarkerWithHudProps> = ({
                 pointerEvents: 'auto',
               }}
             >
-              {/* TODAS LAS ANIMACIONES KEYFRAMES DE APERTURA HOLOGRÁFICA */}
+              {/* ALL HOLOGRAPHIC OPENING KEYFRAME ANIMATIONS */}
               <style>{`
                 @keyframes hudLineDrawRight {
                   0% { stroke-dashoffset: 140; opacity: 0; }
@@ -281,7 +281,7 @@ export const LanderMarkerWithHud: React.FC<LanderMarkerWithHudProps> = ({
                 }
               `}</style>
 
-              {/* LÍNEA GUÍA LÁSER VECTORIAL (Se dibuja desde la nave hasta el panel) */}
+              {/* VECTOR LASER GUIDE LINE (drawn from the lander to the panel) */}
               <svg
                 style={{
                   position: 'absolute',
@@ -332,7 +332,7 @@ export const LanderMarkerWithHud: React.FC<LanderMarkerWithHudProps> = ({
                   style={{ filter: 'drop-shadow(0 0 8px #ffffff)' }}
                 />
 
-                {/* Onda expansiva de proyección holográfica */}
+                {/* Holographic projection shockwave */}
                 <circle
                   cx={direction === 'right' ? 78 : 7}
                   cy="-22"
@@ -345,7 +345,7 @@ export const LanderMarkerWithHud: React.FC<LanderMarkerWithHudProps> = ({
                 />
               </svg>
 
-              {/* CONTENEDOR CON LA ANIMACIÓN HOLOGRÁFICA EXPANSIVA */}
+              {/* CONTAINER WITH THE EXPANDING HOLOGRAPHIC ANIMATION */}
               <div
                 ref={panelRef}
                 style={{
@@ -361,10 +361,10 @@ export const LanderMarkerWithHud: React.FC<LanderMarkerWithHudProps> = ({
                 }}
                 className="w-[350px] sm:w-[390px]"
               >
-                <SciFiHudPanel badgeTitle={site.kind === 'science' ? 'INTERÉS CIENTÍFICO' : 'TELEMETRÍA'}>
+                <SciFiHudPanel badgeTitle={site.kind === 'science' ? 'SCIENCE INTEREST' : 'TELEMETRY'}>
                   <TerminalCardContent
                     site={site}
-                    actionLabel="ALUNIZAR"
+                    actionLabel="LAND"
                     delayStartMs={220}
                     onAction={onLandOnSite ? () => onLandOnSite(site.id) : undefined}
                   />

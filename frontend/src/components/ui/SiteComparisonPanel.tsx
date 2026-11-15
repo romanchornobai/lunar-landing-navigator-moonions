@@ -68,8 +68,8 @@ function longestGap(s: Uint8Array): number {
   return best
 }
 
-/** Hours -> "N h" below 48 h, otherwise "N,N días" (Earth days of 24 h). */
-const fmtHours = (h: number) => (h < 48 ? `${h} h` : `${(h / 24).toFixed(1).replace('.', ',')} días`)
+/** Hours -> "N h" below 48 h, otherwise "N.N days" (Earth days of 24 h). */
+const fmtHours = (h: number) => (h < 48 ? `${h} h` : `${(h / 24).toFixed(1)} days`)
 
 /** One canvas strip: each pixel column = share of its hours with visibility (white) vs. none (dim red). */
 function TimelineStrip({ data }: { data: Uint8Array }) {
@@ -125,7 +125,7 @@ function SiteDetail({ siteId, run, onBack }: { siteId: string; run: ComparisonRu
         <button
           type="button"
           onClick={onBack}
-          aria-label="Volver a la comparativa"
+          aria-label="Back to comparison"
           className="w-9 h-9 shrink-0 flex items-center justify-center border border-white/40 hover:border-white hover:bg-white hover:text-black transition-colors cursor-pointer"
         >
           <ArrowLeft size={18} />
@@ -142,21 +142,21 @@ function SiteDetail({ siteId, run, onBack }: { siteId: string; run: ComparisonRu
 
       {/* Rings: share of the period with Sun / Earth / both visible */}
       <div className="flex flex-wrap justify-center gap-x-10 gap-y-4 pt-6">
-        <Ring label="SOL" value={stats.sun / stats.n} delay={1} model={CELESTIAL_MODELS.sun} style={enter(1)} />
-        <Ring label="TIERRA" value={stats.earth / stats.n} delay={2} model={CELESTIAL_MODELS.earth} earthLight style={enter(2)} />
-        <Ring label="SOL + TIERRA" value={stats.both / stats.n} delay={3} style={enter(3)} />
+        <Ring label="SUN" value={stats.sun / stats.n} delay={1} model={CELESTIAL_MODELS.sun} style={enter(1)} />
+        <Ring label="EARTH" value={stats.earth / stats.n} delay={2} model={CELESTIAL_MODELS.earth} earthLight style={enter(2)} />
+        <Ring label="SUN + EARTH" value={stats.both / stats.n} delay={3} style={enter(3)} />
       </div>
 
       {/* Longest stretches without Sun / without Earth */}
       <div className="flex flex-wrap justify-center gap-3 pt-5" style={enter(4)}>
         <div className="flex items-center gap-2 border border-white/15 px-3 py-1.5">
           <Moon size={14} className="text-neutral-400" />
-          <span className="text-[9px] tracking-[0.22em] text-neutral-400">NOCHE MÁS LARGA</span>
+          <span className="text-[9px] tracking-[0.22em] text-neutral-400">LONGEST NIGHT</span>
           <span className="text-[14px] tabular-nums">{fmtHours(stats.nightMax)}</span>
         </div>
         <div className="flex items-center gap-2 border border-white/15 px-3 py-1.5">
           <SatelliteDish size={14} className="text-neutral-400" />
-          <span className="text-[9px] tracking-[0.22em] text-neutral-400">SIN TIERRA MÁS LARGO</span>
+          <span className="text-[9px] tracking-[0.22em] text-neutral-400">LONGEST WITHOUT EARTH</span>
           <span className="text-[14px] tabular-nums">{fmtHours(stats.noEarthMax)}</span>
         </div>
       </div>
@@ -165,7 +165,7 @@ function SiteDetail({ siteId, run, onBack }: { siteId: string; run: ComparisonRu
       <div className="flex flex-col gap-2 pt-6" style={enter(5)}>
         {(['sun', 'earth'] as const).map((k) => (
           <div key={k} className="flex items-center gap-3">
-            <span className="w-14 text-[9px] tracking-[0.22em] text-neutral-400">{k === 'sun' ? 'SOL' : 'TIERRA'}</span>
+            <span className="w-14 text-[9px] tracking-[0.22em] text-neutral-400">{k === 'sun' ? 'SUN' : 'EARTH'}</span>
             <div className="flex-1 min-w-0">
               <TimelineStrip data={s[k]} />
             </div>
@@ -327,19 +327,19 @@ export const SiteComparisonPanel: React.FC<SiteComparisonPanelProps> = ({ onClos
     if (raf.current !== null) cancelAnimationFrame(raf.current)
   }, [])
 
-  // EMPEZAR: compute every point at once (hourly, LOLA horizon + JPL Horizons) and play the period in 7 s.
+  // START: compute every point at once (hourly, LOLA horizon + JPL Horizons) and play the period in 7 s.
   const start = useCallback(async () => {
     if (raf.current !== null) cancelAnimationFrame(raf.current)
     setError(null)
     try {
       await loadEphemeridesBuffer()
     } catch {
-      setError('No se pudieron cargar las efemérides')
+      setError('Could not load the ephemerides')
       return
     }
     const r = buildRun(startDay, endDay)
     if (!r) {
-      setError('Rango de fechas fuera de las efemérides')
+      setError('Date range outside the ephemerides')
       return
     }
     setRun(r)
@@ -417,9 +417,9 @@ export const SiteComparisonPanel: React.FC<SiteComparisonPanelProps> = ({ onClos
         className="absolute top-6 left-1/2 -translate-x-1/2 w-max max-w-[calc(100vw-260px)] flex flex-wrap items-center justify-center gap-x-8 gap-y-3 font-mono text-white"
         onClick={(e) => e.stopPropagation()}
       >
-        <DateField label="INICIO" value={startDay} min={MIN_DAY} max={MAX_DAY} onChange={changeStart} />
+        <DateField label="START" value={startDay} min={MIN_DAY} max={MAX_DAY} onChange={changeStart} />
         <span className="text-neutral-500 text-lg select-none">→</span>
-        <DateField label="FIN" value={endDay} min={MIN_DAY} max={MAX_DAY} onChange={changeEnd} />
+        <DateField label="END" value={endDay} min={MIN_DAY} max={MAX_DAY} onChange={changeEnd} />
         <button
           type="button"
           onClick={start}
@@ -427,7 +427,7 @@ export const SiteComparisonPanel: React.FC<SiteComparisonPanelProps> = ({ onClos
           className="h-[34px] px-6 disabled:opacity-60 disabled:cursor-default bg-white text-black text-[12px] font-black tracking-[0.3em] uppercase cursor-pointer transition-all hover:shadow-[0_0_18px_rgba(255,255,255,0.7)] active:scale-95"
           style={{ clipPath: 'polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%)' }}
         >
-          {running ? 'CALCULANDO…' : 'EMPEZAR'}
+          {running ? 'COMPUTING…' : 'START'}
         </button>
         {error && <div className="basis-full text-center text-[11px] tracking-[0.25em] text-red-300">{error}</div>}
         {run && !error && (
@@ -436,14 +436,14 @@ export const SiteComparisonPanel: React.FC<SiteComparisonPanelProps> = ({ onClos
               <div className="absolute inset-y-0 left-0 bg-white" style={{ width: `${progress * 100}%` }} />
             </div>
             <div className="text-[11px] tracking-[0.25em] text-neutral-300 tabular-nums">
-              DÍA {currentDay} / {run.nDays} · {currentDate}
+              DAY {currentDay} / {run.nDays} · {currentDate}
             </div>
           </div>
         )}
       </div>
 
       <div className="w-[min(1000px,92vw)]" onClick={(e) => e.stopPropagation()}>
-        <SciFiHudPanel badgeTitle={detailId ? 'DETALLE' : 'COMPARATIVA'}>
+        <SciFiHudPanel badgeTitle={detailId ? 'DETAIL' : 'COMPARISON'}>
           {detailId && run && finished ? (
             <SiteDetail siteId={detailId} run={run} onBack={() => setDetailId(null)} />
           ) : (
@@ -461,7 +461,7 @@ export const SiteComparisonPanel: React.FC<SiteComparisonPanelProps> = ({ onClos
                 className={`py-3 px-1 text-center text-[11px] sm:text-[12px] font-bold tracking-[0.18em] border-b border-white/25 ${
                   c.science ? 'text-sky-400' : ''
                 }`}
-                title={c.science ? 'Zona en sombra permanente (interés científico, no aterrizaje)' : undefined}
+                title={c.science ? 'Permanently shadowed zone (science interest, not a landing site)' : undefined}
               >
                 {finished ? (
                   <button
@@ -498,8 +498,8 @@ export const SiteComparisonPanel: React.FC<SiteComparisonPanelProps> = ({ onClos
             ))}
           </div>
           <p className="mt-3 text-center font-mono text-[10px] tracking-[0.2em] text-neutral-500">
-            % DEL TIEMPO CON SOL / TIERRA VISIBLE · MÁSTIL {DEFAULT_MAST_M} M
-            {finished ? ' · PULSA UN SITIO PARA VER EL DETALLE' : ''}
+            % OF TIME WITH SUN / EARTH VISIBLE · MAST {DEFAULT_MAST_M} M
+            {finished ? ' · CLICK A SITE FOR DETAILS' : ''}
           </p>
           </>
           )}

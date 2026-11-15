@@ -16,7 +16,7 @@ interface ProbeHoloPanelProps {
 }
 
 /**
- * Holographic "SONDA DE SUPERFICIE" panel anchored at a 1x1 px origin (the probed point).
+ * Holographic "SURFACE PROBE" panel anchored at a 1x1 px origin (the probed point).
  * Shared by the 3D terrain probe (drei Html) and the 2D polar map probe.
  */
 export function ProbeHoloPanel({ coords, direction, extra, onClose }: ProbeHoloPanelProps) {
@@ -24,7 +24,7 @@ export function ProbeHoloPanel({ coords, direction, extra, onClose }: ProbeHoloP
   const lonStr = `${Math.abs(coords.longitude).toFixed(3)}° ${coords.longitude < 0 ? 'W' : 'E'}`
   const elevStr =
     coords.elevation_m === null
-      ? 'N/D'
+      ? 'N/A'
       : `≈ ${coords.elevation_m >= 0 ? '+' : ''}${coords.elevation_m.toLocaleString()} m`
 
   return (
@@ -100,19 +100,19 @@ export function ProbeHoloPanel({ coords, direction, extra, onClose }: ProbeHoloP
         }}
         className="w-[340px] sm:w-[370px]"
       >
-        <SciFiHudPanel badgeTitle="TELEMETRÍA">
+        <SciFiHudPanel badgeTitle="TELEMETRY">
           <div className="font-mono text-xs select-none tracking-wide text-neutral-100">
             <div className="flex items-center justify-between border-b border-white/20 pb-2 mb-3">
               <div className="flex items-center gap-2">
                 <Crosshair className="w-4 h-4 text-white" />
                 <span className="font-bold text-white tracking-widest text-[13px] uppercase">
-                  SONDA DE SUPERFICIE
+                  SURFACE PROBE
                 </span>
               </div>
               <button
                 onClick={onClose}
                 className="text-neutral-400 hover:text-white transition-colors p-1 rounded hover:bg-white/10 cursor-pointer"
-                title="Cerrar panel"
+                title="Close panel"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -121,13 +121,13 @@ export function ProbeHoloPanel({ coords, direction, extra, onClose }: ProbeHoloP
             <div className="grid grid-cols-2 gap-2.5 mb-2.5 p-2.5 rounded bg-white/[0.04] border border-white/15 backdrop-blur-sm">
               <div>
                 <span className="text-[9px] text-neutral-400 block uppercase tracking-widest mb-0.5">
-                  LATITUD
+                  LATITUDE
                 </span>
                 <span className="text-white font-semibold text-xs tracking-tight">{latStr}</span>
               </div>
               <div>
                 <span className="text-[9px] text-neutral-400 block uppercase tracking-widest mb-0.5">
-                  LONGITUD
+                  LONGITUDE
                 </span>
                 <span className="text-white font-semibold text-xs tracking-tight">{lonStr}</span>
               </div>
@@ -136,7 +136,7 @@ export function ProbeHoloPanel({ coords, direction, extra, onClose }: ProbeHoloP
             <div className="grid grid-cols-2 gap-2.5 mb-2.5 p-2.5 rounded bg-white/[0.04] border border-white/15 backdrop-blur-sm">
               <div>
                 <span className="text-[9px] text-neutral-400 block uppercase tracking-widest mb-0.5">
-                  ALTITUD
+                  ALTITUDE
                 </span>
                 <span className="text-white font-bold text-xs tracking-tight">{elevStr}</span>
               </div>
@@ -150,9 +150,9 @@ export function ProbeHoloPanel({ coords, direction, extra, onClose }: ProbeHoloP
 
             <div className="mt-3 text-[10px] text-neutral-400 border-t border-white/10 pt-2 flex items-center justify-between">
               <span className="tracking-wider uppercase text-[9px] text-neutral-300">
-                MODELO CIENTÍFICO LRO LOLA
+                LRO LOLA SCIENTIFIC MODEL
               </span>
-              <span className="text-[9px] text-neutral-400">ALTITUD ±260 M</span>
+              <span className="text-[9px] text-neutral-400">ALTITUDE ±260 M</span>
             </div>
           </div>
         </SciFiHudPanel>

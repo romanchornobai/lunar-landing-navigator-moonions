@@ -225,8 +225,8 @@ function Lights({ sunDir, sunFraction, earthDir, earthVisible, earthPhase }: {
 
 const fmtDeg = (v: number) => `${v > 0 ? '+' : ''}${v.toFixed(1)}°`
 function fmtHours(h: number | null): string {
-  if (h === null) return 'más de 60 días'
-  if (h < 1) return 'menos de 1 h'
+  if (h === null) return 'more than 60 days'
+  if (h < 1) return 'less than 1 h'
   const d = Math.floor(h / 24)
   const hh = Math.round(h - d * 24)
   return d > 0 ? `${d} d ${hh} h` : `${hh} h`
@@ -292,20 +292,20 @@ export function SkyBodies({ siteLonDeg, horizonDeg, sun, earth }: SkyBodiesProps
   const below = (b: BodyState, r: number) => b.elevation + r <= 0
   const sunLines = [
     `AZ ${sun.azimuth.toFixed(1)}°  EL ${fmtDeg(sun.elevation)}`,
-    `Relieve en esa dirección: ${fmtDeg(sun.horizon)}`,
+    `Terrain in that direction: ${fmtDeg(sun.horizon)}`,
     sun.visible
-      ? `Visible: ${Math.round(sun.discFraction * 100)} % del disco`
+      ? `Visible: ${Math.round(sun.discFraction * 100)} % of the disc`
       : below(sun, SUN_RADIUS_DEG)
-        ? 'Bajo el horizonte'
-        : 'Tapado por el relieve',
-    `${sun.visible ? 'Se oculta' : 'Vuelve'} en ${fmtHours(sun.hoursToChange)}`,
+        ? 'Below the horizon'
+        : 'Blocked by terrain',
+    `${sun.visible ? 'Sets' : 'Returns'} in ${fmtHours(sun.hoursToChange)}`,
   ]
   const earthLines = [
     `AZ ${earth.azimuth.toFixed(1)}°  EL ${fmtDeg(earth.elevation)}`,
-    `Relieve en esa dirección: ${fmtDeg(earth.horizon)}`,
-    earth.visible ? 'Enlace directo (DTE) posible' : `Sin enlace DTE: ${below(earth, 0) ? 'bajo el horizonte' : 'tapada por el relieve'}`,
-    `${earth.visible ? 'Se pierde' : 'Vuelve'} en ${fmtHours(earth.hoursToChange)}`,
-    `Fase: ${Math.round(phase * 100)} % iluminada`,
+    `Terrain in that direction: ${fmtDeg(earth.horizon)}`,
+    earth.visible ? 'Direct-to-Earth (DTE) link possible' : `No DTE link: ${below(earth, 0) ? 'below the horizon' : 'blocked by terrain'}`,
+    `${earth.visible ? 'Lost' : 'Returns'} in ${fmtHours(earth.hoursToChange)}`,
+    `Phase: ${Math.round(phase * 100)} % illuminated`,
   ]
 
   return (
@@ -315,8 +315,8 @@ export function SkyBodies({ siteLonDeg, horizonDeg, sun, earth }: SkyBodiesProps
       {horizonDeg && <HorizonRing horizonDeg={horizonDeg} siteLonDeg={siteLonDeg} />}
       <Sun dir={sunDir} fraction={sun.discFraction} />
       <Earth dir={earthDir} sunDir={sunDir} night={sun.discFraction <= 0} />
-      <BodyMarker dir={sunDir} radiusDeg={SUN_RADIUS_DEG} name="SOL" lines={sunLines} hidden={!sun.visible} />
-      <BodyMarker dir={earthDir} radiusDeg={EARTH_RADIUS_DEG} name="TIERRA" lines={earthLines} hidden={!earth.visible} />
+      <BodyMarker dir={sunDir} radiusDeg={SUN_RADIUS_DEG} name="SUN" lines={sunLines} hidden={!sun.visible} />
+      <BodyMarker dir={earthDir} radiusDeg={EARTH_RADIUS_DEG} name="EARTH" lines={earthLines} hidden={!earth.visible} />
     </>
   )
 }

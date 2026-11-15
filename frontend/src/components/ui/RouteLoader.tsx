@@ -11,9 +11,9 @@ const FADE_MS = 500
 const FINISH_MS = 300 // time the bar takes to reach 100% before the fade-out starts
 
 const TITLES: Record<string, string> = {
-  '/vista-lunar': 'VISTA LUNAR',
-  '/vista-polar': 'POLO SUR',
-  '/vista-sitio': 'SITIO DE ATERRIZAJE',
+  '/vista-lunar': 'LUNAR VIEW',
+  '/vista-polar': 'SOUTH POLE',
+  '/vista-sitio': 'LANDING SITE',
 }
 
 function titleFor(pathname: string) {

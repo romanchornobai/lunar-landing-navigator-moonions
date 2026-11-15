@@ -9,7 +9,7 @@
     "centerElevationM": 5128,
     "reliefSpanM": 3156,
     "glbPath": "/models/malapert_massif/malapert_massif_15km.glb",
-    "description": "Cumbre de más de 5.000 m con visibilidad de 360°.",
+    "description": "Summit above 5,000 m with 360° visibility.",
     "groundNormal": [0.0742, 0.9965, -0.0373]
   },
   "de-gerlache-rim": {
@@ -22,7 +22,7 @@
     "centerElevationM": 1766,
     "reliefSpanM": 2521,
     "glbPath": "/models/de_gerlache_rim/de_gerlache_rim_15km.glb",
-    "description": "Meseta elevada entre cuencas de impacto.",
+    "description": "Elevated plateau between impact basins.",
     "groundNormal": [0.0076, 0.9953, 0.0965]
   },
   "nobile-rim-1": {
@@ -35,7 +35,7 @@
     "centerElevationM": 6504,
     "reliefSpanM": 2946,
     "glbPath": "/models/nobile_rim_1/nobile_rim_1_15km.glb",
-    "description": "Cordillera sobre el cráter Nobile.",
+    "description": "Mountain range above Nobile crater.",
     "groundNormal": [-0.2347, 0.9716, -0.0312]
   }
 }

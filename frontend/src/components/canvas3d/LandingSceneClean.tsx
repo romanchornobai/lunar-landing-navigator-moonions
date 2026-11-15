@@ -26,9 +26,9 @@ const NIGHT_VISION_FILTER = 'grayscale(1) sepia(1) hue-rotate(78deg) saturate(3.
 
 const SITE_INFO_MAP: Record<SiteKey, { name: string; shortName: string }> = {
   cr1: { name: 'Connecting Ridge (CR1)', shortName: 'CR1' },
-  malapert: { name: 'Macizo de Malapert (Peak A)', shortName: 'Malapert' },
-  degerlache: { name: 'Borde de Faustini / De Gerlache', shortName: 'De Gerlache' },
-  nobile: { name: 'Cresta del Cráter Nobile', shortName: 'Nobile' },
+  malapert: { name: 'Malapert Massif (Peak A)', shortName: 'Malapert' },
+  degerlache: { name: 'Faustini / De Gerlache Rim', shortName: 'De Gerlache' },
+  nobile: { name: 'Nobile Crater Ridge', shortName: 'Nobile' },
 }
 
 // Artemis lunar lander centered on the ground at [0,0,0]
@@ -255,8 +255,8 @@ export function LandingSceneClean({ siteId = 'cr1' }: LandingSceneCleanProps) {
       <div className="absolute top-6 left-6 z-10">
         <button
           onClick={() => navigate('/vista-polar')}
-          title="Volver al polo sur"
-          aria-label="Volver al polo sur"
+          title="Back to the south pole"
+          aria-label="Back to the south pole"
           className="w-10 h-10 flex items-center justify-center text-white/80 hover:text-white cursor-pointer transition-all hover:-translate-x-0.5 active:scale-90 drop-shadow-[0_0_6px_rgba(255,255,255,0.7)]"
         >
           <ChevronLeft size={34} strokeWidth={1.5} />

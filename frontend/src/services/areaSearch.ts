@@ -67,8 +67,8 @@ export function startAreaSearch(lat: number, lon: number, handlers: AreaSearchHa
     const data = (e as MessageEvent).data
     handlers.onError(
       data
-        ? JSON.parse(data).detail ?? 'Error en el cálculo'
-        : 'Servidor de cálculo no disponible. Arranca el backend local (puerto 8000).',
+        ? JSON.parse(data).detail ?? 'Computation error'
+        : 'Computation server unavailable. Start the local backend (port 8000).',
     )
   })
 

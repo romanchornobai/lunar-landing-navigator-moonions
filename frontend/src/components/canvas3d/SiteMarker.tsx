@@ -29,7 +29,7 @@ export function SiteMarker({ site, position, lineHeight = 6.0, revealed = true }
     }
   }, [site, position])
 
-  // ALUNIZAR only where the 15 km first-person terrain exists (scene_key); hidden otherwise.
+  // LAND only where the 15 km first-person terrain exists (scene_key); hidden otherwise.
   const sceneKey = site.scene_key
   const handleLandOnSite = sceneKey ? () => navigate(`/vista-sitio/${sceneKey}`) : undefined
 

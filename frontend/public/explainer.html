@@ -1,11 +1,11 @@
 <!doctype html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <script>if (/[?&]embed/.test(location.search)) document.documentElement.classList.add("embed");</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Cómo funciona · Lunar Landing Site Navigator</title>
-<meta name="description" content="Cuatro animaciones cortas que explican cómo el Lunar Landing Site Navigator encuentra el mejor punto de aterrizaje con relieve LRO LOLA y efemérides de JPL Horizons.">
+<title>How it works · Lunar Landing Site Navigator</title>
+<meta name="description" content="Four short animations explaining how the Lunar Landing Site Navigator finds the best landing point using LRO LOLA terrain and JPL Horizons ephemerides.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -119,36 +119,36 @@
 <div class="wrap">
   <header>
     <div class="eyebrow">NASA Space Apps 2026 · Lunar Landing Site Navigator</div>
-    <h1>Cómo encontramos el mejor punto de aterrizaje</h1>
-    <p class="lead">Eliges un área de 15 × 15 km cerca del polo sur lunar. En segundos, el Navigator prueba 150 puntos contra el relieve real y tres años de posiciones del Sol y la Tierra. Todo lo que ves son datos reales de una búsqueda alrededor de Connecting Ridge.</p>
+    <h1>How we find the best landing point</h1>
+    <p class="lead">You pick a 15 × 15 km area near the lunar south pole. In seconds, the Navigator tests 150 points against the real terrain and three years of Sun and Earth positions. Everything you see is real data from a search around Connecting Ridge.</p>
     <div class="toolbar">
       <button class="btn" id="play-all" type="button">
         <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4v16l14-8z"/></svg>
-        Reproducir todo · 26 s
+        Play all · 26 s
       </button>
-      <nav class="flow" aria-label="Pasos">
-        <a href="#s1">Candidatos</a>›<a href="#s2">Horizonte</a>›<a href="#s3">Sol y Tierra</a>›<a href="#s4">Ranking</a>
+      <nav class="flow" aria-label="Steps">
+        <a href="#s1">Candidates</a>›<a href="#s2">Horizon</a>›<a href="#s3">Sun and Earth</a>›<a href="#s4">Ranking</a>
       </nav>
     </div>
   </header>
 
   <!-- ===================================================== 1 -->
   <section class="scene" id="s1">
-    <div class="scene-head"><span class="scene-num">01</span><h2 class="scene-title">De medio millón de píxeles a 150 candidatos</h2><span class="scene-dur">6 s</span></div>
+    <div class="scene-head"><span class="scene-num">01</span><h2 class="scene-title">From half a million pixels to 150 candidates</h2><span class="scene-dur">6 s</span></div>
     <div class="frame">
       <div class="stage">
         <canvas></canvas>
         <div class="fx hud">
-          <div class="phase" data-a="0" data-b="1.4"><div class="kicker">01 · Candidatos</div><div class="headline">Área de 15 × 15 km con el relieve real de LOLA</div></div>
-          <div class="phase" data-a="1.4" data-b="3.2"><div class="kicker">01 · Candidatos</div><div class="headline">Celdas de 240 m: el punto más alto de cada una</div></div>
-          <div class="phase" data-a="2.9" data-b="4.4"><div class="kicker">01 · Candidatos</div><div class="headline">Un máximo local por celda</div></div>
-          <div class="phase" data-a="4.1" data-b="6"><div class="kicker">01 · Candidatos</div><div class="headline">Los 150 más altos son los candidatos</div></div>
+          <div class="phase" data-a="0" data-b="1.4"><div class="kicker">01 · Candidates</div><div class="headline">15 × 15 km area with the real LOLA terrain</div></div>
+          <div class="phase" data-a="1.4" data-b="3.2"><div class="kicker">01 · Candidates</div><div class="headline">240 m cells: the highest point of each one</div></div>
+          <div class="phase" data-a="2.9" data-b="4.4"><div class="kicker">01 · Candidates</div><div class="headline">One local maximum per cell</div></div>
+          <div class="phase" data-a="4.1" data-b="6"><div class="kicker">01 · Candidates</div><div class="headline">The 150 highest are the candidates</div></div>
         </div>
       </div>
       <div class="controls"></div>
     </div>
-    <p class="caption">Nos quedamos con el <b>punto más alto de cada celda de 240&nbsp;m</b> y, de todos ellos, con los <b>150 más altos</b>.</p>
-    <p class="note">LRO LOLA LDEM_85S_20M (alturas sobre R = 1737,4 km). Área centrada en Connecting Ridge CR1 (89,44° S, 137,19° O), proyección polar estereográfica.</p>
+    <p class="caption">We keep the <b>highest point of each 240&nbsp;m cell</b> and, of all of them, the <b>150 highest</b>.</p>
+    <p class="note">LRO LOLA LDEM_85S_20M (heights above R = 1737.4 km). Area centered on Connecting Ridge CR1 (89.44° S, 137.19° W), polar stereographic projection.</p>
   </section>
 
   <!-- ===================================================== 2 -->
@@ -158,68 +158,68 @@
       <div class="stage">
         <canvas></canvas>
         <div class="fx hud">
-          <div class="phase" data-a="0" data-b="2.9"><div class="kicker">02 · Horizonte</div><div class="headline">El punto más empinado del rayo marca el horizonte</div></div>
-          <div class="phase" data-a="2.6" data-b="5.3"><div class="kicker">02 · Horizonte</div><div class="headline">360 rayos de hasta 200 km</div></div>
-          <div class="phase" data-a="5.0" data-b="7"><div class="kicker">02 · Horizonte</div><div class="headline">El horizonte real alrededor del punto</div></div>
+          <div class="phase" data-a="0" data-b="2.9"><div class="kicker">02 · Horizon</div><div class="headline">The steepest point along the ray sets the horizon</div></div>
+          <div class="phase" data-a="2.6" data-b="5.3"><div class="kicker">02 · Horizon</div><div class="headline">360 rayos de hasta 200 km</div></div>
+          <div class="phase" data-a="5.0" data-b="7"><div class="kicker">02 · Horizon</div><div class="headline">El horizonte real alrededor del punto</div></div>
         </div>
       </div>
       <div class="controls"></div>
     </div>
-    <p class="caption">Desde un <b>mástil de 2&nbsp;m</b> lanzamos <b>360 rayos de hasta 200&nbsp;km</b> sobre el relieve real: el obstáculo más empinado de cada rayo es el horizonte.</p>
-    <p class="note">Perfil real de LOLA en un acimut, con la curvatura exacta de la esfera lunar (sin aproximación de suelo plano). Escala vertical exagerada.</p>
+    <p class="caption">From a <b>2&nbsp;m mast</b> we cast <b>360 rays of up to 200&nbsp;km</b> over the real terrain: the steepest obstacle along each ray is the horizon.</p>
+    <p class="note">Real LOLA profile along one azimuth, with the exact curvature of the lunar sphere (no flat-ground approximation). Vertical scale exaggerated.</p>
   </section>
 
   <!-- ===================================================== 3 -->
   <section class="scene" id="s3">
-    <div class="scene-head"><span class="scene-num">03</span><h2 class="scene-title">El Sol y la Tierra contra el horizonte</h2><span class="scene-dur">7 s</span></div>
+    <div class="scene-head"><span class="scene-num">03</span><h2 class="scene-title">The Sun and Earth against the horizon</h2><span class="scene-dur">7 s</span></div>
     <div class="frame">
       <div class="stage">
         <canvas></canvas>
         <div class="fx hud">
-          <div class="phase" data-a="0" data-b="4.7"><div class="kicker">03 · Sol y Tierra</div><div class="headline">Cada hora, 3 años: ¿el terreno tapa el Sol o la Tierra?</div></div>
-          <div class="phase" data-a="4.4" data-b="7"><div class="kicker">03 · Ocaso</div><div class="headline">Calculamos qué parte del disco solar se ve</div></div>
+          <div class="phase" data-a="0" data-b="4.7"><div class="kicker">03 · Sun and Earth</div><div class="headline">Every hour, for 3 years: does the terrain block the Sun or the Earth?</div></div>
+          <div class="phase" data-a="4.4" data-b="7"><div class="kicker">03 · Sunset</div><div class="headline">We compute how much of the solar disc is visible</div></div>
         </div>
       </div>
       <div class="controls"></div>
     </div>
-    <p class="caption">Cada hora durante 3 años, <b>JPL Horizons</b> nos dice dónde están el Sol y la Tierra; comprobamos si el terreno los tapa.</p>
-    <p class="note">Posiciones horarias reales de JPL Horizons en el mejor punto. Elevación estirada respecto al acimut. Enlace directo con la Tierra (DTE) cuando su centro está sobre el terreno.</p>
+    <p class="caption">Every hour for 3 years, <b>JPL Horizons</b> tells us where the Sun and Earth are; we check whether the terrain blocks them.</p>
+    <p class="note">Real hourly JPL Horizons positions at the best point. Elevation stretched relative to azimuth. Direct-to-Earth link (DTE) when its center is above the terrain.</p>
   </section>
 
   <!-- ===================================================== 4 -->
   <section class="scene" id="s4">
-    <div class="scene-head"><span class="scene-num">04</span><h2 class="scene-title">Tres años en una barra y el ganador</h2><span class="scene-dur">6 s</span></div>
+    <div class="scene-head"><span class="scene-num">04</span><h2 class="scene-title">Three years in one bar, and the winner</h2><span class="scene-dur">6 s</span></div>
     <div class="frame">
       <div class="stage">
         <canvas></canvas>
         <div class="fx hud">
-          <div class="phase" data-a="0" data-b="2.5"><div class="kicker">04 · Resultado</div><div class="headline">3 años de datos horarios en una sola barra</div></div>
-          <div class="phase" data-a="2.2" data-b="4.7"><div class="kicker">04 · Ranking</div><div class="headline">Gana quien tiene Sol y Tierra a la vez</div></div>
-          <div class="phase" data-a="4.4" data-b="6"><div class="kicker">04 · Resultado</div><div class="headline">El mejor punto del área</div></div>
+          <div class="phase" data-a="0" data-b="2.5"><div class="kicker">04 · Result</div><div class="headline">3 years of hourly data in a single bar</div></div>
+          <div class="phase" data-a="2.2" data-b="4.7"><div class="kicker">04 · Ranking</div><div class="headline">The winner has Sun and Earth at the same time</div></div>
+          <div class="phase" data-a="4.4" data-b="6"><div class="kicker">04 · Result</div><div class="headline">The best point of the area</div></div>
         </div>
       </div>
       <div class="controls"></div>
     </div>
-    <p class="caption">Ganan las <b>horas con Sol y enlace directo con la Tierra a la vez</b>.</p>
-    <p class="note">Cada columna de la barra ≈ 1 día. Comprobación: el ganador está junto a Connecting Ridge CR1, iluminado el 92 % del tiempo según Gläser et al. (2014).</p>
+    <p class="caption">What counts are the <b>hours with Sun and a direct link to Earth at the same time</b>.</p>
+    <p class="note">Each column of the bar ≈ 1 day. Check: the winner sits next to Connecting Ridge CR1, illuminated 92 % of the time according to Gläser et al. (2014).</p>
   </section>
 
   <footer>
-    <div><b>Datos.</b> NASA LRO LOLA, DEM polares LDEM_85S_20M y LDEM_80S_40M (NASA PDS Geosciences Node). JPL Horizons: acimut y elevación horarios del Sol y la Tierra, 2026-11-14 a 2029-11-14.</div>
-    <div><b>Modelo.</b> Mástil de 2 m · paso de 1° en acimut · rayos de 200 km · paso de 1 h · radio solar 0,266° · Tierra como punto.</div>
+    <div><b>Data.</b> NASA LRO LOLA, polar DEMs LDEM_85S_20M and LDEM_80S_40M (NASA PDS Geosciences Node). JPL Horizons: hourly azimuth and elevation of the Sun and Earth, 2026-11-14 to 2029-11-14.</div>
+    <div><b>Model.</b> 2 m mast · 1° azimuth step · 200 km rays · 1 h step · solar radius 0.266° · Earth as a point.</div>
     <div id="gen-note"></div>
   </footer>
 </div>
 
 <template id="controls-tpl">
-  <button class="ctl" type="button" data-play data-state="play" aria-label="Reproducir o pausar">
+  <button class="ctl" type="button" data-play data-state="play" aria-label="Play or pause">
     <svg class="i-play" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4v16l14-8z"/></svg>
     <svg class="i-pause" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14"/><rect x="14" y="5" width="4" height="14"/></svg>
     <svg class="i-replay" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="square"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
   </button>
-  <input type="range" min="0" max="1000" value="0" aria-label="Línea de tiempo">
-  <span class="time">0,0 / 0,0 s</span>
-  <button class="ctl ghost" type="button" data-fs aria-label="Pantalla completa">
+  <input type="range" min="0" max="1000" value="0" aria-label="Timeline">
+  <span class="time">0.0 / 0.0 s</span>
+  <button class="ctl ghost" type="button" data-fs aria-label="Fullscreen">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
   </button>
 </template>
@@ -230,7 +230,7 @@
 (() => {
   "use strict";
   const D = JSON.parse(document.getElementById("explainer-data").textContent);
-  if (!D.area) { document.querySelector(".lead").textContent = "Faltan los datos: ejecuta backend/app/scripts/export_explainer_data.py"; return; }
+  if (!D.area) { document.querySelector(".lead").textContent = "Data missing: run backend/app/scripts/export_explainer_data.py"; return; }
 
   // ------------------------------------------------------------------ shared
   const W = 1600, H = 900;  // logical canvas size; everything is drawn in these units
@@ -242,11 +242,11 @@
   const lerp = (a, b, t) => a + (b - a) * t;
   const seg = (t, a, b) => clamp((t - a) / (b - a));
   const E = { io: gsap.parseEase("power2.inOut"), out: gsap.parseEase("power3.out"), sine: gsap.parseEase("sine.inOut"), back: gsap.parseEase("back.out(2)") };
-  // Spanish number format: 553.536 · 92,4
+  // English number format: 553,536 · 92.4
   function fmt(n, d = 0) {
     const s = Math.abs(n).toFixed(d); let [i, f] = s.split(".");
-    i = i.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-    return (n < 0 && Number(s) !== 0 ? "−" : "") + i + (f ? "," + f : "");
+    i = i.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    return (n < 0 && Number(s) !== 0 ? "−" : "") + i + (f ? "." + f : "");
   }
   const pct = (x, d = 1) => fmt(x * 100, d) + " %";
   const hex2rgb = (h) => { const n = parseInt(h.slice(1), 16); return [n >> 16, (n >> 8) & 255, n & 255]; };
@@ -256,7 +256,7 @@
   const R_MOON = D.model.r_moon_m;
   const START_MS = Date.parse(D.model.start_utc);
   const fmtHour = (h) => new Date(START_MS + h * 3600e3).toISOString().slice(0, 16).replace("T", " ") + " UTC";
-  const latlon = (lat, lon) => `${fmt(Math.abs(lat), 4)}° ${lat < 0 ? "S" : "N"} · ${fmt(Math.abs(lon), 4)}° ${lon < 0 ? "O" : "E"}`;
+  const latlon = (lat, lon) => `${fmt(Math.abs(lat), 4)}° ${lat < 0 ? "S" : "N"} · ${fmt(Math.abs(lon), 4)}° ${lon < 0 ? "W" : "E"}`;
   const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   // lunar grey ramp (dark blue-grey lows → white highs), like the app's monochrome Moon
@@ -551,10 +551,10 @@
       }
       // ---- counter
       let val, label;
-      if (t < 1.4) { val = A.pixels * E.out(seg(t, 0.15, 1.2)); label = "PÍXELES LOLA · 20 M"; }
+      if (t < 1.4) { val = A.pixels * E.out(seg(t, 0.15, 1.2)); label = "LOLA PIXELS · 20 M"; }
       else if (t < 3.0) { val = A.cells * E.out(seg(t, 1.45, 2.2)); label = `CELDAS DE ${fmt(A.cell_m)} M`; }
-      else if (t < 4.2) { val = A.cells * E.out(seg(t, 3.0, 4.1)); label = "MÁXIMOS LOCALES"; }
-      else { val = keep; label = keep === A.order.length ? "CANDIDATOS" : "PUNTOS"; }
+      else if (t < 4.2) { val = A.cells * E.out(seg(t, 3.0, 4.1)); label = "LOCAL MAXIMA"; }
+      else { val = keep; label = keep === A.order.length ? "CANDIDATES" : "POINTS"; }
       const cA = E.out(seg(t, 0.1, 0.6)), done = keep === A.order.length && t > 5;
       text(c, fmt(val), 86, 300, { size: 120, color: done ? COL.accent : COL.ink, alpha: cA, glow: true });
       text(c, label, 92, 336, { size: 26, color: COL.accent, ls: 3, alpha: cA });
@@ -586,9 +586,9 @@
         const [x, y] = topPt, yy = y - 46 * lift;
         c.strokeStyle = rgba(COL.accent, 0.8 * lift); c.lineWidth = 1.2; c.setLineDash([3, 4]); c.beginPath(); c.moveTo(x, y); c.lineTo(x, yy); c.stroke(); c.setLineDash([]);
         glow(c, x, yy, 6, COL.accent, lift); dot(c, x, yy, 6, COL.accent, lift);
-        text(c, "el más alto", x + 18, yy + 7, { size: 26, color: COL.accent, alpha: lift });
+        text(c, "the highest", x + 18, yy + 7, { size: 26, color: COL.accent, alpha: lift });
       }
-      text(c, "1 CELDA · 12 × 12 PÍXELES", ox, 800, { align: "center", size: 22, color: COL.dim, ls: 2 });
+      text(c, "1 CELL · 12 × 12 PIXELS", ox, 800, { align: "center", size: 22, color: COL.dim, ls: 2 });
       c.restore();
     }
   }
@@ -662,7 +662,7 @@
       // the Moon's curvature (reference sphere)
       dashed(c, this.sphere.map(([x, y]) => [sx(x), sy(y)]), "#ffffff", 1.2, [2, 6], 0.5 * reveal);
       const sEnd = this.sphere[120];
-      text(c, "curvatura lunar", sx(sEnd[0]), sy(sEnd[1]) + 30, { align: "right", size: 22, color: COL.dim, alpha: reveal, shadow: true });
+      text(c, "lunar curvature", sx(sEnd[0]), sy(sEnd[1]) + 30, { align: "right", size: 22, color: COL.dim, alpha: reveal, shadow: true });
       this.observer(c, PX0, PY0, reveal);
       // sight lines
       if (ic > 0) {
@@ -678,13 +678,13 @@
         if (ic >= this.bi) {
           const q = E.out(seg(dc, X[this.bi], X[this.bi] + 9000)), x = sx(X[this.bi]), y = sy(Y[this.bi]);
           glow(c, x, y, 6, COL.accent, q); dot(c, x, y, 6, COL.accent, q);
-          text(c, "horizonte", x, y + 40, { align: "center", size: 26, color: COL.accent, alpha: q, shadow: true });
+          text(c, "horizon", x, y + 40, { align: "center", size: 26, color: COL.accent, alpha: q, shadow: true });
         }
         if (this.hi != null && ic >= this.hi) {
           const q = E.out(seg(dc, X[this.hi], X[this.hi] + 6000)), x = sx(X[this.hi]), y = sy(Y[this.hi]);
           dot(c, x, y, 5, "#ffffff", q);
-          text(c, "pico más alto,", x - 14, y - 40, { align: "right", size: 24, color: COL.ink, alpha: q, shadow: true });
-          text(c, "oculto por la curvatura", x - 14, y - 16, { align: "right", size: 24, color: COL.dim, alpha: q, shadow: true });
+          text(c, "highest peak,", x - 14, y - 40, { align: "right", size: 24, color: COL.ink, alpha: q, shadow: true });
+          text(c, "hidden by the curvature", x - 14, y - 16, { align: "right", size: 24, color: COL.dim, alpha: q, shadow: true });
         }
       }
       c.restore();
@@ -695,7 +695,7 @@
       c.moveTo(x - 14, y + 18); c.lineTo(x - 6, y + 4); c.lineTo(x + 6, y + 4); c.lineTo(x + 14, y + 18);
       c.moveTo(x - 9, y + 4); c.lineTo(x - 9, y - 2); c.lineTo(x + 9, y - 2); c.lineTo(x + 9, y + 4); c.moveTo(x, y - 2); c.lineTo(x, y - 18); c.stroke();
       glow(c, x, y - 18, 4, COL.accent, 1); dot(c, x, y - 18, 3.5, COL.accent);
-      text(c, "mástil 2 m", x - 6, y - 32, { size: 24, color: COL.ink });
+      text(c, "2 m mast", x - 6, y - 32, { size: 24, color: COL.ink });
       c.restore();
     }
     mapView(c, t, mA) {
@@ -732,7 +732,7 @@
         }
         glow(c, cx, cy, 5, COL.accent, 1); dot(c, cx, cy, 5, "#ffffff");
         text(c, `${fmt(Math.min(360, Math.round(sw * 360)))}`, 1330, 492, { size: 110, glow: true });
-        text(c, "RAYOS", 1336, 530, { size: 28, color: COL.accent, ls: 3 });
+        text(c, "RAYS", 1336, 530, { size: 28, color: COL.accent, ls: 3 });
         c.restore();
       }
       // horizon ring → panorama
@@ -809,9 +809,9 @@
       if (bA > 0) {
         c.save(); c.globalAlpha = bA;
         if (f <= 0) { c.setLineDash([3, 4]); c.strokeStyle = rgba(COL.sun, 0.8); c.lineWidth = 1.4; c.beginPath(); c.arc(sx, sy, rS, 0, TAU); c.stroke(); c.setLineDash([]); }
-        text(c, "Sol", sx, sy - rS - 16, { align: "center", size: 28, color: COL.sun, shadow: true });
+        text(c, "Sun", sx, sy - rS - 16, { align: "center", size: 28, color: COL.sun, shadow: true });
         if (!dte) { c.strokeStyle = COL.lost; c.lineWidth = 2.2; c.beginPath(); c.arc(ex, ey, 14, 0, TAU); c.stroke(); c.beginPath(); c.moveTo(ex - 10, ey - 10); c.lineTo(ex + 10, ey + 10); c.stroke(); }
-        text(c, "Tierra", ex, ey - 22, { align: "center", size: 28, color: dte ? COL.earth : COL.lost, shadow: true });
+        text(c, "Earth", ex, ey - 22, { align: "center", size: 28, color: dte ? COL.earth : COL.lost, shadow: true });
         c.restore();
       }
       text(c, fmtHour(S.start_hour + hi).slice(0, 10), 1520, 70, { align: "right", size: 34, alpha: bA * (1 - seg(t, 4.4, 4.8)) });
@@ -850,7 +850,7 @@
       c.restore();
       c.strokeStyle = "rgba(255,255,255,.7)"; c.lineWidth = 1.5; c.beginPath(); c.arc(lx, ly, LR, 0, TAU); c.stroke();
       text(c, `${fmt(f * 100, 0)} %`, lx, ly + LR + 70, { align: "center", size: 72, color: COL.sun, glow: true });
-      text(c, "del disco visible", lx, ly + LR + 102, { align: "center", size: 26, color: COL.dim });
+      text(c, "of the disc visible", lx, ly + LR + 102, { align: "center", size: 26, color: COL.dim });
       c.restore();
     }
   }
@@ -877,7 +877,7 @@
       // legend
       const legA = E.out(seg(t, 0.3, 0.7)) * (1 - seg(t, 2.3, 2.6));
       if (legA > 0) {
-        const items = [["Sol + Tierra", COL.both], ["Solo Sol", COL.sun], ["Solo Tierra", COL.earth], ["Nada", "#2a3446"]];
+        const items = [["Sun + Earth", COL.both], ["Sun only", COL.sun], ["Earth only", COL.earth], ["Neither", "#2a3446"]];
         let lx = 80; c.save(); c.globalAlpha = legA; c.font = F(26);
         for (const [l, col] of items) { c.fillStyle = col; c.fillRect(lx, 262, 18, 18); text(c, l, lx + 28, 280, { size: 26 }); lx += 28 + c.measureText(l).width + 44; }
         c.restore();
@@ -951,10 +951,10 @@
       c.strokeStyle = rgba(COL.both, 0.4 + 0.4 * pulse); c.lineWidth = 2; c.beginPath(); c.arc(wx, wy, 10 + 6 * pulse, 0, TAU); c.stroke();
       glow(c, wx, wy, 5, COL.both, 1); dot(c, wx, wy, 5, COL.both);
       const yy = y + s + 60;
-      text(c, "MEJOR PUNTO", x, yy, { size: 30, color: COL.both, ls: 3 });
+      text(c, "BEST POINT", x, yy, { size: 30, color: COL.both, ls: 3 });
       text(c, latlon(w.lat, w.lon), x, yy + 42, { size: 28 });
-      text(c, `${fmt(w.ground_height_m, 1)} m de altura`, x, yy + 78, { size: 26, color: COL.dim });
-      text(c, `a ${fmt(this.dCR1, 0)} m de CR1`, x, yy + 128, { size: 28, color: COL.ink });
+      text(c, `${fmt(w.ground_height_m, 1)} m high`, x, yy + 78, { size: 26, color: COL.dim });
+      text(c, `${fmt(this.dCR1, 0)} m from CR1`, x, yy + 128, { size: 28, color: COL.ink });
       text(c, "(Gläser et al. 2014)", x, yy + 160, { size: 24, color: COL.dim });
       c.restore();
     }
@@ -967,7 +967,7 @@
     try { await document.fonts.load(`500 18px "JetBrains Mono"`); } catch (e) { /* the fallback monospace font still works */ }
     const scenes = [new SceneCandidates(maps), new SceneHorizon(maps), new SceneSky(), new SceneRanking(maps)];
     for (const s of scenes) { s.ready = true; s.resize(); }
-    document.getElementById("gen-note").innerHTML = `<b>Generado</b> el ${D.generated_utc} por backend/app/scripts/export_explainer_data.py a partir de las fuentes anteriores.`;
+    document.getElementById("gen-note").innerHTML = `<b>Generated</b> on ${D.generated_utc} by backend/app/scripts/export_explainer_data.py from the sources above.`;
     // keep the winner pin pulsing on the last frame
     const s4 = scenes[3];
     (function pulse() { if (s4.state.t >= 4.6 && !s4.tl.isActive()) s4.draw(); requestAnimationFrame(pulse); })();

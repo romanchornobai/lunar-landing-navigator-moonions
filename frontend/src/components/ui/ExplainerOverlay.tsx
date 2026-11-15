@@ -70,7 +70,7 @@ export function ExplainerOverlay({ progress, onPlay }: ExplainerOverlayProps) {
       <iframe
         ref={frame}
         src="/explainer.html?embed=1"
-        title="Cómo se calcula el mejor punto"
+        title="How the best point is computed"
         className={`absolute inset-0 w-full h-full border-0 ${shown ? 'opacity-100' : 'opacity-0'}`}
       />
 
@@ -89,7 +89,7 @@ export function ExplainerOverlay({ progress, onPlay }: ExplainerOverlayProps) {
         ) : (
           <button onMouseDown={(e) => e.preventDefault()}
             onClick={onPlay}
-            aria-label="Ver el punto calculado"
+            aria-label="View the computed point"
             className="w-11 h-11 flex items-center justify-center text-white border border-white/80 hover:bg-white hover:text-black transition-colors cursor-pointer drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]"
           >
             <Play size={20} fill="currentColor" />

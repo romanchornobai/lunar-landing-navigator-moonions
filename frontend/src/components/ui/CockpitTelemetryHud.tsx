@@ -75,7 +75,7 @@ export const CockpitTelemetryHud: React.FC<CockpitTelemetryHudProps> = ({
         className="absolute right-6 bottom-6 z-40 select-none text-white pointer-events-none flex flex-col items-center gap-2"
       >
         <div className="text-[15px] leading-tight">
-          <div>PENDIENTE: {slopeDeg.toFixed(1)}°</div>
+          <div>SLOPE: {slopeDeg.toFixed(1)}°</div>
         </div>
       </div>
     </>

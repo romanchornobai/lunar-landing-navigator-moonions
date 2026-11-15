@@ -16,7 +16,7 @@ export function AreaComputeLoader({ done, total }: AreaComputeLoaderProps) {
         className="text-center text-white text-[11px] sm:text-xs font-bold tracking-[0.3em] mb-2"
         style={{ textShadow: '0 0 8px rgba(255,255,255,0.9), 0 0 18px rgba(255,255,255,0.5)' }}
       >
-        CALCULANDO MEJOR PUNTO
+        COMPUTING BEST POINT
       </div>
       <div
         className="w-full h-3.5 p-[2px] bg-black/80 border border-white/80 rounded-[1px]"
@@ -36,11 +36,11 @@ export function AreaComputeLoader({ done, total }: AreaComputeLoaderProps) {
         </div>
       </div>
       <div className="mt-1.5 flex justify-between text-[10px] tracking-[0.2em] text-neutral-300">
-        <span>{total > 0 ? `${done} / ${total} CANDIDATOS` : 'BUSCANDO CANDIDATOS…'}</span>
+        <span>{total > 0 ? `${done} / ${total} CANDIDATES` : 'SEARCHING CANDIDATES…'}</span>
         <span>{total > 0 ? `${Math.round(ratio * 100)} %` : ''}</span>
       </div>
       <div className="mt-0.5 text-center text-[9px] tracking-[0.18em] text-neutral-500">
-        HORIZONTE LOLA 100 KM · SOL Y TIERRA JPL HORIZONS 2026–2029
+        LOLA HORIZON 100 KM · SUN AND EARTH JPL HORIZONS 2026–2029
       </div>
     </div>
   )

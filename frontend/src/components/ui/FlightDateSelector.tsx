@@ -131,7 +131,7 @@ export const FlightDateSelector: React.FC<FlightDateSelectorProps> = ({
         {/* Left arrow: play time backward */}
         <button
           onClick={togglePlayBackward}
-          title={playDirection === 'backward' ? 'Pausar' : `Retroceder tiempo (${stepMode}/s)`}
+          title={playDirection === 'backward' ? 'Pause' : `Rewind time (${stepMode}/s)`}
           className={`w-9 h-9 flex items-center justify-center text-lg sm:text-xl transition-all cursor-pointer active:scale-90 ${
             playDirection === 'backward'
               ? 'text-white font-bold drop-shadow-[0_0_12px_#ffffff] scale-110'
@@ -148,7 +148,7 @@ export const FlightDateSelector: React.FC<FlightDateSelectorProps> = ({
         {/* Large centered date */}
         <div className="flex items-center gap-2.5 text-base sm:text-xl md:text-2xl font-black tracking-[0.16em] text-white whitespace-nowrap">
           {/* Clicking the date opens the native date picker (limited to the ephemeris range) */}
-          <span className="relative cursor-pointer hover:drop-shadow-[0_0_8px_#ffffff] transition-all" title="Elegir fecha">
+          <span className="relative cursor-pointer hover:drop-shadow-[0_0_8px_#ffffff] transition-all" title="Pick a date">
             {day} {month} {year}
             <input
               ref={dateInputRef}
@@ -166,7 +166,7 @@ export const FlightDateSelector: React.FC<FlightDateSelectorProps> = ({
               onChange={(e) => pickDay(e.target.value)}
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
               style={{ colorScheme: 'dark' }}
-              aria-label="Elegir fecha"
+              aria-label="Pick a date"
             />
           </span>
           <span className="text-white ml-2">
@@ -180,7 +180,7 @@ export const FlightDateSelector: React.FC<FlightDateSelectorProps> = ({
         {/* Right arrow: play time forward */}
         <button
           onClick={togglePlayForward}
-          title={playDirection === 'forward' ? 'Pausar' : `Avanzar tiempo (${stepMode}/s)`}
+          title={playDirection === 'forward' ? 'Pause' : `Advance time (${stepMode}/s)`}
           className={`w-9 h-9 flex items-center justify-center text-lg sm:text-xl transition-all cursor-pointer active:scale-90 ${
             playDirection === 'forward'
               ? 'text-white font-bold drop-shadow-[0_0_12px_#ffffff] scale-110'
@@ -204,7 +204,7 @@ export const FlightDateSelector: React.FC<FlightDateSelectorProps> = ({
           <button
             onClick={() => setIsSpeedMenuOpen((prev) => !prev)}
             className="flex items-center gap-1 text-sm sm:text-base tracking-wider text-neutral-300 hover:text-white cursor-pointer transition-colors p-1"
-            title="Velocidad: tiempo simulado por segundo"
+            title="Speed: simulated time per second"
           >
             <span className="font-black underline underline-offset-4 decoration-white/40 group-hover:decoration-white">
               {stepMode}/s

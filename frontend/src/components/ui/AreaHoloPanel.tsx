@@ -33,7 +33,7 @@ function Cell({ label, value, strong }: { label: string; value: string; strong?:
   )
 }
 
-/** Holographic panel of a selected 15 x 15 km area: CALCULAR button, progress and best point found. */
+/** Holographic panel of a selected 15 x 15 km area: COMPUTE button, progress and best point found. */
 export function AreaHoloPanel({ center, state, direction, onCompute, onClose }: AreaHoloPanelProps) {
   const best = state.status === 'done' ? state.result.best : null
 
@@ -81,46 +81,46 @@ export function AreaHoloPanel({ center, state, direction, onCompute, onClose }: 
         }}
         className="w-[350px] sm:w-[380px]"
       >
-        <SciFiHudPanel badgeTitle="ÁREA DE BÚSQUEDA">
+        <SciFiHudPanel badgeTitle="SEARCH AREA">
           <div className="font-mono text-xs select-none tracking-wide text-neutral-100">
             <div className="flex items-center justify-between border-b border-white/20 pb-2 mb-3">
               <div className="flex items-center gap-2">
                 <Scan className="w-4 h-4 text-sky-300" />
                 <span className="font-bold text-white tracking-widest text-[13px] uppercase">
-                  ÁREA {AREA_SIZE_KM} × {AREA_SIZE_KM} KM
+                  AREA {AREA_SIZE_KM} × {AREA_SIZE_KM} KM
                 </span>
               </div>
               <button
                 onClick={onClose}
                 className="text-neutral-400 hover:text-white transition-colors p-1 rounded hover:bg-white/10 cursor-pointer"
-                title="Cerrar área"
+                title="Close area"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <div className="grid grid-cols-2 gap-2.5 mb-2.5 p-2.5 rounded bg-white/[0.04] border border-white/15">
-              <Cell label="CENTRO" value={`${fmtLat(center.latitude)} · ${fmtLon(center.longitude)}`} />
-              <Cell label="ALTITUD CENTRO" value={center.elevation_m === null ? 'N/D' : `≈ ${signed(center.elevation_m)}`} />
+              <Cell label="CENTER" value={`${fmtLat(center.latitude)} · ${fmtLon(center.longitude)}`} />
+              <Cell label="CENTER ALTITUDE" value={center.elevation_m === null ? 'N/A' : `≈ ${signed(center.elevation_m)}`} />
             </div>
 
             {best && (
               <div className="mb-2.5 p-2.5 rounded bg-sky-400/[0.07] border border-sky-300/40 space-y-2.5">
-                <span className="text-[10px] text-sky-300 block uppercase tracking-[0.25em] font-bold">MEJOR PUNTO</span>
+                <span className="text-[10px] text-sky-300 block uppercase tracking-[0.25em] font-bold">BEST POINT</span>
                 <div className="grid grid-cols-2 gap-2.5">
-                  <Cell label="COORDENADAS" value={`${fmtLat(best.lat)} · ${fmtLon(best.lon)}`} />
-                  <Cell label="ALTITUD (LOLA)" value={signed(best.ground_height_m)} />
-                  <Cell label="SOL + TIERRA A LA VEZ" value={pct(best.sun_and_dte)} strong />
-                  <Cell label="PENDIENTE" value={`${best.slope_deg.toFixed(1)}°`} />
-                  <Cell label="SOL VISIBLE" value={pct(best.sun_any)} />
-                  <Cell label="TIERRA VISIBLE (DTE)" value={pct(best.dte)} />
-                  <Cell label="NOCHE MÁS LARGA" value={days(best.longest_dark_h)} />
-                  <Cell label="APAGÓN DTE MÁS LARGO" value={days(best.longest_dte_blackout_h)} />
+                  <Cell label="COORDINATES" value={`${fmtLat(best.lat)} · ${fmtLon(best.lon)}`} />
+                  <Cell label="ALTITUDE (LOLA)" value={signed(best.ground_height_m)} />
+                  <Cell label="SUN + EARTH AT ONCE" value={pct(best.sun_and_dte)} strong />
+                  <Cell label="SLOPE" value={`${best.slope_deg.toFixed(1)}°`} />
+                  <Cell label="SUN VISIBLE" value={pct(best.sun_any)} />
+                  <Cell label="EARTH VISIBLE (DTE)" value={pct(best.dte)} />
+                  <Cell label="LONGEST NIGHT" value={days(best.longest_dark_h)} />
+                  <Cell label="LONGEST DTE BLACKOUT" value={days(best.longest_dte_blackout_h)} />
                 </div>
                 {state.status === 'done' && (
                   <p className="text-[9px] leading-snug text-neutral-400">
-                    {state.total} candidatos · {state.period ? `${state.period[0].slice(0, 10)} → ${state.period[1].slice(0, 10)}` : ''} ·
-                    mástil {state.result.model.mast_m} m · {state.result.elapsed_s.toFixed(1)} s · LRO LOLA + JPL HORIZONS
+                    {state.total} candidates · {state.period ? `${state.period[0].slice(0, 10)} → ${state.period[1].slice(0, 10)}` : ''} ·
+                    mast {state.result.model.mast_m} m · {state.result.elapsed_s.toFixed(1)} s · LRO LOLA + JPL HORIZONS
                   </p>
                 )}
               </div>
@@ -136,10 +136,10 @@ export function AreaHoloPanel({ center, state, direction, onCompute, onClose }: 
                 onClick={state.status === 'computing' ? undefined : onCompute}
               >
                 {state.status === 'computing'
-                  ? `CALCULANDO… ${state.total ? Math.round((state.done / state.total) * 100) : 0} %`
+                  ? `COMPUTING… ${state.total ? Math.round((state.done / state.total) * 100) : 0} %`
                   : state.status === 'error'
-                    ? 'REINTENTAR'
-                    : 'CALCULAR'}
+                    ? 'RETRY'
+                    : 'COMPUTE'}
               </LedButton>
             )}
           </div>

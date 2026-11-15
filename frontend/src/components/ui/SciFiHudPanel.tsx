@@ -10,7 +10,7 @@ interface SciFiHudPanelProps {
 }
 
 export const SciFiHudPanel: React.FC<SciFiHudPanelProps> = ({
-  badgeTitle = 'TELEMETRÍA',
+  badgeTitle = 'TELEMETRY',
   children,
   className = '',
   style = {},
@@ -38,18 +38,18 @@ export const SciFiHudPanel: React.FC<SciFiHudPanelProps> = ({
 
   const w = size.width;
   const h = size.height;
-  const c = 18; // Biselado diagonal de las esquinas
+  const c = 18; // Diagonal corner bevel
   const stroke = 1.6;
   const halfStroke = stroke / 2;
 
-  // Pestaña trapezoidal superior
+  // Top trapezoidal tab
   const tabW = Math.min(160, Math.max(120, Math.round(w * 0.42)));
   const tabX1 = Math.round((w - tabW) / 2);
   const tabX2 = tabX1 + tabW;
   const tabH = 22;
   const tabSlant = 9;
 
-  // Polígono exterior principal
+  // Main outer polygon
   const outerPath = `
     M ${c} ${halfStroke}
     L ${w - c} ${halfStroke}
@@ -62,7 +62,7 @@ export const SciFiHudPanel: React.FC<SciFiHudPanelProps> = ({
     Z
   `.replace(/\s+/g, ' ').trim();
 
-  // Marco interior concéntrico
+  // Concentric inner frame
   const inset = 5;
   const ic = c - 2;
   const innerPath = `
@@ -77,7 +77,7 @@ export const SciFiHudPanel: React.FC<SciFiHudPanelProps> = ({
     Z
   `.replace(/\s+/g, ' ').trim();
 
-  // Pestaña trapezoidal superior
+  // Top trapezoidal tab
   const tabPath = `
     M ${tabX1} ${halfStroke}
     L ${tabX2} ${halfStroke}
@@ -86,7 +86,7 @@ export const SciFiHudPanel: React.FC<SciFiHudPanelProps> = ({
     Z
   `.replace(/\s+/g, ' ').trim();
 
-  // Pestañas laterales
+  // Side tabs
   const leftTabY1 = Math.round(h * 0.3);
   const leftTabY2 = Math.round(h * 0.44);
   const rightTabY1 = Math.round(h * 0.62);
@@ -131,14 +131,14 @@ export const SciFiHudPanel: React.FC<SciFiHudPanelProps> = ({
           </filter>
         </defs>
 
-        {/* Resplandor exterior neón */}
+        {/* Outer neon glow */}
         <path d={outerPath} fill="none" stroke="#ffffff" strokeWidth={stroke} filter="url(#whiteGlow)" opacity={0.8} />
 
         {/* Cristal oscuro */}
         <path d={outerPath} fill="url(#sciFiHudGlass)" stroke="#ffffff" strokeWidth={stroke} />
         <path d={outerPath} fill="url(#topGlassReflection)" stroke="none" />
 
-        {/* Doble línea interior */}
+        {/* Double inner line */}
         <path d={innerPath} fill="none" stroke="#ffffff" strokeWidth="0.8" strokeOpacity="0.3" />
 
         {/* Acentos de esquinas */}
@@ -147,7 +147,7 @@ export const SciFiHudPanel: React.FC<SciFiHudPanelProps> = ({
         <line x1={c} y1={h - halfStroke} x2={c} y2={h - halfStroke - 4} stroke="#ffffff" strokeWidth="1" strokeOpacity="0.6" />
         <line x1={w - c} y1={h - halfStroke} x2={w - c} y2={h - halfStroke - 4} stroke="#ffffff" strokeWidth="1" strokeOpacity="0.6" />
 
-        {/* Pestaña superior con badge */}
+        {/* Top tab with badge */}
         <path d={tabPath} fill="#ffffff" stroke="#ffffff" strokeWidth={stroke} style={{ filter: 'drop-shadow(0 0 6px rgba(255,255,255,0.8))' }} />
         <text
           x={(tabX1 + tabX2) / 2}
@@ -167,7 +167,7 @@ export const SciFiHudPanel: React.FC<SciFiHudPanelProps> = ({
           <line x1={slot2X1} y1={halfStroke + 1} x2={slot2X2} y2={halfStroke + 1} stroke="#ffffff" strokeWidth="1.8" strokeLinecap="round" strokeOpacity="0.65" />
         )}
 
-        {/* Pestañas laterales */}
+        {/* Side tabs */}
         <rect x={-4} y={leftTabY1} width={2.5} height={leftTabY2 - leftTabY1} rx={0.5} fill="#ffffff" stroke="#ffffff" strokeWidth="0.5" style={{ filter: 'drop-shadow(0 0 4px #ffffff)' }} />
         <rect x={w + 1.5} y={rightTabY1} width={2.5} height={rightTabY2 - rightTabY1} rx={0.5} fill="#ffffff" stroke="#ffffff" strokeWidth="0.5" style={{ filter: 'drop-shadow(0 0 4px #ffffff)' }} />
 
@@ -176,7 +176,7 @@ export const SciFiHudPanel: React.FC<SciFiHudPanelProps> = ({
         <rect x={botTab2_X1} y={h + 1.5} width={botTab2_X2 - botTab2_X1} height={2} rx={0.5} fill="#ffffff" stroke="#ffffff" strokeWidth="0.5" style={{ filter: 'drop-shadow(0 0 4px #ffffff)' }} />
       </svg>
 
-      {/* Líneas de barrido holográfico */}
+      {/* Holographic scan lines */}
       <div
         className="absolute inset-0 pointer-events-none rounded opacity-40 overflow-hidden"
         style={{
