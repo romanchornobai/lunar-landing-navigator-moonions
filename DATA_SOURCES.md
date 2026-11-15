@@ -169,6 +169,12 @@ Routes: `cr1` (Connecting Ridge CR1, Gläser et al. 2014), `malapert`, `degerlac
 around, so never sunlit). CR1 directions are re-projected from the Shackleton buffer site (22.6 km away, Earth parallax
 < 0.004 deg) with `reprojector` in `lib/visibility.ts`; its horizon is the `connecting-ridge-cr1` profile.
 
+Custom coordinates (`components/ui/CoordinateForm.tsx`, `GET /api/point?lat=&lon=`): planetocentric lat / lon
+(deg, east positive) between 84 and 90 S inside the regional 3D terrain. The backend evaluates that exact point like one
+area-search candidate (same horizon, ephemeris and visibility code, whole 2026-2029 period); check: CR1 at the
+coordinates of Gläser et al. 2014 returns 90.8 % Sun, 86.4 % mean visible disc, the values of the Validation table. The
+marker and the 15 x 15 km area around it use the regional georeference (+-0.9 km).
+
 Visibility strip (`components/ui/VisibilityWindowStrip.tsx`): hourly Sun (any part of the disc) and Earth (centre)
 visibility of the site from `visibilitySeries`, 15 days before and after the mission date, same model as the HUD.
 Sky paths (`components/canvas3d/SkyPaths.tsx`, `localTracks` in `lib/visibility.ts`): the hourly Sun and Earth

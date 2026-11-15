@@ -1,7 +1,7 @@
 import { X, Scan } from 'lucide-react'
 import { SciFiHudPanel } from './SciFiHudPanel'
 import { LedButton } from './LedButton'
-import type { AreaSearchResult } from '../../services/areaSearch'
+import type { AreaCandidateStats, AreaSearchResult } from '../../services/areaSearch'
 import { AREA_SIZE_KM } from '../../lib/southPoleGrid'
 
 export type AreaComputeState =
@@ -10,8 +10,15 @@ export type AreaComputeState =
   | { status: 'done'; result: AreaSearchResult; total: number; period: [string, string] | null }
   | { status: 'error'; message: string }
 
+/** Custom coordinates typed by the user, evaluated by the backend (GET /api/point). */
+export type PointState =
+  | { lat: number; lon: number; status: 'loading' }
+  | { lat: number; lon: number; status: 'done'; stats: AreaCandidateStats }
+  | { lat: number; lon: number; status: 'error'; message: string }
+
 interface AreaHoloPanelProps {
   center: { latitude: number; longitude: number; elevation_m: number | null }
+  point?: PointState | null
   state: AreaComputeState
   direction: 'left' | 'right'
   onCompute: () => void
@@ -57,7 +64,7 @@ function AreaSpread({ result }: { result: AreaSearchResult }) {
 }
 
 /** Holographic panel of a selected 15 x 15 km area: COMPUTE button, progress and best point found. */
-export function AreaHoloPanel({ center, state, direction, onCompute, onClose }: AreaHoloPanelProps) {
+export function AreaHoloPanel({ center, point, state, direction, onCompute, onClose }: AreaHoloPanelProps) {
   const best = state.status === 'done' ? state.result.best : null
 
   return (
@@ -126,6 +133,27 @@ export function AreaHoloPanel({ center, state, direction, onCompute, onClose }: 
               <Cell label="CENTER" value={`${fmtLat(center.latitude)} · ${fmtLon(center.longitude)}`} />
               <Cell label="CENTER ALTITUDE" value={center.elevation_m === null ? 'N/A' : `≈ ${signed(center.elevation_m)}`} />
             </div>
+
+            {point && (
+              <div className="mb-2.5 p-2.5 rounded bg-amber-300/[0.07] border border-amber-300/50 space-y-2.5">
+                <span className="text-[10px] text-amber-300 block uppercase tracking-[0.25em] font-bold">YOUR POINT</span>
+                <Cell label="COORDINATES" value={`${fmtLat(point.lat)} · ${fmtLon(point.lon)}`} />
+                {point.status === 'loading' && (
+                  <p className="text-[11px] text-neutral-300">Computing its horizon and 3 years of Sun and Earth…</p>
+                )}
+                {point.status === 'error' && <p className="text-[11px] leading-snug text-red-300">{point.message}</p>}
+                {point.status === 'done' && (
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <Cell label="SUN + EARTH AT ONCE" value={pct(point.stats.sun_and_dte)} strong />
+                    <Cell label="ALTITUDE (LOLA)" value={signed(point.stats.ground_height_m)} />
+                    <Cell label="SUN VISIBLE" value={pct(point.stats.sun_any)} />
+                    <Cell label="EARTH VISIBLE (DTE)" value={pct(point.stats.dte)} />
+                    <Cell label="LONGEST NIGHT" value={days(point.stats.longest_dark_h)} />
+                    <Cell label="LONGEST DTE BLACKOUT" value={days(point.stats.longest_dte_blackout_h)} />
+                  </div>
+                )}
+              </div>
+            )}
 
             {best && (
               <div className="mb-2.5 p-2.5 rounded bg-sky-400/[0.07] border border-sky-300/40 space-y-2.5">

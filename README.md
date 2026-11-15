@@ -27,6 +27,9 @@ with time running faster, and any 15 x 15 km area can be searched for its best l
   chosen date (white = visible, red = hidden); click it to jump to another date.
 - **See the sky move.** PATHS draws the Sun and Earth tracks of the next 30 days: the Sun circles the sky just above
   the horizon, and the Earth traces a small loop, the Moon's libration. Where the terrain hides a track, it turns dashed.
+- **Your own coordinates.** Type any latitude / longitude of the South Pole terrain (84 to 90 S): a marker drops on
+  the point, the backend computes its horizon and 3 years of Sun and Earth visibility in about a second, and its
+  15 x 15 km surroundings are ready to search.
 - **Find the best point in an area.** Select any 15 x 15 km square and the backend ranks its 150 highest points by Sun
   and Earth visibility. Every point is drawn as a coloured column (red = worst, white = best), so you can see how much
   a few hundred metres change the result.
@@ -94,7 +97,8 @@ python -m venv .venv
 .venv/Scripts/python -m pip install -r requirements.txt
 .venv/Scripts/python -m uvicorn app.main:app --port 8000
 ```
-Without the backend, the area search shows "Computation server unavailable"; the rest of the app works.
+Without the backend, the area search and custom coordinates show "Computation server unavailable"; the rest of the
+app works.
 
 ## Deployment
 The live app runs with Docker Compose (`docker-compose.yml`, `deploy/`): nginx serves the built frontend and proxies

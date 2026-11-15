@@ -3,19 +3,29 @@ import * as THREE from 'three'
 import { Canvas, useLoader, useThree } from '@react-three/fiber'
 import { Html, OrbitControls, Stars } from '@react-three/drei'
 import { useNavigate } from 'react-router-dom'
-import { BarChart3, ChevronLeft, Crosshair, Info } from 'lucide-react'
+import { BarChart3, ChevronLeft, Crosshair, Info, MapPin } from 'lucide-react'
 import { SITES_IN_3D, getSite3DPosition, scenePointToLunarCoords } from '../../data/sites'
-import { GRID, MEAN_Z, SCALE_Y, TERRAIN_SIZE, getTerrainHeight, latLonToScene } from '../../lib/southPoleGrid'
+import {
+  GRID,
+  MEAN_Z,
+  SCALE_Y,
+  TERRAIN_SIZE,
+  getTerrainHeight,
+  latLonToScene,
+  sceneToLatLon,
+  terrainElevationM,
+} from '../../lib/southPoleGrid'
 import { SiteMarker } from './SiteMarker'
 import { AreaHighlight, BestPointBeacon, clampAreaCenter } from './AreaHighlight'
 import { AreaHeatmap } from './AreaHeatmap'
 import { SiteComparisonPanel } from '../ui/SiteComparisonPanel'
-import { AreaHoloPanel, type AreaComputeState } from '../ui/AreaHoloPanel'
+import { AreaHoloPanel, type AreaComputeState, type PointState } from '../ui/AreaHoloPanel'
+import { CoordinateForm } from '../ui/CoordinateForm'
 import { ExplainerOverlay } from '../ui/ExplainerOverlay'
-import { startAreaSearch } from '../../services/areaSearch'
+import { fetchPoint, startAreaSearch } from '../../services/areaSearch'
 import SouthPolarMap, { type MapViewInfo } from '../map2d/SouthPolarMap'
 import MiniSouthPoleTerrain from './MiniSouthPoleTerrain'
-import { SOUTH_POLE_ELEVATION_URL, decodeSouthPoleElevation } from '../../lib/southPoleElevation'
+import { SOUTH_POLE_ELEVATION_URL, decodeSouthPoleElevation, useSouthPoleElevation } from '../../lib/southPoleElevation'
 import { INTRO_START_AZIMUTH, IntroCameraFlight } from './IntroCameraFlight'
 
 // Regional South Pole terrain: NASA Moon Trek (LRO LOLA) 1200x1200 Float32 grid, ~212 x 212 km around Shackleton.
@@ -36,12 +46,14 @@ interface SelectedArea {
 function AreaPanelAnchor({
   anchor,
   area,
+  point,
   state,
   onCompute,
   onClose,
 }: {
   anchor: [number, number, number]
   area: SelectedArea
+  point: PointState | null
   state: AreaComputeState
   onCompute: () => void
   onClose: () => void
@@ -55,7 +67,7 @@ function AreaPanelAnchor({
   }, [anchor[0], anchor[2]])
   return (
     <Html position={anchor} center style={{ pointerEvents: 'none' }}>
-      <AreaHoloPanel center={area} state={state} direction={direction} onCompute={onCompute} onClose={onClose} />
+      <AreaHoloPanel center={area} point={point} state={state} direction={direction} onCompute={onCompute} onClose={onClose} />
     </Html>
   )
 }
@@ -71,6 +83,27 @@ interface TerrainProps {
   onCloseArea: () => void
   /** True while the black explainer cover is up: the floating panel is not mounted at all. */
   hidePanel: boolean
+  /** Custom coordinates (GO TO COORDINATES) and their scene position (x, z). */
+  point: PointState | null
+  pointPos: [number, number] | null
+}
+
+/** Moves the orbit target to a point (keeps the view direction, at most 60 units away). */
+function FocusOn({ x, z, y }: { x: number; y: number; z: number }) {
+  const { camera, controls } = useThree() as unknown as {
+    camera: THREE.PerspectiveCamera
+    controls: { target: THREE.Vector3; update: () => void } | null
+  }
+  useEffect(() => {
+    if (!controls) return
+    const offset = camera.position.clone().sub(controls.target)
+    offset.setLength(Math.min(offset.length(), 60))
+    controls.target.set(x, y, z)
+    camera.position.copy(controls.target).add(offset)
+    controls.update()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [x, z])
+  return null
 }
 
 function Terrain({
@@ -83,6 +116,8 @@ function Terrain({
   onCompute,
   onCloseArea,
   hidePanel,
+  point,
+  pointPos,
 }: TerrainProps) {
   const buffer = useLoader(THREE.FileLoader, SOUTH_POLE_ELEVATION_URL, (loader) => {
     loader.setResponseType('arraybuffer')
@@ -220,9 +255,20 @@ function Terrain({
         <AreaHeatmap points={compute.result.all} valueKey={compute.result.rank_key ?? 'sun_and_dte'} elevations={elevations} />
       )}
       {bestPosition && <BestPointBeacon position={bestPosition} />}
+      {pointPos && (
+        <>
+          <BestPointBeacon
+            position={[pointPos[0], getTerrainHeight(elevations, pointPos[0], pointPos[1]), pointPos[1]]}
+            height={7}
+            color="#fcd34d"
+            glow="#f59e0b"
+          />
+          <FocusOn x={pointPos[0]} y={getTerrainHeight(elevations, pointPos[0], pointPos[1])} z={pointPos[1]} />
+        </>
+      )}
 
       {area && areaAnchor && !hidePanel && (
-        <AreaPanelAnchor anchor={areaAnchor} area={area} state={compute} onCompute={onCompute} onClose={onCloseArea} />
+        <AreaPanelAnchor anchor={areaAnchor} area={area} point={point} state={compute} onCompute={onCompute} onClose={onCloseArea} />
       )}
     </group>
   )
@@ -238,6 +284,10 @@ export default function SouthPoleTerrain() {
   const [area, setArea] = useState<SelectedArea | null>(null)
   const [compute, setCompute] = useState<AreaComputeState>({ status: 'idle' })
   const [showExplainer, setShowExplainer] = useState(false)
+  const [isCoordFormOpen, setIsCoordFormOpen] = useState(false)
+  const [point, setPoint] = useState<PointState | null>(null)
+  const [pointPos, setPointPos] = useState<[number, number] | null>(null)
+  const elevationGrid = useSouthPoleElevation()
   // The animations open only on demand (info button); computing never covers the south pole view.
   const explainerOpen = showExplainer
   const cancelSearch = useRef<(() => void) | null>(null)
@@ -289,7 +339,39 @@ export default function SouthPoleTerrain() {
     cancelSearch.current = null
     setArea(null)
     setCompute({ status: 'idle' })
+    setPoint(null)
+    setPointPos(null)
   }, [])
+
+  // GO TO COORDINATES: marker on the point, its 15 x 15 km area selected (ready for COMPUTE), point evaluated now.
+  const handleGoTo = useCallback(
+    (lat: number, lon: number): string | null => {
+      const [x, , z] = latLonToScene(lat, lon)
+      const half = TERRAIN_SIZE / 2
+      if (Math.abs(x) > half || Math.abs(z) > half) return 'That point is outside the 3D South Pole terrain'
+      if (compute.status === 'computing') return 'Wait for the current area search to finish'
+      const [cx, cz] = clampAreaCenter(x, z)
+      const c = sceneToLatLon(cx, cz)
+      setArea({
+        center: [cx, cz],
+        latitude: c.lat,
+        longitude: c.lon,
+        elevation_m: elevationGrid ? Math.round(terrainElevationM(elevationGrid, cx, cz)) : null,
+      })
+      setCompute({ status: 'idle' })
+      setPointPos([x, z])
+      setPoint({ lat, lon, status: 'loading' })
+      setIsCoordFormOpen(false)
+      setIsPickerActive(false)
+      fetchPoint(lat, lon)
+        .then((stats) => setPoint((p) => (p && p.lat === lat && p.lon === lon ? { lat, lon, status: 'done', stats } : p)))
+        .catch((e: Error) =>
+          setPoint((p) => (p && p.lat === lat && p.lon === lon ? { lat, lon, status: 'error', message: e.message } : p)),
+        )
+      return null
+    },
+    [compute.status, elevationGrid],
+  )
 
   return (
     <div style={{ position: 'relative', width: '100vw', height: '100vh', background: '#020408' }}>
@@ -318,6 +400,8 @@ export default function SouthPoleTerrain() {
             onCompute={handleCompute}
             onCloseArea={handleCloseArea}
             hidePanel={explainerOpen}
+            point={point}
+            pointPos={pointPos}
           />
         </Suspense>
         <OrbitControls
@@ -404,6 +488,29 @@ export default function SouthPoleTerrain() {
             }`}
           />
         </button>
+
+        {/* Custom coordinates (3D view): typed lat / lon -> marker, point statistics and its area */}
+        {viewMode === '3d' && (
+          <div className="relative">
+            <button
+              onClick={() => setIsCoordFormOpen((v) => !v)}
+              className={`group relative flex items-center justify-center w-10 h-10 transition-all duration-300 select-none cursor-pointer active:scale-90 ${
+                isCoordFormOpen
+                  ? 'text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.95)]'
+                  : 'text-white/80 drop-shadow-[0_0_6px_rgba(255,255,255,0.6)] hover:text-white hover:drop-shadow-[0_0_10px_rgba(255,255,255,0.95)]'
+              }`}
+              title="Go to coordinates"
+              aria-label="Go to coordinates"
+            >
+              <MapPin className="w-7 h-7" strokeWidth={1.5} />
+            </button>
+            {isCoordFormOpen && (
+              <div className="absolute top-full right-0 mt-3">
+                <CoordinateForm onGo={handleGoTo} onClose={() => setIsCoordFormOpen(false)} />
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Round view toggle: shows a live preview of the other view (2D map in 3D, spinning terrain in 2D).
             Hidden while the comparison panel is open. */}

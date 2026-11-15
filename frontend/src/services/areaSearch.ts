@@ -45,6 +45,22 @@ export interface AreaSearchHandlers {
   onError: (message: string) => void
 }
 
+/** Custom coordinates: horizon + Sun / Earth statistics of one point (GET /api/point, same model as a candidate). */
+export async function fetchPoint(lat: number, lon: number): Promise<AreaCandidateStats> {
+  const params = new URLSearchParams({ lat: lat.toFixed(5), lon: lon.toFixed(5) })
+  let r: Response
+  try {
+    r = await fetch(`/api/point?${params}`)
+  } catch {
+    throw new Error('Computation server unavailable.')
+  }
+  if (!r.ok) {
+    const body = await r.json().catch(() => null)
+    throw new Error(typeof body?.detail === 'string' ? body.detail : `Server error ${r.status}`)
+  }
+  return r.json()
+}
+
 /** Starts a streamed area search. Returns a function that cancels it. */
 export function startAreaSearch(lat: number, lon: number, handlers: AreaSearchHandlers): () => void {
   const params = new URLSearchParams({ lat: lat.toFixed(5), lon: lon.toFixed(5) })

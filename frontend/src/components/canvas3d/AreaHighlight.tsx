@@ -80,28 +80,38 @@ export function AreaHighlight({ elevations, center, opacity = 0.32 }: AreaHighli
   )
 }
 
-/** Beacon on the best point found inside the area. */
-export function BestPointBeacon({ position, height = 9 }: { position: [number, number, number]; height?: number }) {
+/** Beacon on the best point found inside the area (white / sky) or on a custom coordinate (amber). */
+export function BestPointBeacon({
+  position,
+  height = 9,
+  color = '#ffffff',
+  glow = '#38bdf8',
+}: {
+  position: [number, number, number]
+  height?: number
+  color?: string
+  glow?: string
+}) {
   return (
     <group position={position}>
       {/* Ground ring */}
       <mesh position={[0, 0.2, 0]} rotation={[-Math.PI / 2, 0, 0]} raycast={() => null} renderOrder={4}>
         <ringGeometry args={[0.55, 0.95, 40]} />
-        <meshBasicMaterial color="#ffffff" side={THREE.DoubleSide} depthTest={false} toneMapped={false} />
+        <meshBasicMaterial color={color} side={THREE.DoubleSide} depthTest={false} toneMapped={false} />
       </mesh>
       {/* Mast (thin cylinder: lines are 1 px wide in WebGL) */}
       <mesh position={[0, height / 2, 0]} raycast={() => null}>
         <cylinderGeometry args={[0.07, 0.07, height, 8]} />
-        <meshBasicMaterial color="#ffffff" toneMapped={false} />
+        <meshBasicMaterial color={color} toneMapped={false} />
       </mesh>
       {/* Head */}
       <mesh position={[0, height, 0]} raycast={() => null}>
         <sphereGeometry args={[0.75, 20, 20]} />
-        <meshBasicMaterial color="#ffffff" toneMapped={false} />
+        <meshBasicMaterial color={color} toneMapped={false} />
       </mesh>
       <mesh position={[0, height, 0]} raycast={() => null}>
         <sphereGeometry args={[1.25, 20, 20]} />
-        <meshBasicMaterial color="#38bdf8" transparent opacity={0.35} depthWrite={false} toneMapped={false} />
+        <meshBasicMaterial color={glow} transparent opacity={0.35} depthWrite={false} toneMapped={false} />
       </mesh>
     </group>
   )
