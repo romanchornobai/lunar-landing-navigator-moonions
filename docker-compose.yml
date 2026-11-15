@@ -5,6 +5,7 @@ services:
   api:
     build: { context: ., dockerfile: deploy/Dockerfile.api }
     restart: unless-stopped
+    cpus: 1.5  # the VPS (2 cores) also runs other production services
     environment:
       AREA_SEARCH_WORKERS: "${AREA_SEARCH_WORKERS:-2}"
     volumes:
