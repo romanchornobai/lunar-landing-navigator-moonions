@@ -32,6 +32,10 @@ const HEIGHT_PER_UNIT_M = 208.0
 const HEIGHT_OFFSET_M = -6339
 export const ELEVATION_UNCERTAINTY_M = 261
 
+/** Side of the area searched by the backend (km) and its size in scene units. */
+export const AREA_SIZE_KM = 15
+export const AREA_SIZE_SCENE = ((AREA_SIZE_KM * 1000) / (2 * HALF_WIDTH_M)) * TERRAIN_SIZE
+
 const half = TERRAIN_SIZE / 2
 
 function sceneToGrid(x: number, z: number): { col: number; row: number } {

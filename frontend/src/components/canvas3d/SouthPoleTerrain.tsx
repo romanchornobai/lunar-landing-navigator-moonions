@@ -1,14 +1,17 @@
-import { Suspense, useMemo, useState, useEffect, useRef } from 'react'
+import { Suspense, useCallback, useMemo, useState, useEffect, useRef } from 'react'
 import * as THREE from 'three'
-import { Canvas, useFrame, useLoader } from '@react-three/fiber'
-import { OrbitControls, Stars } from '@react-three/drei'
+import { Canvas, useLoader, useThree } from '@react-three/fiber'
+import { Html, OrbitControls, Stars } from '@react-three/drei'
 import { useNavigate } from 'react-router-dom'
 import { BarChart3, ChevronLeft, Crosshair } from 'lucide-react'
 import { SITES_IN_3D, getSite3DPosition, scenePointToLunarCoords } from '../../data/sites'
-import { GRID, MEAN_Z, SCALE_Y, TERRAIN_SIZE, getTerrainHeight } from '../../lib/southPoleGrid'
+import { GRID, MEAN_Z, SCALE_Y, TERRAIN_SIZE, getTerrainHeight, latLonToScene } from '../../lib/southPoleGrid'
 import { SiteMarker } from './SiteMarker'
-import { TerrainProbeMarker } from './TerrainProbeMarker'
+import { AreaHighlight, BestPointBeacon, clampAreaCenter } from './AreaHighlight'
 import { SiteComparisonPanel } from '../ui/SiteComparisonPanel'
+import { AreaHoloPanel, type AreaComputeState } from '../ui/AreaHoloPanel'
+import { AreaComputeLoader } from '../ui/AreaComputeLoader'
+import { startAreaSearch } from '../../services/areaSearch'
 import SouthPolarMap, { type MapViewInfo } from '../map2d/SouthPolarMap'
 import MiniSouthPoleTerrain from './MiniSouthPoleTerrain'
 
@@ -16,73 +19,62 @@ import MiniSouthPoleTerrain from './MiniSouthPoleTerrain'
 // Georeference, mirroring and height units: lib/southPoleGrid.ts (registered against LRO LOLA GDR, see DATA_SOURCES.md).
 const BASE = '/models/south_pole'
 
-const STICK_HEIGHT = 1.2 // scene units
-const STICK_REST_MS = 350 // cursor must rest this long before the stick grows
+/** Selected 15 x 15 km area: scene centre and its lat / lon (sent to the local backend). */
+interface SelectedArea {
+  center: [number, number]
+  latitude: number
+  longitude: number
+  elevation_m: number | null
+}
 
-function HoverStick({ point }: { point: [number, number, number] }) {
-  const stick = useRef<THREE.Mesh>(null)
-  const grow = useRef({ value: 0, target: 0 })
-
-  // Moving the cursor collapses the stick; resting on a point grows it.
-  useEffect(() => {
-    grow.current.value = 0
-    grow.current.target = 0
-    const timer = setTimeout(() => {
-      grow.current.target = 1
-    }, STICK_REST_MS)
-    return () => clearTimeout(timer)
-  }, [point[0], point[2]])
-
-  useFrame((_, dt) => {
-    const g = grow.current
-    g.value += (g.target - g.value) * Math.min(1, dt * 9)
-    if (stick.current) {
-      const s = Math.max(g.value, 0.0001)
-      stick.current.scale.y = s
-      stick.current.position.y = (STICK_HEIGHT * s) / 2
-      stick.current.visible = g.value > 0.01
-    }
-  })
-
+/** Area panel anchored above the area centre; opens towards the screen centre. */
+function AreaPanelAnchor({
+  anchor,
+  area,
+  state,
+  onCompute,
+  onClose,
+}: {
+  anchor: [number, number, number]
+  area: SelectedArea
+  state: AreaComputeState
+  onCompute: () => void
+  onClose: () => void
+}) {
+  const { camera, size } = useThree()
+  const direction = useMemo(() => {
+    const p = new THREE.Vector3(...anchor).project(camera)
+    return ((p.x + 1) / 2) * size.width > size.width / 2 ? ('left' as const) : ('right' as const)
+    // Decided once per selected area (camera moves do not flip the panel).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [anchor[0], anchor[2]])
   return (
-    <group position={point}>
-      <mesh position={[0, 0.1, 0]}>
-        <sphereGeometry args={[0.1, 12, 12]} />
-        <meshBasicMaterial color="#ffffff" toneMapped={false} />
-      </mesh>
-      <mesh ref={stick} visible={false}>
-        <cylinderGeometry args={[0.06, 0.06, STICK_HEIGHT, 8]} />
-        <meshBasicMaterial color="#ffffff" toneMapped={false} />
-      </mesh>
-    </group>
+    <Html position={anchor} center style={{ pointerEvents: 'none' }}>
+      <AreaHoloPanel center={area} state={state} direction={direction} onCompute={onCompute} onClose={onClose} />
+    </Html>
   )
 }
 
-type ProbeLatLon = { latitude: number; longitude: number; elevation_m: number }
-
 interface TerrainProps {
   isPickerActive: boolean
-  onPickPoint: (point: THREE.Vector3, coords: ProbeLatLon) => void
-  probe: {
-    position: [number, number, number]
-    coords: {
-      latitude: number
-      longitude: number
-      elevation_m: number
-    }
-  } | null
-  onCloseProbe: () => void
-  hoverPoint: [number, number, number] | null
-  onHoverPoint: (pt: [number, number, number] | null) => void
+  hoverCenter: [number, number] | null
+  onHoverCenter: (c: [number, number] | null) => void
+  area: SelectedArea | null
+  onSelectArea: (area: SelectedArea) => void
+  compute: AreaComputeState
+  onCompute: () => void
+  onCloseArea: () => void
 }
 
 function Terrain({
   isPickerActive,
-  onPickPoint,
-  probe,
-  onCloseProbe,
-  hoverPoint,
-  onHoverPoint,
+  hoverCenter,
+  onHoverCenter,
+  area,
+  onSelectArea,
+  compute,
+  onCompute,
+  onCloseArea,
 }: TerrainProps) {
   const buffer = useLoader(THREE.FileLoader, `${BASE}/lunar_elevation_1200.bin`, (loader) => {
     loader.setResponseType('arraybuffer')
@@ -127,9 +119,20 @@ function Terrain({
     }))
   }, [elevations])
 
+  // Best point of the computed area (lat / lon from the backend -> scene)
+  const best = compute.status === 'done' ? compute.result.best : null
+  const bestPosition = useMemo(
+    () => (best ? latLonToScene(best.lat, best.lon, elevations) : null),
+    [best, elevations],
+  )
+
   albedo.colorSpace = THREE.SRGBColorSpace
   normal.colorSpace = THREE.NoColorSpace
   ao.colorSpace = THREE.NoColorSpace
+
+  const areaAnchor: [number, number, number] | null = area
+    ? [area.center[0], getTerrainHeight(elevations, area.center[0], area.center[1]) + 2.5, area.center[1]]
+    : null
 
   return (
     <group>
@@ -149,42 +152,39 @@ function Terrain({
         />
       </mesh>
 
-      {/* Lightweight invisible collision proxy - only active when probe mode is on */}
+      {/* Lightweight invisible collision proxy - only active when the area selector is on */}
       {isPickerActive && (
         <mesh
           geometry={proxyGeometry}
           onPointerMove={(e) => {
             e.stopPropagation()
-            const exactY = getTerrainHeight(elevations, e.point.x, e.point.z)
-            onHoverPoint([e.point.x, exactY, e.point.z])
+            onHoverCenter(clampAreaCenter(e.point.x, e.point.z))
           }}
-          onPointerLeave={() => {
-            onHoverPoint(null)
-          }}
+          onPointerLeave={() => onHoverCenter(null)}
           onClick={(e) => {
             e.stopPropagation()
-            const exactY = getTerrainHeight(elevations, e.point.x, e.point.z)
-            const picked = new THREE.Vector3(e.point.x, exactY, e.point.z)
-            onPickPoint(picked, scenePointToLunarCoords(picked, elevations))
+            const [x, z] = clampAreaCenter(e.point.x, e.point.z)
+            const y = getTerrainHeight(elevations, x, z)
+            const c = scenePointToLunarCoords({ x, y, z }, elevations)
+            onSelectArea({ center: [x, z], latitude: c.latitude, longitude: c.longitude, elevation_m: c.elevation_m })
           }}
         >
           <meshBasicMaterial transparent opacity={0} depthWrite={false} />
         </mesh>
       )}
 
-      {/* White dot at the cursor; a short stick grows from it once the cursor rests */}
-      {isPickerActive && hoverPoint && <HoverStick point={hoverPoint} />}
+      {/* 15 x 15 km square under the cursor (blue) and the selected one (stronger) */}
+      {isPickerActive && hoverCenter && <AreaHighlight elevations={elevations} center={hoverCenter} opacity={0.22} />}
+      {area && <AreaHighlight elevations={elevations} center={area.center} opacity={0.38} />}
 
       {sitePositions.map(({ site, position }) => (
         <SiteMarker key={site.id} site={site} position={position} />
       ))}
 
-      {probe && (
-        <TerrainProbeMarker
-          position={probe.position}
-          coords={probe.coords}
-          onClose={onCloseProbe}
-        />
+      {bestPosition && <BestPointBeacon position={bestPosition} />}
+
+      {area && areaAnchor && (
+        <AreaPanelAnchor anchor={areaAnchor} area={area} state={compute} onCompute={onCompute} onClose={onCloseArea} />
       )}
     </group>
   )
@@ -196,34 +196,59 @@ export default function SouthPoleTerrain() {
   const [isComparisonOpen, setIsComparisonOpen] = useState(false)
   const [viewMode, setViewMode] = useState<'3d' | '2d'>('3d')
   const [mapView, setMapView] = useState<MapViewInfo | null>(null)
-  const [hoverPoint, setHoverPoint] = useState<[number, number, number] | null>(null)
-  const [probe, setProbe] = useState<{
-    position: [number, number, number]
-    coords: {
-      latitude: number
-      longitude: number
-      elevation_m: number
-    }
-  } | null>(null)
+  const [hoverCenter, setHoverCenter] = useState<[number, number] | null>(null)
+  const [area, setArea] = useState<SelectedArea | null>(null)
+  const [compute, setCompute] = useState<AreaComputeState>({ status: 'idle' })
+  const cancelSearch = useRef<(() => void) | null>(null)
+  const searchInfo = useRef<{ total: number; period: [string, string] | null }>({ total: 0, period: null })
 
   useEffect(() => {
     if (isPickerActive) {
       document.body.style.cursor = 'crosshair'
     } else {
       document.body.style.cursor = 'auto'
-      setHoverPoint(null)
+      setHoverCenter(null)
     }
     return () => {
       document.body.style.cursor = 'auto'
     }
   }, [isPickerActive])
 
-  const handlePickPoint = (point: THREE.Vector3, coords: ProbeLatLon) => {
-    setProbe({
-      position: [point.x, point.y, point.z],
-      coords,
+  // Cancel a running search when leaving the page
+  useEffect(() => () => cancelSearch.current?.(), [])
+
+  const handleSelectArea = useCallback(
+    (a: SelectedArea) => {
+      if (compute.status === 'computing') return // the area stays fixed while it is being computed
+      setArea(a)
+      setCompute({ status: 'idle' })
+    },
+    [compute.status],
+  )
+
+  const handleCompute = useCallback(() => {
+    if (!area) return
+    cancelSearch.current?.()
+    searchInfo.current = { total: 0, period: null }
+    setCompute({ status: 'computing', done: 0, total: 0 })
+    cancelSearch.current = startAreaSearch(area.latitude, area.longitude, {
+      onStart: (d) => {
+        searchInfo.current = { total: d.total, period: d.period_utc }
+        setCompute({ status: 'computing', done: 0, total: d.total })
+      },
+      onProgress: (done, total) => setCompute({ status: 'computing', done, total }),
+      onResult: (result) =>
+        setCompute({ status: 'done', result, total: searchInfo.current.total, period: searchInfo.current.period }),
+      onError: (message) => setCompute({ status: 'error', message }),
     })
-  }
+  }, [area])
+
+  const handleCloseArea = useCallback(() => {
+    cancelSearch.current?.()
+    cancelSearch.current = null
+    setArea(null)
+    setCompute({ status: 'idle' })
+  }, [])
 
   return (
     <div style={{ position: 'relative', width: '100vw', height: '100vh', background: '#020408' }}>
@@ -243,12 +268,14 @@ export default function SouthPoleTerrain() {
         <Stars radius={180} depth={80} count={4000} factor={4} saturation={0} fade speed={0.3} />
         <Suspense fallback={null}>
           <Terrain
-            isPickerActive={isPickerActive}
-            onPickPoint={handlePickPoint}
-            probe={probe}
-            onCloseProbe={() => setProbe(null)}
-            hoverPoint={hoverPoint}
-            onHoverPoint={setHoverPoint}
+            isPickerActive={isPickerActive && viewMode === '3d'}
+            hoverCenter={hoverCenter}
+            onHoverCenter={setHoverCenter}
+            area={area}
+            onSelectArea={handleSelectArea}
+            compute={compute}
+            onCompute={handleCompute}
+            onCloseArea={handleCloseArea}
           />
         </Suspense>
         <OrbitControls
@@ -269,6 +296,11 @@ export default function SouthPoleTerrain() {
       )}
 
       {isComparisonOpen && <SiteComparisonPanel onClose={() => setIsComparisonOpen(false)} />}
+
+      {/* Area search progress (top centre) */}
+      {viewMode === '3d' && compute.status === 'computing' && (
+        <AreaComputeLoader done={compute.done} total={compute.total} />
+      )}
 
       {/* Top Left: Navigation back to Lunar Globe */}
       <div className="absolute top-6 left-6 z-20">
@@ -305,7 +337,15 @@ export default function SouthPoleTerrain() {
               ? 'text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.95)]'
               : 'text-white/80 drop-shadow-[0_0_6px_rgba(255,255,255,0.6)] hover:text-white hover:drop-shadow-[0_0_10px_rgba(255,255,255,0.95)]'
           }`}
-          title={isPickerActive ? 'Desactivar selector de coordenadas' : 'Activar selector de coordenadas'}
+          title={
+            viewMode === '3d'
+              ? isPickerActive
+                ? 'Desactivar selector de área'
+                : 'Seleccionar un área de 15 × 15 km'
+              : isPickerActive
+                ? 'Desactivar selector de coordenadas'
+                : 'Activar selector de coordenadas'
+          }
         >
           <Crosshair
             strokeWidth={1.5}

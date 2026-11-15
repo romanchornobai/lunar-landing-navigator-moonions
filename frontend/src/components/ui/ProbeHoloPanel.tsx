@@ -152,7 +152,7 @@ export function ProbeHoloPanel({ coords, direction, extra, onClose }: ProbeHoloP
               <span className="tracking-wider uppercase text-[9px] text-neutral-300">
                 MODELO CIENTÍFICO LRO LOLA
               </span>
-              <span className="text-[9px] text-neutral-400">DTM 364 KM</span>
+              <span className="text-[9px] text-neutral-400">ALTITUD ±260 M</span>
             </div>
           </div>
         </SciFiHudPanel>

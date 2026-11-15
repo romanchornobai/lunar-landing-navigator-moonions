@@ -79,6 +79,9 @@ of the cap (center lat <= -84) for the best point. Not part of the public site: 
    sight (`services/visibility.py`); ground slope from the DEM (reported, not filtered).
 3. Ranking by share of hours with Sun and Earth visible at once (or Sun mean visible fraction, or DTE).
 Timing on a 12-core laptop: ~6 s for 150 candidates, ~11.5 s for 300.
+Frontend: in the South Pole 3D view the selector button picks a 15 x 15 km square (blue overlay, `AreaHighlight.tsx`);
+CALCULAR streams the search from the local backend (`services/areaSearch.ts`, Vite proxies `/api` to :8000), shows the
+progress at the top and the best point (beacon + panel). Without the local backend the panel reports it is unavailable.
 
 ## 3D assets and textures: provenance to verify
 These have no recorded origin or license yet. Confirm and fill in before the final submission.
