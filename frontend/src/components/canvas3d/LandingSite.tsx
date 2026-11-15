@@ -5,22 +5,35 @@ import { OrbitControls, Stars, useGLTF } from '@react-three/drei'
 
 // Candidate landing sites: LRO LOLA 15 km x 15 km terrain at 1:1 scale (meters), site center at [0,0,0].
 // Ground normals are in scene axes (Y up). See ASSETS.md / DATA_SOURCES.md.
+// lat / lon: site at the mesh centre (deg); profile: id of its LOLA horizon in data/horizonProfiles.json.
 export const SITES = {
-  shackleton: {
-    glb: '/models/shackleton_rim/shackleton_rim_15km.glb',
-    normal: [-0.2871, 0.9229, -0.2567],
+  cr1: {
+    glb: '/models/connecting_ridge_cr1/connecting_ridge_cr1_15km.glb',
+    normal: [0.0251, 0.9997, 0.0082],
+    lat: -89.4395,
+    lon: -137.1934,
+    profile: 'connecting-ridge-cr1',
   },
   malapert: {
     glb: '/models/malapert_massif/malapert_massif_15km.glb',
     normal: [0.0742, 0.9965, -0.0373],
+    lat: -85.99,
+    lon: 2.93,
+    profile: 'malapert',
   },
   degerlache: {
     glb: '/models/de_gerlache_rim/de_gerlache_rim_15km.glb',
     normal: [0.0076, 0.9953, 0.0965],
+    lat: -88.71,
+    lon: -68.7,
+    profile: 'degerlache',
   },
   nobile: {
     glb: '/models/nobile_rim_1/nobile_rim_1_15km.glb',
     normal: [-0.2347, 0.9716, -0.0312],
+    lat: -85.25,
+    lon: 35.8,
+    profile: 'nobile',
   },
 } as const
 
@@ -191,7 +204,7 @@ interface LandingSiteProps {
 }
 
 export default function LandingSite({
-  siteKey = 'shackleton',
+  siteKey = 'cr1',
   sunAzimuthDeg = DEFAULT_SUN_AZIMUTH_DEG,
   sunElevationDeg = DEFAULT_SUN_ELEVATION_DEG,
 }: LandingSiteProps) {

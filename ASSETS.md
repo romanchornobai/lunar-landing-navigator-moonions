@@ -17,6 +17,9 @@ Each folder has `<site>_15km.glb`, `<site>_heightmap_16bit.png` (uint16), `<site
 | `malapert_massif` | Malapert Massif summit | -85.99 / 2.93 | 6218.06, 121487.27 | 5127.5 | 2017.5 .. 5173.5 |
 | `de_gerlache_rim` | Faustini / De Gerlache ridge | -88.71 / -68.70 | -36446.62, 14209.94 | 1765.5 | -706.0 .. 1814.5 |
 | `nobile_rim_1` | Nobile crater rim | -85.25 / 35.80 | 84303.20, 116889.27 | 6504.0 | 3854.0 .. 6800.0 |
+| `connecting_ridge_cr1` | Connecting Ridge CR1 (route `cr1`; built by `backend/app/scripts/make_site_terrain.py`, no heightmap/preview PNG) | -89.4395 / -137.1934 | -11549.47, -12469.42 | 1958.0 | -536.3 .. 1958.7 |
+
+`shackleton_rim` is no longer used by any route: its centre lies on Shackleton's inner wall (never sunlit), replaced by `cr1`.
 
 Load: `useGLTF('/models/<site>/<site>_15km.glb')`, `position=[0,0,0]`.
 

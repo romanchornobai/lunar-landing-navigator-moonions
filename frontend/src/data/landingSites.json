@@ -8,7 +8,7 @@
     "description": "Cresta que une los cráteres Shackleton y de Gerlache. Punto CR1 (spot 1) del estudio de iluminación con LOLA.",
     "published": "Iluminado el 92 % del tiempo a 2 m del suelo (media 88,1 %); noche más larga 4,6 días. Simulación de 19 años, LOLA 20 m/px.",
     "nasa_region": "Connecting Ridge (candidata Artemis III 2022)",
-    "scene_key": null,
+    "scene_key": "cr1",
     "sources": [
       {
         "label": "Gläser et al. 2014, EPSC Abstracts 9, EPSC2014-136-1",

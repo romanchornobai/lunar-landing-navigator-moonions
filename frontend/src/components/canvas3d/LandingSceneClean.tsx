@@ -8,20 +8,21 @@ import { SkyBodies, type BodyState } from './SkyBodies'
 import { ChevronLeft } from 'lucide-react'
 import { CockpitTelemetryHud, type LandingSiteData } from '../ui/CockpitTelemetryHud'
 import { FlightDateSelector } from '../ui/FlightDateSelector'
+import { SITES, type SiteKey } from './LandingSite'
+import { EPHEMERIS_START_MS, loadEphemeridesBuffer } from '@/utils/ephemerisClient'
 import {
-  EPHEMERIS_SITES,
-  EPHEMERIS_SITE_LATLON,
-  EPHEMERIS_START_MS,
-  getEphemerisAt,
-  loadEphemeridesBuffer,
-  type EphemerisSiteKey,
-} from '@/utils/ephemerisClient'
-import { horizonAt, horizonProfile, hoursUntilVisibilityChange, sunDiscFraction, SUN_RADIUS_DEG } from '@/lib/visibility'
+  horizonAt,
+  horizonProfile,
+  hoursUntilVisibilityChange,
+  localDirectionsAt,
+  sunDiscFraction,
+  SUN_RADIUS_DEG,
+} from '@/lib/visibility'
 
 type Vec3 = [number, number, number]
 
-const SITE_INFO_MAP: Record<string, { name: string; shortName: string }> = {
-  shackleton: { name: 'Cráter Shackleton - Borde Iluminado', shortName: 'Shackleton' },
+const SITE_INFO_MAP: Record<SiteKey, { name: string; shortName: string }> = {
+  cr1: { name: 'Connecting Ridge (CR1)', shortName: 'CR1' },
   malapert: { name: 'Macizo de Malapert (Peak A)', shortName: 'Malapert' },
   degerlache: { name: 'Borde de Faustini / De Gerlache', shortName: 'De Gerlache' },
   nobile: { name: 'Cresta del Cráter Nobile', shortName: 'Nobile' },
@@ -71,32 +72,24 @@ function ArtemisLander({ groundNormal = [-0.2871, 0.9229, -0.2567] }: { groundNo
 }
 
 interface LandingSceneCleanProps {
-  /** Site identifier key. Defaults to 'shackleton'. */
-  siteId?: string
-  /** Terrain GLB. Defaults to Shackleton Connecting Ridge. */
-  modelPath?: string
-  /** Ground normal at the site center (scene axes, Y up). Defaults to Shackleton's. */
-  groundNormal?: Vec3
+  /** Route key of the site (see SITES in LandingSite.tsx). */
+  siteId?: SiteKey
 }
 
-export function LandingSceneClean({
-  siteId = 'shackleton',
-  modelPath = '/models/shackleton_rim/shackleton_rim_15km.glb',
-  groundNormal = [-0.2871, 0.9229, -0.2567],
-}: LandingSceneCleanProps) {
+export function LandingSceneClean({ siteId = 'cr1' }: LandingSceneCleanProps) {
   const navigate = useNavigate()
-  const info = SITE_INFO_MAP[siteId] || { name: 'Cráter Shackleton - Borde Iluminado', shortName: 'Shackleton' }
+  const site = SITES[siteId]
+  const modelPath = site.glb
+  const groundNormal = site.normal as unknown as Vec3
+  const info = SITE_INFO_MAP[siteId]
   const siteData: LandingSiteData = {
     id: siteId,
     name: info.name,
     shortName: info.shortName,
     groundNormal: groundNormal,
   }
-  const siteKey: EphemerisSiteKey = (EPHEMERIS_SITES as readonly string[]).includes(siteId)
-    ? (siteId as EphemerisSiteKey)
-    : 'shackleton'
-  const siteLonDeg = EPHEMERIS_SITE_LATLON[siteKey][1]
-  const profile = useMemo(() => horizonProfile(siteKey), [siteKey])
+  const siteLonDeg = site.lon
+  const profile = useMemo(() => horizonProfile(site.profile), [site.profile])
 
   // Mission date (UTC) and Sun/Earth directions from the baked JPL Horizons buffer.
   const [missionDate, setMissionDate] = useState(() => new Date(EPHEMERIS_START_MS))
@@ -106,9 +99,11 @@ export function LandingSceneClean({
       .then(() => setEphemerisReady(true))
       .catch((e) => console.error(e))
   }, [])
+  // Exact Horizons track for the 4 buffer sites; CR1 is re-projected from Shackleton's (22.6 km, Earth parallax
+  // < 0.004 deg).
   const ephemeris = useMemo(
-    () => (ephemerisReady ? getEphemerisAt(siteKey, missionDate) : null),
-    [ephemerisReady, siteKey, missionDate],
+    () => (ephemerisReady ? localDirectionsAt(site.lat, site.lon, missionDate) : null),
+    [ephemerisReady, site.lat, site.lon, missionDate],
   )
 
   // Visibility against the LOLA horizon of the site (same model as the comparison table and the backend).
@@ -125,16 +120,16 @@ export function LandingSceneClean({
       visible: sunVisible,
       discFraction: sunDiscFraction(ephemeris.sun.elevation, sunH),
       // Next rise / set from the hourly samples (1 h resolution, up to 60 days ahead).
-      hoursToChange: hoursUntilVisibilityChange(siteKey, 'sun', hour, sunVisible),
+      hoursToChange: hoursUntilVisibilityChange(site.profile, 'sun', hour, sunVisible),
     }
     const earth: BodyState = {
       ...ephemeris.earth,
       horizon: earthH,
       visible: earthVisible,
-      hoursToChange: hoursUntilVisibilityChange(siteKey, 'earth', hour, earthVisible),
+      hoursToChange: hoursUntilVisibilityChange(site.profile, 'earth', hour, earthVisible),
     }
     return { sun, earth }
-  }, [ephemeris, profile, missionDate, siteKey])
+  }, [ephemeris, profile, missionDate, site.profile])
 
   // HUD check marks follow the terrain-aware visibility.
   const hudEphemeris = useMemo(

@@ -13,7 +13,9 @@ import {
   EPHEMERIS_HOURS,
   EPHEMERIS_SITES,
   EPHEMERIS_SITE_LATLON,
+  getEphemerisAt,
   getRawTrack,
+  type EphemerisSample,
   type EphemerisSiteKey,
 } from '../utils/ephemerisClient'
 
@@ -71,25 +73,64 @@ function isVisible(body: 'sun' | 'earth', az: number, el: number, profile: numbe
 }
 
 /**
- * Hours from `hour` (fractional index into the ephemeris buffer) until the terrain visibility of a body changes,
- * scanning the hourly samples of an ephemeris site (route keys use their own exact track). null if no change within
- * maxHours or the data is missing. Resolution: 1 h.
+ * Re-projection of the Horizons directions of the nearest of the 4 buffer sites onto the local horizon of (lat, lon):
+ * exact for a direction fixed in the Moon frame; Earth parallax error < distance / 356,000 km (identity at the 4 sites).
+ */
+export function reprojector(lat: number, lon: number) {
+  const src = nearestEphemerisSite(lat, lon)
+  const a = enu(...EPHEMERIS_SITE_LATLON[src])
+  const b = enu(lat, lon)
+  const toLocal = (az: number, el: number): [number, number] => {
+    const ca = Math.cos(el * DEG)
+    const s = Math.sin(az * DEG) * ca
+    const c = Math.cos(az * DEG) * ca
+    const z = Math.sin(el * DEG)
+    const v: Vec3 = [
+      s * a.e[0] + c * a.n[0] + z * a.u[0],
+      s * a.e[1] + c * a.n[1] + z * a.u[1],
+      s * a.e[2] + c * a.n[2] + z * a.u[2],
+    ]
+    const az2 = Math.atan2(dot(v, b.e), dot(v, b.n)) / DEG
+    return [(az2 + 360) % 360, Math.asin(Math.max(-1, Math.min(1, dot(v, b.u)))) / DEG]
+  }
+  return { src, toLocal }
+}
+
+/** Sun / Earth (azimuth, elevation) at any point of the cap at a date, from the nearest buffer site. */
+export function localDirectionsAt(lat: number, lon: number, date: Date): EphemerisSample | null {
+  const { src, toLocal } = reprojector(lat, lon)
+  const raw = getEphemerisAt(src, date)
+  if (!raw) return null
+  const body = (d: { azimuth: number; elevation: number }) => {
+    const [azimuth, elevation] = toLocal(d.azimuth, d.elevation)
+    return { azimuth, elevation, isAbove: elevation > 0 }
+  }
+  return { sun: body(raw.sun), earth: body(raw.earth) }
+}
+
+/**
+ * Hours from `hour` (fractional index into the ephemeris buffer) until the terrain visibility of a body changes at a
+ * profile site (horizonProfiles.json id), scanning the hourly samples. null if no change within maxHours or the data
+ * is missing. Resolution: 1 h.
  */
 export function hoursUntilVisibilityChange(
-  siteKey: EphemerisSiteKey,
+  profileId: string,
   body: 'sun' | 'earth',
   hour: number,
   visibleNow: boolean,
   maxHours = 24 * 60,
 ): number | null {
-  const profile = horizonProfile(siteKey)
+  const site = PROFILES.sites[profileId]
+  const profile = horizonProfile(profileId)
   const h0 = Math.ceil(hour)
   const h1 = Math.min(h0 + maxHours, EPHEMERIS_HOURS)
-  if (!profile || h1 <= h0) return null
-  const track = getRawTrack(siteKey, body, h0, h1)
+  if (!site || !profile || h1 <= h0) return null
+  const { src, toLocal } = reprojector(site.lat, site.lon)
+  const track = getRawTrack(src, body, h0, h1)
   if (!track) return null
   for (let i = 0; i < h1 - h0; i++) {
-    if (isVisible(body, track[2 * i], track[2 * i + 1], profile) !== visibleNow) return h0 + i - hour
+    const [az, el] = toLocal(track[2 * i], track[2 * i + 1])
+    if (isVisible(body, az, el, profile) !== visibleNow) return h0 + i - hour
   }
   return null
 }
@@ -117,29 +158,13 @@ export function visibilitySeries(siteId: string, h0: number, h1: number, mast = 
   const site = PROFILES.sites[siteId]
   const profile = site?.profiles[mast]?.horizon_deg
   if (!profile) return null
-  const src = nearestEphemerisSite(site.lat, site.lon)
+  // Re-project (az, el) from the ephemeris site to this site and test against its horizon.
+  const { src, toLocal } = reprojector(site.lat, site.lon)
   const sunRaw = getRawTrack(src, 'sun', h0, h1)
   const earthRaw = getRawTrack(src, 'earth', h0, h1)
   if (!sunRaw || !earthRaw) return null
-
-  const a = enu(...EPHEMERIS_SITE_LATLON[src])
-  const b = enu(site.lat, site.lon)
   const n = h1 - h0
   const out: VisibilitySeries = { sun: new Uint8Array(n), earth: new Uint8Array(n) }
-
-  // Re-project (az, el) from the ephemeris site to this site and test against its horizon.
-  const toLocal = (az: number, el: number): [number, number] => {
-    const ca = Math.cos(el * DEG)
-    const s = Math.sin(az * DEG) * ca
-    const c = Math.cos(az * DEG) * ca
-    const z = Math.sin(el * DEG)
-    const v: Vec3 = [
-      s * a.e[0] + c * a.n[0] + z * a.u[0],
-      s * a.e[1] + c * a.n[1] + z * a.u[1],
-      s * a.e[2] + c * a.n[2] + z * a.u[2],
-    ]
-    return [Math.atan2(dot(v, b.e), dot(v, b.n)) / DEG, Math.asin(Math.max(-1, Math.min(1, dot(v, b.u)))) / DEG]
-  }
 
   for (let i = 0; i < n; i++) {
     const [sAz, sEl] = toLocal(sunRaw[2 * i], sunRaw[2 * i + 1])

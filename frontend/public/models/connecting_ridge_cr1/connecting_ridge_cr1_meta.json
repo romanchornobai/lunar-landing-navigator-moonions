@@ -1,0 +1,36 @@
+{
+  "site_key": "connecting_ridge_cr1",
+  "name": "Connecting Ridge (CR1)",
+  "coordinates": {
+    "lat": -89.4395,
+    "lon": -137.1934
+  },
+  "polar_projection_meters": {
+    "cx": -11549.47,
+    "cy": -12469.42
+  },
+  "area_size_meters": {
+    "width": 15000,
+    "height": 15000,
+    "span_km": 15.0
+  },
+  "grid_size": [
+    501,
+    501
+  ],
+  "resolution_meters_per_pixel": 30.0,
+  "elevation": {
+    "datum": "LOLA sphere R = 1737400 m",
+    "center_abs_meters": 1958.0,
+    "min_abs_meters": -536.3,
+    "max_abs_meters": 1958.7,
+    "relief_span_meters": 2495.1,
+    "relative_at_center": 0.0
+  },
+  "ground_normal_scene": [
+    0.0251,
+    0.9997,
+    0.0082
+  ],
+  "source": "LRO LOLA GDR LDEM_85S_20M / LDEM_80S_40M (NASA PDS Geosciences Node), bilinear, backend/app/scripts/make_site_terrain.py"
+}

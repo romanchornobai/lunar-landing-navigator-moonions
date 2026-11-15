@@ -5,18 +5,11 @@ import { SITES, type SiteKey } from './components/canvas3d/LandingSite'
 import { LandingSceneClean } from './components/canvas3d/LandingSceneClean'
 import { RouteLoader } from './components/ui/RouteLoader'
 
-// /vista-sitio/:siteKey where siteKey is one of shackleton | malapert | degerlache | nobile
+// /vista-sitio/:siteKey where siteKey is one of cr1 | malapert | degerlache | nobile
 function LandingSiteRoute() {
   const { siteKey } = useParams()
-  const key = (siteKey && siteKey in SITES ? siteKey : 'shackleton') as SiteKey
-  const site = SITES[key]
-  return (
-    <LandingSceneClean
-      siteId={key}
-      modelPath={site.glb}
-      groundNormal={[...site.normal] as [number, number, number]}
-    />
-  )
+  const key = (siteKey && siteKey in SITES ? siteKey : 'cr1') as SiteKey
+  return <LandingSceneClean siteId={key} />
 }
 
 export default function App() {

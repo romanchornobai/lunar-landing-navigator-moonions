@@ -148,8 +148,18 @@ when the visibility model says so; the HUD checks and the hover labels use the s
 Earth: centre, DTE), with the next rise / set from the hourly samples (1 h resolution, up to 60 days ahead). The Sun
 light is scaled by the exact visible disc fraction; earthshine by the Earth's lit fraction `(1 - s.e) / 2`. The
 ambient fill is for legibility only (the Moon has no sky light). Earth's rotation angle is not modelled, only its phase.
-Note: the `shackleton` route point (-89.54, 129.20) lies on Shackleton's inner wall (LOLA -2317 m): its horizon is
-14-27 deg in every direction, so the Sun is never visible there.
+Routes: `cr1` (Connecting Ridge CR1, Gläser et al. 2014), `malapert`, `degerlache`, `nobile`. CR1 replaced the former
+`shackleton` route (-89.54, 129.20), which lies on Shackleton's inner wall (LOLA -2317 m, horizon 14-27 deg all
+around, so never sunlit). CR1 directions are re-projected from the Shackleton buffer site (22.6 km away, Earth parallax
+< 0.004 deg) with `reprojector` in `lib/visibility.ts`; its horizon is the `connecting-ridge-cr1` profile.
+
+### CR1 site terrain (`frontend/public/models/connecting_ridge_cr1/`)
+Built from the same LOLA GDR DEMs with `python backend/app/scripts/make_site_terrain.py --key connecting_ridge_cr1
+--lat -89.4395 --lon -137.1934 --name "Connecting Ridge (CR1)"` (501 x 501 vertices, 30 m, bilinear, grid-aligned like
+the other meshes), then from `frontend/`:
+`npx gltf-transform simplify <raw> <tmp> --ratio 0 --error 0.0001 --lock-border true` and
+`npx gltf-transform meshopt <tmp> <out> --quantize-position 16 --quantize-normal 12 --quantize-texcoord 14`.
+The other three site meshes came with the project (origin in `ASSETS.md`).
 
 ### Comparison table (`frontend/src/components/ui/SiteComparisonPanel.tsx`, `frontend/src/lib/visibility.ts`)
 Runs fully in the browser (no backend): for each point and every hour of the chosen dates, the Sun / Earth directions of the
