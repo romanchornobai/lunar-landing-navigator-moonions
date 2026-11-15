@@ -1,6 +1,6 @@
-import { Suspense, useEffect, useMemo } from 'react'
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
-import { Canvas, useLoader, useThree } from '@react-three/fiber'
+import { Canvas, useFrame, useLoader, useThree } from '@react-three/fiber'
 import { Stars } from '@react-three/drei'
 import { useNavigate } from 'react-router-dom'
 import { LedButton } from '../ui/LedButton'
@@ -113,7 +113,26 @@ function engrave(
   return tex
 }
 
-function Moon() {
+/** EMPEZAR exit: the globe spins fast (ease-in) so the engraving turns away, then the next view opens. */
+const SPIN_S = 0.9
+const SPIN_RAD = Math.PI * 1.25
+
+function Moon({ spinning = false, onSpinDone }: { spinning?: boolean; onSpinDone?: () => void }) {
+  const meshRef = useRef<THREE.Mesh>(null)
+  const spinT = useRef(0)
+  const spinDone = useRef(false)
+  useFrame((_, delta) => {
+    const m = meshRef.current
+    if (!m || !spinning || spinDone.current) return
+    spinT.current = Math.min(1, spinT.current + Math.min(delta, 1 / 30) / SPIN_S)
+    const k = spinT.current * spinT.current * spinT.current // ease-in: accelerates
+    m.rotation.y = MOON_ROTATION_Y - SPIN_RAD * k
+    if (spinT.current >= 1) {
+      spinDone.current = true
+      onSpinDone?.()
+    }
+  })
+
   const [colorMap, elevationMap] = useLoader(THREE.TextureLoader, [COLOR_URL, ELEVATION_URL])
   const maxAniso = useThree((s) => s.gl.capabilities.getMaxAnisotropy())
   colorMap.anisotropy = Math.min(8, maxAniso)
@@ -130,7 +149,7 @@ function Moon() {
   )
 
   return (
-    <mesh rotation={[0, MOON_ROTATION_Y, 0]}>
+    <mesh ref={meshRef} rotation={[0, MOON_ROTATION_Y, 0]}>
       <sphereGeometry args={[2, 384, 384]} />
       <meshStandardMaterial
         map={engravedColor}
@@ -148,6 +167,7 @@ function Moon() {
 
 export default function LunarGlobe() {
   const navigate = useNavigate()
+  const [leaving, setLeaving] = useState(false)
   return (
     <div style={{ position: 'relative', width: '100vw', height: '100vh' }}>
       {/* Fixed view: no orbit controls, the Moon cannot be rotated or zoomed */}
@@ -163,11 +183,11 @@ export default function LunarGlobe() {
         <directionalLight position={[-8, -2, -6]} intensity={0.3} />
         <Stars radius={100} depth={50} count={3000} factor={4} saturation={0} fade speed={0.5} />
         <Suspense fallback={null}>
-          <Moon />
+          <Moon spinning={leaving} onSpinDone={() => navigate('/vista-polar')} />
         </Suspense>
       </Canvas>
       <div className="absolute bottom-8 left-1/2 z-10 -translate-x-1/2">
-        <LedButton variant="compact" className="min-w-[190px]" onClick={() => navigate('/vista-polar')}>
+        <LedButton variant="compact" className="min-w-[190px]" onClick={() => setLeaving(true)}>
           EMPEZAR
         </LedButton>
       </div>
