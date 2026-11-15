@@ -378,4 +378,4 @@ export const LanderMarkerWithHud: React.FC<LanderMarkerWithHudProps> = ({
   );
 };
 
-useGLTF.preload('/models/lander/lander.glb');
+// Preloaded in the background by lib/prefetchAssets.ts once the first view has loaded.

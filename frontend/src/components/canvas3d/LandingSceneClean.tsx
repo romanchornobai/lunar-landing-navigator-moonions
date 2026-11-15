@@ -274,4 +274,4 @@ export function LandingSceneClean({ siteId = 'cr1' }: LandingSceneCleanProps) {
   )
 }
 
-useGLTF.preload('/models/lander/lander.glb')
+// Preloaded in the background by lib/prefetchAssets.ts once the first view has loaded.

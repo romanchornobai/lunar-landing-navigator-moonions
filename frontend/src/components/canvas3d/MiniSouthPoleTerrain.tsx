@@ -14,7 +14,7 @@ const SCALE_Y = 0.24375
 
 function Terrain({ elevations }: { elevations: Float32Array }) {
   const group = useRef<THREE.Group>(null)
-  const albedo = useLoader(THREE.TextureLoader, '/models/south_pole/lunar_albedo_2k.png')
+  const albedo = useLoader(THREE.TextureLoader, '/models/south_pole/lunar_albedo_2k.jpg')
   albedo.colorSpace = THREE.SRGBColorSpace
 
   const geometry = useMemo(() => {

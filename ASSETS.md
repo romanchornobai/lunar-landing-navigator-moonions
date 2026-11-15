@@ -29,7 +29,10 @@ at a site of longitude `lon` is scene `(sin lon, 0, -cos lon)`, so a body at (az
 `azimuth + lon` clockwise from `-Z`. Implemented in `frontend/src/lib/skyGeometry.ts`.
 
 ## South Pole regional terrain (`models/south_pole/`)
-- `lunar_elevation_1200.bin`: Float32Array 1200x1200 (5.76 MB). Plus `lunar_albedo_2k.png`, `lunar_normal_2k.png`, `lunar_ao_2k.png`.
+- `lunar_elevation_1200_u16.bin` (2.9 MB): the 1200x1200 Float32 grid quantized to uint16 for download size: header float32
+  [min, step], then row-major uint16 q, value = min + q * step (max error 0.0003 units ~ 0.07 m; decoded in
+  `lib/southPoleElevation.ts`). Plus `lunar_albedo_2k.jpg` (q90), `lunar_normal_2k.webp` (q90) and `lunar_ao_2k.jpg` (grey, q90),
+  re-encoded from the original 2K PNGs (17 MB -> 2.1 MB).
 - **Georeference (measured, the original notes were wrong):** NOT the -90..-84 cap. The grid is a ~212 x 212 km square
   centred at 89.467 S, 116.25 E (near Shackleton), rotated 359.62 deg and stored mirrored; values are not metres
   (LOLA height ~= 208.0 * value - 6339 m, +-261 m). Registered against LRO LOLA GDR (r = 0.979), see `DATA_SOURCES.md`.
@@ -50,7 +53,7 @@ at a site of longitude `lon` is scene `(sin lon, 0, -cos lon)`, so a body at (az
 - Simplified from ~450k to ~110k triangles (max error ~3.6 mm at scale 0.1), ~1 MB.
 
 ## Celestial (`models/celestial/`)
-- `Earth.glb` (~2.3 MB, 4096x3072 WebP color + normal maps). Earth sits 1-6 deg above the horizon at the South Pole (libration, ~14-day cycle).
+- `Earth.glb` (~145 KB, 1024x768 WebP color + normal maps, downsampled from 4096x3072: Earth is ~1 deg wide on screen). Earth sits 1-6 deg above the horizon at the South Pole (libration, ~14-day cycle).
 - Site 3D view (`components/canvas3d/SkyBodies.tsx`): Earth.glb normalized to radius 25 km x tan(0.95 deg) at 25 km,
   north pole pointing down, custom shader lit only by the Sun direction (correct phase); Sun = sphere of 30 km x
   tan(0.266 deg) at 30 km plus two additive glow sprites. Directions from the JPL Horizons buffer.
@@ -58,10 +61,11 @@ at a site of longitude `lon` is scene `(sin lon, 0, -cos lon)`, so a body at (az
 ## Textures
 - `models/moon_texture/textures/moon_meteor_01_{diff,nor,rough,ao}_2k.jpg`: PBR regolith. Intended for an anti-tiling stochastic shader
   (double rotation ~28 deg) with distance fade beyond ~280 m, anisotropy 16x, applied to the site meshes.
-- `textures/moon_color_8k.jpg` (8192x4096 sRGB, ~6.8 MB) and `textures/moon_elevation_8bit.png` (5760x2880 grey, ~5.2 MB):
+- `textures/moon_color_4k.jpg` (4096x2048 sRGB, q88, ~1.6 MB) and `textures/moon_elevation_4k.png` (4096x2048 grey, ~2.3 MB),
+  Lanczos-downsampled for load time from the 8192x4096 / 5760x2880 8-bit derivatives:
   global Moon sphere, loaded with `THREE.TextureLoader`. Derived from the git-ignored 16-bit TIFFs
   `lroc_color_16bit_srgb_8k.tif` (243 MB) and `ldem_16_uint.tif` (33 MB) by plain 16 -> 8 bit scaling (value / 256),
-  same resolution. DEM range after scaling: 8..161. Sphere radius 2.0, 384x384 segments, displacementScale 0.05, displacementBias -0.015, bumpScale 0.03, roughness 0.92,
+  (then downsampled as above). DEM range after scaling: 8..161. Sphere radius 2.0, 384x384 segments, displacementScale 0.05, displacementBias -0.015, bumpScale 0.03, roughness 0.92,
   metalness 0.02, rotation [0, -PI/2, 0].
 
 ## Ephemerides (`frontend/public/data/ephemerides/ephemerides_3yr.bin`, 1,683,520 bytes)
@@ -72,8 +76,9 @@ at a site of longitude `lon` is scene `(sin lon, 0, -cos lon)`, so a body at (az
   Earth azimuth ~ 360 - longitude). Reader: `frontend/src/utils/ephemerisClient.ts` (loaded once, linear interpolation, no network per query).
 
 ## HUD icons (`models/icons/`)
-- `sun_model.glb` (731 KB, was 28.8 MB): joined, simplified to ~3% of the original ~1M vertices (unlit material), meshopt-compressed.
-- `earth.glb` (624 KB): converted from `KHR_materials_pbrSpecularGlossiness` (not supported by three r162, rendered grey) to metal-rough, meshopt-compressed.
+- Embedded textures downsampled to 512 px for load time (shown at ~64 px).
+- `sun_model.glb` (527 KB, was 28.8 MB): joined, simplified to ~3% of the original ~1M vertices (unlit material), meshopt-compressed.
+- `earth.glb` (149 KB): converted from `KHR_materials_pbrSpecularGlossiness` (not supported by three r162, rendered grey) to metal-rough, meshopt-compressed.
 - Both are normalized at runtime to a unit sphere (`CelestialReadout.tsx`), shown at ~64 px, spinning slowly.
 
 ## Optimization (done 2026-11-14, tuned for an integrated AMD Radeon laptop)

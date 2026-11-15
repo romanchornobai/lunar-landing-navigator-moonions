@@ -90,5 +90,5 @@ export const CelestialReadout: React.FC<CelestialReadoutProps> = ({ body, azimut
   </div>
 )
 
-useGLTF.preload(CELESTIAL_MODELS.sun)
+// Preloaded in the background by lib/prefetchAssets.ts once the first view has loaded.
 useGLTF.preload(CELESTIAL_MODELS.earth)

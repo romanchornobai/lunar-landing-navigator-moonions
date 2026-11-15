@@ -143,7 +143,4 @@ export const LandingTerrainModel: React.FC<LandingTerrainModelProps> = ({ modelP
   return <primitive object={terrain} position={[0, 0, 0]} />
 }
 
-useGLTF.preload('/models/connecting_ridge_cr1/connecting_ridge_cr1_15km.glb')
-useGLTF.preload('/models/malapert_massif/malapert_massif_15km.glb')
-useGLTF.preload('/models/de_gerlache_rim/de_gerlache_rim_15km.glb')
-useGLTF.preload('/models/nobile_rim_1/nobile_rim_1_15km.glb')
+// Preloaded in the background by lib/prefetchAssets.ts once the first view has loaded.

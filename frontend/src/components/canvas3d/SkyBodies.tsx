@@ -321,4 +321,4 @@ export function SkyBodies({ siteLonDeg, horizonDeg, sun, earth }: SkyBodiesProps
   )
 }
 
-useGLTF.preload(EARTH_URL)
+// Preloaded in the background by lib/prefetchAssets.ts once the first view has loaded.

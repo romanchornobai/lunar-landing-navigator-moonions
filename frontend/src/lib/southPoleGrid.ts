@@ -1,5 +1,5 @@
 /**
- * Georeference of the regional South Pole 3D terrain (public/models/south_pole/lunar_elevation_1200.bin).
+ * Georeference of the regional South Pole 3D terrain (public/models/south_pole/lunar_elevation_1200_u16.bin, decoded by lib/southPoleElevation.ts).
  *
  * The 1200x1200 Float32 grid comes from NASA Moon Trek (LRO LOLA). Its export metadata was lost, so the grid was
  * registered against the official LRO LOLA GDR polar DEMs (LDEM_85S_20M + LDEM_80S_40M, NASA PDS) by maximising the

@@ -8,8 +8,8 @@ import { LedButton } from '../ui/LedButton'
 // NASA SVS CGI Moon Kit (https://svs.gsfc.nasa.gov/4720/): LROC WAC color + LOLA DEM.
 // Browser-native 8-bit derivatives of the 16-bit TIFFs (same resolution; see DATA_SOURCES.md),
 // decoded off the main thread with GPU mipmaps. Sphere radius 2.0 scene units; relief params from ASSETS.md.
-const COLOR_URL = '/textures/moon_color_8k.jpg' // 8192x4096 sRGB
-const ELEVATION_URL = '/textures/moon_elevation_8bit.png' // 5760x2880 grey, LOLA DEM
+const COLOR_URL = '/textures/moon_color_4k.jpg' // 4096x2048 sRGB (downsampled from the 8K kit map for load time)
+const ELEVATION_URL = '/textures/moon_elevation_4k.png' // 4096x2048 grey, LOLA DEM (downsampled from 5760x2880)
 
 const CAMERA_POS: [number, number, number] = [0, -1.2, 4.0]
 const MOON_ROTATION_Y = -Math.PI / 2
