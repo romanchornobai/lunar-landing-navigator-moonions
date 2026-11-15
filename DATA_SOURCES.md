@@ -111,8 +111,18 @@ Applies to the horizon, Sun and Direct-to-Earth (DTE) results (`backend/app/serv
 7. **Illumination only.** Solar power is a visibility proxy (time-averaged visible disc fraction), not a flux or thermal
    model: no panel orientation, albedo or regolith scattering. No shadowing from the lander or from sub-DEM features.
 8. **Validation so far.** Adaptive vs uniform ray sampling (5 sites, max 0.04 deg), the browser vs Python
-   implementations (identical percentages for 5 points), and CR1 against Gläser et al. 2014 (92 % lit). More published
-   points (for example Mazarico et al. 2011 illumination maps) would strengthen it.
+   implementations (identical percentages for 5 points), CR1 against Gläser et al. 2014 (92 % lit), and the
+   ephemeris buffer against fresh Horizons queries (below). More published points (for example Mazarico et al. 2011
+   illumination maps) would strengthen it.
+
+### Ephemeris buffer check (2026-11-15)
+`ephemerides_3yr.bin` was compared with new JPL Horizons API queries (`CENTER=coord@301`, `COORD_TYPE=GEODETIC`, altitude 0,
+`QUANTITIES=4`, hourly, apparent azimuth / elevation) for the 4 sites, Sun (10) and Earth (399), in three 48 h windows
+(start, middle and end of the 2026-11-14 .. 2029-11-14 range; 144 hourly samples per site and body).
+Result: max |d azimuth| 0.00006 deg and max |d elevation| 0.00005 deg for the Sun, 0.00006 deg and 0.00082 deg for
+the Earth. So the buffer uses the same site coordinates, frame and altitude convention as Horizons, and the differences
+are ~300 times below the solar radius (0.266 deg). Small Earth elevation differences are consistent with ephemeris
+updates since the buffer was generated (not investigated). Only 3 windows were sampled, not all 26,305 hours.
 
 ## 3D assets and textures: provenance to verify
 These have no recorded origin or license yet. Confirm and fill in before the final submission.
