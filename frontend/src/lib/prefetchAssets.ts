@@ -22,9 +22,9 @@ const REGOLITH_TEXTURES = [
 const GLOBE_TEXTURES = ['/textures/moon_color_4k.jpg', '/textures/moon_elevation_4k.png'] // LunarGlobe.tsx
 const MODELS = [
   '/models/lander/lander.glb',
-  '/models/icons/sun_model.glb',
-  '/models/icons/earth.glb',
-  '/models/celestial/Earth.glb',
+  '/models/icons/sun_model.glb?v=2',
+  '/models/icons/earth.glb?v=2',
+  '/models/celestial/Earth.glb?v=2',
   '/models/connecting_ridge_cr1/connecting_ridge_cr1_15km.glb',
   '/models/malapert_massif/malapert_massif_15km.glb',
   '/models/de_gerlache_rim/de_gerlache_rim_15km.glb',

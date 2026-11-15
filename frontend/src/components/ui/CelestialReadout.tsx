@@ -4,8 +4,8 @@ import { Canvas, useFrame } from '@react-three/fiber'
 import { useGLTF } from '@react-three/drei'
 
 export const CELESTIAL_MODELS = {
-  sun: '/models/icons/sun_model.glb',
-  earth: '/models/icons/earth.glb',
+  sun: '/models/icons/sun_model.glb?v=2',
+  earth: '/models/icons/earth.glb?v=2',
 } as const
 
 interface CelestialReadoutProps {

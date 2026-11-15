@@ -23,7 +23,7 @@ const EARTH_DIST = 25000 // m
 const RING_DIST = 20000 // m, beyond the 7.5 km half-width of the terrain mesh
 const RING_BOTTOM = -4500 // m below the site centre (lower than any terrain of the 4 meshes)
 const MAST_M = 2 // m, observer height of the horizon profiles
-const EARTH_URL = '/models/celestial/Earth.glb'
+const EARTH_URL = '/models/celestial/Earth.glb?v=2'
 const SHADOW_HALF = 500 // m, shadow window around the lander (a 13 m lander at 1.5 deg casts a ~500 m shadow)
 
 export interface BodyState {
