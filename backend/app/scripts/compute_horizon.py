@@ -44,6 +44,7 @@ import numpy as np
 
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "backend"))
+from app.services.ephemeris import SITES as EPHEMERIS_SITES  # noqa: E402
 from app.services.terrain import R_MOON_M, horizon_profile, open_dems, polar_xy  # noqa: E402
 
 OUT_JSON = ROOT / "frontend" / "src" / "data" / "horizonProfiles.json"
@@ -57,6 +58,8 @@ SITES = {
               "elevation_m": s["coordinates"]["elevation_m"]}
     for s in json.loads(SITES_JSON.read_text(encoding="utf-8"))
 }
+# Plus the 4 JPL Horizons ephemeris sites, keyed like the /vista-sitio/:siteKey routes (site 3D view).
+SITES.update({k: {"lat": lat, "lon": lon, "elevation_m": None} for k, (lat, lon) in EPHEMERIS_SITES.items()})
 
 
 def main() -> None:

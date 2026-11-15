@@ -9,7 +9,13 @@
  * error < distance / 356,000 km, e.g. 0.004 deg at 25 km). Angles in degrees, azimuth clockwise from local north.
  */
 import horizonProfiles from '../data/horizonProfiles.json'
-import { EPHEMERIS_SITES, EPHEMERIS_SITE_LATLON, getRawTrack, type EphemerisSiteKey } from '../utils/ephemerisClient'
+import {
+  EPHEMERIS_HOURS,
+  EPHEMERIS_SITES,
+  EPHEMERIS_SITE_LATLON,
+  getRawTrack,
+  type EphemerisSiteKey,
+} from '../utils/ephemerisClient'
 
 export const SUN_RADIUS_DEG = 0.266
 export const DEFAULT_MAST_M = '2'
@@ -47,7 +53,48 @@ function nearestEphemerisSite(lat: number, lon: number): EphemerisSiteKey {
   return best
 }
 
-function horizonAt(profile: number[], azDeg: number): number {
+/** LOLA horizon H(theta) [deg], 1 deg steps from local north, of a site id (landingSites.json id or route key). */
+export function horizonProfile(siteId: string, mast = DEFAULT_MAST_M): number[] | null {
+  return PROFILES.sites[siteId]?.profiles[mast]?.horizon_deg ?? null
+}
+
+/** Exact visible area fraction of the solar disc above a locally straight horizon (same as the backend). */
+export function sunDiscFraction(sunElDeg: number, horizonDeg: number): number {
+  const s = Math.max(-1, Math.min(1, (sunElDeg - horizonDeg) / SUN_RADIUS_DEG))
+  return 1 - (Math.acos(s) - s * Math.sqrt(1 - s * s)) / Math.PI
+}
+
+/** Hourly [az, el] track is visible: Sun = any part of the disc above the terrain, Earth = centre above it. */
+function isVisible(body: 'sun' | 'earth', az: number, el: number, profile: number[]): boolean {
+  const h = horizonAt(profile, az)
+  return body === 'sun' ? el + SUN_RADIUS_DEG > h : el > h
+}
+
+/**
+ * Hours from `hour` (fractional index into the ephemeris buffer) until the terrain visibility of a body changes,
+ * scanning the hourly samples of an ephemeris site (route keys use their own exact track). null if no change within
+ * maxHours or the data is missing. Resolution: 1 h.
+ */
+export function hoursUntilVisibilityChange(
+  siteKey: EphemerisSiteKey,
+  body: 'sun' | 'earth',
+  hour: number,
+  visibleNow: boolean,
+  maxHours = 24 * 60,
+): number | null {
+  const profile = horizonProfile(siteKey)
+  const h0 = Math.ceil(hour)
+  const h1 = Math.min(h0 + maxHours, EPHEMERIS_HOURS)
+  if (!profile || h1 <= h0) return null
+  const track = getRawTrack(siteKey, body, h0, h1)
+  if (!track) return null
+  for (let i = 0; i < h1 - h0; i++) {
+    if (isVisible(body, track[2 * i], track[2 * i + 1], profile) !== visibleNow) return h0 + i - hour
+  }
+  return null
+}
+
+export function horizonAt(profile: number[], azDeg: number): number {
   const n = profile.length
   const p = ((((azDeg % 360) + 360) % 360) * n) / 360
   const i0 = Math.floor(p) % n

@@ -14,7 +14,7 @@ interface CelestialReadoutProps {
   azimuth?: number
   /** Degrees above the local horizon. undefined while there is no ephemeris data. */
   elevation?: number
-  /** Direct light (Sun) / visible (Earth). Elevation > 0 deg, terrain not included. */
+  /** Direct light (Sun) / DTE link (Earth): above the LOLA terrain horizon of the site (see lib/visibility.ts). */
   isAbove?: boolean
 }
 

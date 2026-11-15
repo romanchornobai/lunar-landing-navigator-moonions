@@ -10,18 +10,12 @@ interface FlightDateSelectorProps {
 
 type StepMode = '1h' | '4h' | '1d' | '3d';
 
+// Playback rate: simulated hours per real second (continuous, advanced every animation frame).
 const STEP_HOURS: Record<StepMode, number> = {
   '1h': 1,
   '4h': 4,
   '1d': 24,
   '3d': 72,
-};
-
-const STEP_INTERVAL_MS: Record<StepMode, number> = {
-  '1h': 260,
-  '4h': 320,
-  '1d': 400,
-  '3d': 500,
 };
 
 const MONTH_NAMES = [
@@ -60,34 +54,39 @@ export const FlightDateSelector: React.FC<FlightDateSelectorProps> = ({
     return () => window.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const stepTime = useCallback(
-    (hoursDelta: number) => {
-      const nextMs = currentDate.getTime() + hoursDelta * 3600 * 1000;
-      if (nextMs <= MIN_DATE.getTime()) {
-        onDateChange(new Date(MIN_DATE.getTime()));
-        setPlayDirection('idle');
-      } else if (nextMs >= MAX_DATE.getTime()) {
-        onDateChange(new Date(MAX_DATE.getTime()));
-        setPlayDirection('idle');
-      } else {
-        onDateChange(new Date(nextMs));
-      }
-    },
-    [currentDate, onDateChange]
-  );
+  // Latest date / callback for the animation loop (avoids restarting it on every frame).
+  const dateRef = useRef(currentDate);
+  dateRef.current = currentDate;
+  const onChangeRef = useRef(onDateChange);
+  onChangeRef.current = onDateChange;
+
+  const stepTime = useCallback((hoursDelta: number) => {
+    const nextMs = dateRef.current.getTime() + hoursDelta * 3600 * 1000;
+    if (nextMs <= MIN_DATE.getTime()) {
+      onChangeRef.current(new Date(MIN_DATE.getTime()));
+      setPlayDirection('idle');
+    } else if (nextMs >= MAX_DATE.getTime()) {
+      onChangeRef.current(new Date(MAX_DATE.getTime()));
+      setPlayDirection('idle');
+    } else {
+      onChangeRef.current(new Date(nextMs));
+    }
+  }, []);
 
   useEffect(() => {
     if (playDirection === 'idle') return;
 
-    const hours = STEP_HOURS[stepMode];
-    const intervalMs = STEP_INTERVAL_MS[stepMode];
-    const delta = playDirection === 'forward' ? hours : -hours;
-
-    const timer = setInterval(() => {
-      stepTime(delta);
-    }, intervalMs);
-
-    return () => clearInterval(timer);
+    const rate = (playDirection === 'forward' ? 1 : -1) * STEP_HOURS[stepMode]; // simulated h per second
+    let last = performance.now();
+    let raf = 0;
+    const tick = (now: number) => {
+      const dt = Math.min(0.1, (now - last) / 1000); // cap long frames (tab in background)
+      last = now;
+      stepTime(rate * dt);
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
   }, [playDirection, stepMode, stepTime]);
 
   const togglePlayForward = () => {
@@ -132,7 +131,7 @@ export const FlightDateSelector: React.FC<FlightDateSelectorProps> = ({
         {/* Left arrow: play time backward */}
         <button
           onClick={togglePlayBackward}
-          title={playDirection === 'backward' ? 'Pausar' : `Retroceder tiempo (${stepMode})`}
+          title={playDirection === 'backward' ? 'Pausar' : `Retroceder tiempo (${stepMode}/s)`}
           className={`w-9 h-9 flex items-center justify-center text-lg sm:text-xl transition-all cursor-pointer active:scale-90 ${
             playDirection === 'backward'
               ? 'text-white font-bold drop-shadow-[0_0_12px_#ffffff] scale-110'
@@ -181,7 +180,7 @@ export const FlightDateSelector: React.FC<FlightDateSelectorProps> = ({
         {/* Right arrow: play time forward */}
         <button
           onClick={togglePlayForward}
-          title={playDirection === 'forward' ? 'Pausar' : `Avanzar tiempo (${stepMode})`}
+          title={playDirection === 'forward' ? 'Pausar' : `Avanzar tiempo (${stepMode}/s)`}
           className={`w-9 h-9 flex items-center justify-center text-lg sm:text-xl transition-all cursor-pointer active:scale-90 ${
             playDirection === 'forward'
               ? 'text-white font-bold drop-shadow-[0_0_12px_#ffffff] scale-110'
@@ -195,7 +194,7 @@ export const FlightDateSelector: React.FC<FlightDateSelectorProps> = ({
           )}
         </button>
 
-        {/* Step selector (1h / 4h / 1d / 3d) */}
+        {/* Playback speed (1h / 4h / 1d / 3d per second) */}
         <div
           ref={containerRef}
           className="relative group py-1"
@@ -205,10 +204,10 @@ export const FlightDateSelector: React.FC<FlightDateSelectorProps> = ({
           <button
             onClick={() => setIsSpeedMenuOpen((prev) => !prev)}
             className="flex items-center gap-1 text-sm sm:text-base tracking-wider text-neutral-300 hover:text-white cursor-pointer transition-colors p-1"
-            title="Cambiar intervalo de tiempo"
+            title="Velocidad: tiempo simulado por segundo"
           >
             <span className="font-black underline underline-offset-4 decoration-white/40 group-hover:decoration-white">
-              {stepMode}
+              {stepMode}/s
             </span>
             <span
               className={`text-xs text-neutral-400 transition-transform duration-150 ${
@@ -236,7 +235,7 @@ export const FlightDateSelector: React.FC<FlightDateSelectorProps> = ({
                       : 'text-neutral-300 hover:text-white hover:bg-white/15'
                   }`}
                 >
-                  {mode}
+                  {mode}/s
                 </button>
               ))}
             </div>

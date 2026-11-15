@@ -4,10 +4,19 @@ import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Stars, useGLTF } from '@react-three/drei'
 import { useNavigate } from 'react-router-dom'
 import { LandingTerrainModel } from './LandingTerrainModel'
+import { SkyBodies, type BodyState } from './SkyBodies'
 import { ChevronLeft } from 'lucide-react'
 import { CockpitTelemetryHud, type LandingSiteData } from '../ui/CockpitTelemetryHud'
 import { FlightDateSelector } from '../ui/FlightDateSelector'
-import { EPHEMERIS_START_MS, getEphemerisAt, loadEphemeridesBuffer } from '@/utils/ephemerisClient'
+import {
+  EPHEMERIS_SITES,
+  EPHEMERIS_SITE_LATLON,
+  EPHEMERIS_START_MS,
+  getEphemerisAt,
+  loadEphemeridesBuffer,
+  type EphemerisSiteKey,
+} from '@/utils/ephemerisClient'
+import { horizonAt, horizonProfile, hoursUntilVisibilityChange, sunDiscFraction, SUN_RADIUS_DEG } from '@/lib/visibility'
 
 type Vec3 = [number, number, number]
 
@@ -83,6 +92,11 @@ export function LandingSceneClean({
     shortName: info.shortName,
     groundNormal: groundNormal,
   }
+  const siteKey: EphemerisSiteKey = (EPHEMERIS_SITES as readonly string[]).includes(siteId)
+    ? (siteId as EphemerisSiteKey)
+    : 'shackleton'
+  const siteLonDeg = EPHEMERIS_SITE_LATLON[siteKey][1]
+  const profile = useMemo(() => horizonProfile(siteKey), [siteKey])
 
   // Mission date (UTC) and Sun/Earth directions from the baked JPL Horizons buffer.
   const [missionDate, setMissionDate] = useState(() => new Date(EPHEMERIS_START_MS))
@@ -93,8 +107,45 @@ export function LandingSceneClean({
       .catch((e) => console.error(e))
   }, [])
   const ephemeris = useMemo(
-    () => (ephemerisReady ? getEphemerisAt(siteId, missionDate) : null),
-    [ephemerisReady, siteId, missionDate],
+    () => (ephemerisReady ? getEphemerisAt(siteKey, missionDate) : null),
+    [ephemerisReady, siteKey, missionDate],
+  )
+
+  // Visibility against the LOLA horizon of the site (same model as the comparison table and the backend).
+  const sky = useMemo(() => {
+    if (!ephemeris || !profile) return null
+    const hour = (missionDate.getTime() - EPHEMERIS_START_MS) / 3.6e6
+    const sunH = horizonAt(profile, ephemeris.sun.azimuth)
+    const earthH = horizonAt(profile, ephemeris.earth.azimuth)
+    const sunVisible = ephemeris.sun.elevation + SUN_RADIUS_DEG > sunH // any part of the disc
+    const earthVisible = ephemeris.earth.elevation > earthH // Earth centre (DTE)
+    const sun: BodyState & { discFraction: number } = {
+      ...ephemeris.sun,
+      horizon: sunH,
+      visible: sunVisible,
+      discFraction: sunDiscFraction(ephemeris.sun.elevation, sunH),
+      // Next rise / set from the hourly samples (1 h resolution, up to 60 days ahead).
+      hoursToChange: hoursUntilVisibilityChange(siteKey, 'sun', hour, sunVisible),
+    }
+    const earth: BodyState = {
+      ...ephemeris.earth,
+      horizon: earthH,
+      visible: earthVisible,
+      hoursToChange: hoursUntilVisibilityChange(siteKey, 'earth', hour, earthVisible),
+    }
+    return { sun, earth }
+  }, [ephemeris, profile, missionDate, siteKey])
+
+  // HUD check marks follow the terrain-aware visibility.
+  const hudEphemeris = useMemo(
+    () =>
+      ephemeris && sky
+        ? {
+            sun: { ...ephemeris.sun, isAbove: sky.sun.visible },
+            earth: { ...ephemeris.earth, isAbove: sky.earth.visible },
+          }
+        : ephemeris,
+    [ephemeris, sky],
   )
 
   return (
@@ -109,28 +160,14 @@ export function LandingSceneClean({
         {/* Starfield */}
         <Stars radius={28000} depth={4000} count={6000} factor={6} saturation={0} fade speed={0.1} />
 
-        {/* 1. Base ambient light */}
-        <ambientLight intensity={0.52} color="#ffffff" />
-
-        {/* 2. Main overhead light so the entire terrain and lander are clearly illuminated */}
-        <directionalLight
-          position={[350, 3200, 250]}
-          intensity={2.7}
-          color="#ffffff"
-          castShadow
-          shadow-mapSize-width={2048}
-          shadow-mapSize-height={2048}
-          shadow-bias={-0.00015}
-          shadow-camera-near={10}
-          shadow-camera-far={10000}
-          shadow-camera-left={-4000}
-          shadow-camera-right={4000}
-          shadow-camera-top={4000}
-          shadow-camera-bottom={-4000}
-        />
-
-        {/* 3. Secondary overhead fill light to soften contrast and eliminate dark crevices */}
-        <directionalLight position={[-1500, 2500, -1200]} intensity={0.65} color="#cbd5e1" />
+        {/* Sun, Earth, far LOLA horizon and lighting from the JPL Horizons directions */}
+        <Suspense fallback={null}>
+          {sky ? (
+            <SkyBodies siteLonDeg={siteLonDeg} horizonDeg={profile} sun={sky.sun} earth={sky.earth} />
+          ) : (
+            <ambientLight intensity={0.6} />
+          )}
+        </Suspense>
 
         {/* 3D content */}
         <Suspense fallback={null}>
@@ -166,7 +203,7 @@ export function LandingSceneClean({
       </div>
 
       {/* Retro Sci-Fi Cockpit Telemetry HUD driven by the JPL Horizons ephemerides */}
-      <CockpitTelemetryHud site={siteData} ephemeris={ephemeris} />
+      <CockpitTelemetryHud site={siteData} ephemeris={hudEphemeris} />
     </div>
   )
 }

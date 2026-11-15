@@ -20,6 +20,11 @@ Each folder has `<site>_15km.glb`, `<site>_heightmap_16bit.png` (uint16), `<site
 
 Load: `useGLTF('/models/<site>/<site>_15km.glb')`, `position=[0,0,0]`.
 
+**Orientation (measured against LRO LOLA LDEM_85S_20M / 80S_40M, RMS 3-6 m on the 4 meshes):** the mesh is aligned with
+the polar stereographic grid, not with local north: scene `+X` = polar `x`, scene `-Z` = polar `y`, `+Y` up. Local north
+at a site of longitude `lon` is scene `(sin lon, 0, -cos lon)`, so a body at (azimuth, elevation) is at scene azimuth
+`azimuth + lon` clockwise from `-Z`. Implemented in `frontend/src/lib/skyGeometry.ts`.
+
 ## South Pole regional terrain (`models/south_pole/`)
 - `lunar_elevation_1200.bin`: Float32Array 1200x1200 (5.76 MB). Plus `lunar_albedo_2k.png`, `lunar_normal_2k.png`, `lunar_ao_2k.png`.
 - **Georeference (measured, the original notes were wrong):** NOT the -90..-84 cap. The grid is a ~212 x 212 km square
@@ -43,8 +48,9 @@ Load: `useGLTF('/models/<site>/<site>_15km.glb')`, `position=[0,0,0]`.
 
 ## Celestial (`models/celestial/`)
 - `Earth.glb` (~2.3 MB, 4096x3072 WebP color + normal maps). Earth sits 1-6 deg above the horizon at the South Pole (libration, ~14-day cycle).
-- Typical scene values: Earth scale 0.8-1.2 at distance ~120-180, position [-60, 15, -90]; Sun position [120, 8, -60] (grazing ~1.5 deg).
-- These are visual placeholders: real directions must come from the ephemerides.
+- Site 3D view (`components/canvas3d/SkyBodies.tsx`): Earth.glb normalized to radius 25 km x tan(0.95 deg) at 25 km,
+  north pole pointing down, custom shader lit only by the Sun direction (correct phase); Sun = sphere of 30 km x
+  tan(0.266 deg) at 30 km plus two additive glow sprites. Directions from the JPL Horizons buffer.
 
 ## Textures
 - `models/moon_texture/textures/moon_meteor_01_{diff,nor,rough,ao}_2k.jpg`: PBR regolith. Intended for an anti-tiling stochastic shader

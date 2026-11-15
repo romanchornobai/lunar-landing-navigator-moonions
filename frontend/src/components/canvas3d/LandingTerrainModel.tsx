@@ -128,7 +128,8 @@ export const LandingTerrainModel: React.FC<LandingTerrainModelProps> = ({ modelP
       if ((child as THREE.Mesh).isMesh) {
         const mesh = child as THREE.Mesh
         mesh.receiveShadow = true
-        mesh.castShadow = true
+        // Only the lander casts: redrawing the whole terrain into the shadow map each frame is costly (ASSETS.md).
+        mesh.castShadow = false
         mesh.material = terrainMaterial
         // uv2 channel for the ambient occlusion map (aoMap)
         if (!mesh.geometry.attributes.uv2 && mesh.geometry.attributes.uv) {

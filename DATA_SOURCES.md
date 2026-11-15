@@ -47,7 +47,9 @@ BASE=https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/
 for f in ldem_85s_20m ldem_80s_40m; do curl -fO $BASE/$f.lbl && curl -fO $BASE/$f.img; done
 cd ../.. && python backend/app/scripts/compute_horizon.py
 ```
-The script (NumPy only) writes `frontend/src/data/horizonProfiles.json` for every point of `landingSites.json` (keyed by id): its LOLA ground height and, for
+The script (NumPy only) writes `frontend/src/data/horizonProfiles.json` for every point of `landingSites.json` (keyed by id)
+and for the 4 JPL Horizons ephemeris sites (keyed `shackleton`, `malapert`, `nobile`, `degerlache`, used by the site 3D
+view): its LOLA ground height and, for
 mast heights of 2, 4 and 6 m, the horizon angle every 1 deg of azimuth (clockwise from local north) with the distance of
 the terrain point that sets it. Method: `h_obs = h_terrain + h_mast`; along each azimuth (great circle, 20 m steps,
 20 m to 200 km) `alpha = atan2((R + h_m) cos(d/R) - (R + h_obs), (R + h_m) sin(d/R))` (exact on the sphere) and
@@ -136,6 +138,18 @@ These have no recorded origin or license yet. Confirm and fill in before the fin
 - [ ] `models/lander/lander.glb`: "reference Artemis lunar lander model", author/license unknown.
 - [ ] `models/celestial/Earth.glb`: author/license unknown.
 - [ ] `models/moon_texture/textures/moon_meteor_01_*_2k.jpg`: photogrammetric PBR regolith, author/license unknown.
+
+### Site 3D view: Sun and Earth (`frontend/src/components/canvas3d/SkyBodies.tsx`, `LandingSceneClean.tsx`)
+Runs in the browser. Sun / Earth (azimuth, elevation) come from the site's own JPL Horizons track (exact for the 4
+routes), converted to scene axes with the measured mesh orientation (`lib/skyGeometry.ts`, see `ASSETS.md`). Both are
+drawn at true angular size (Sun radius 0.266 deg; Earth 0.95 deg at the mean distance 384,400 km, 0.90-1.03 deg in
+reality). A ring at 20 km is raised to the site's LOLA horizon (2 m mast), so the bodies hide behind terrain exactly
+when the visibility model says so; the HUD checks and the hover labels use the same model (Sun: any part of the disc;
+Earth: centre, DTE), with the next rise / set from the hourly samples (1 h resolution, up to 60 days ahead). The Sun
+light is scaled by the exact visible disc fraction; earthshine by the Earth's lit fraction `(1 - s.e) / 2`. The
+ambient fill is for legibility only (the Moon has no sky light). Earth's rotation angle is not modelled, only its phase.
+Note: the `shackleton` route point (-89.54, 129.20) lies on Shackleton's inner wall (LOLA -2317 m): its horizon is
+14-27 deg in every direction, so the Sun is never visible there.
 
 ### Comparison table (`frontend/src/components/ui/SiteComparisonPanel.tsx`, `frontend/src/lib/visibility.ts`)
 Runs fully in the browser (no backend): for each point and every hour of the chosen dates, the Sun / Earth directions of the
