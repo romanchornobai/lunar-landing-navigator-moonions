@@ -1,5 +1,4 @@
 import React from 'react';
-import { Thermometer } from 'lucide-react';
 import { CelestialReadout } from './CelestialReadout';
 
 // Types for the astronomical data and site info
@@ -49,13 +48,6 @@ export const CockpitTelemetryHud: React.FC<CockpitTelemetryHudProps> = ({
   const [, ny] = site.groundNormal || [0, 1, 0];
   const slopeDeg = Math.acos(Math.max(-1, Math.min(1, ny))) * (180 / Math.PI);
 
-  // SIMULATED surface temperature from the Sun elevation (not a thermal model)
-  const hasData = ephemeris !== null;
-  const sunElev = ephemeris?.sun.elevation ?? 0;
-  const surfaceTempC = ephemeris?.sun.isAbove
-    ? Math.round(-35 + sunElev * 18)
-    : Math.round(-135 + sunElev * 6);
-
   return (
     <>
       {/* LEFT: Sun and Earth readouts */}
@@ -82,13 +74,8 @@ export const CockpitTelemetryHud: React.FC<CockpitTelemetryHudProps> = ({
         style={egaTerminalStyle}
         className="absolute right-6 bottom-6 z-40 select-none text-white pointer-events-none flex flex-col items-center gap-2"
       >
-        <div className="text-[15px] leading-tight space-y-1">
+        <div className="text-[15px] leading-tight">
           <div>PENDIENTE: {slopeDeg.toFixed(1)}°</div>
-          <div className="flex items-center gap-1.5">
-            <Thermometer size={16} strokeWidth={2.2} />
-            <span>SUPERFICIE: {hasData ? `${surfaceTempC}°C` : '--'}</span>
-          </div>
-          <div className="pl-[22px]">CABINA: +21.0°C</div>
         </div>
       </div>
     </>
