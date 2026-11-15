@@ -30,6 +30,10 @@ interface LanderMarkerWithHudProps {
 }
 
 const POP_S = 0.7;
+/** Beam colour while it grows (blue) and fade time to white after the pop-in [s]. */
+const BEAM_START = '#38bdf8';
+const WHITE = new THREE.Color('#ffffff');
+const FADE_S = 0.8;
 /** Lander model scale (scene units per model unit); larger than before so the markers read at the overview zoom. */
 const LANDER_SCALE = 0.03;
 /** Ease-out with a small overshoot, so the marker "pops" into place. */
@@ -65,7 +69,11 @@ export const LanderMarkerWithHud: React.FC<LanderMarkerWithHudProps> = ({
 
   // Marker colour: white for landing candidates, ice blue for permanently shadowed science targets
   const accent = site.kind === 'science' ? '#38bdf8' : '#ffffff';
-  const haloRef = useRef<THREE.Mesh>(null);
+  const beamMatRef = useRef<THREE.MeshBasicMaterial>(null);
+  const glowMatRef = useRef<THREE.MeshBasicMaterial>(null);
+  const fadeT = useRef(revealed ? 1 : 0); // 0 = blue, 1 = white
+  const colorDone = useRef(false);
+  const tmpColor = useRef(new THREE.Color());
 
   // Rotación suave del lander cuando está en hover
   useFrame((_, delta) => {
@@ -79,12 +87,13 @@ export const LanderMarkerWithHud: React.FC<LanderMarkerWithHudProps> = ({
       const xz = easeOutBack(Math.max(0, (t - 0.15) / 0.85));
       root.scale.set(Math.max(1e-3, xz), Math.max(1e-3, y), Math.max(1e-3, xz));
     }
-    // Halo: expands and fades out every 2 s
-    const halo = haloRef.current;
-    if (halo) {
-      const p = (performance.now() / 2000) % 1;
-      halo.scale.setScalar(1 + p * 1.8);
-      (halo.material as THREE.MeshBasicMaterial).opacity = 0.6 * (1 - p);
+    // Beam colour: blue while it grows, then fades to white once the pop-in is over
+    if (revealed && fadeT.current < 1 && popT.current >= 1) fadeT.current = Math.min(1, fadeT.current + delta / FADE_S);
+    if (fadeT.current < 1 || !colorDone.current) {
+      tmpColor.current.set(BEAM_START).lerp(WHITE, fadeT.current);
+      beamMatRef.current?.color.copy(tmpColor.current);
+      glowMatRef.current?.color.copy(tmpColor.current);
+      colorDone.current = fadeT.current >= 1;
     }
     if (landerMeshRef.current && isHovered) {
       landerMeshRef.current.rotation.y += delta * 1.5;
@@ -151,22 +160,18 @@ export const LanderMarkerWithHud: React.FC<LanderMarkerWithHudProps> = ({
 
   return (
     <group ref={rootRef} position={[groundPos.x, groundPos.y, groundPos.z]} visible={revealed}>
-      {/* 0. Ground anchor: solid ring + a pulsing halo, and a vertical beam up to the lander */}
+      {/* 0. Ground anchor: solid ring and a vertical beam up to the lander */}
       <mesh position={[0, 0.06, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <ringGeometry args={[0.5, 0.8, 48]} />
         <meshBasicMaterial color={accent} side={THREE.DoubleSide} transparent opacity={0.95} toneMapped={false} />
       </mesh>
-      <mesh ref={haloRef} position={[0, 0.05, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[0.8, 0.95, 48]} />
-        <meshBasicMaterial color={accent} side={THREE.DoubleSide} transparent opacity={0.6} depthWrite={false} toneMapped={false} />
-      </mesh>
       <mesh position={[0, lineHeight / 2, 0]}>
         <cylinderGeometry args={[0.06, 0.06, lineHeight, 8]} />
-        <meshBasicMaterial color={accent} transparent opacity={0.9} toneMapped={false} />
+        <meshBasicMaterial ref={beamMatRef} color={revealed ? '#ffffff' : BEAM_START} transparent opacity={0.9} toneMapped={false} />
       </mesh>
       <mesh position={[0, lineHeight / 2, 0]}>
         <cylinderGeometry args={[0.22, 0.22, lineHeight, 12, 1, true]} />
-        <meshBasicMaterial color={accent} transparent opacity={0.12} depthWrite={false} toneMapped={false} />
+        <meshBasicMaterial ref={glowMatRef} color={revealed ? '#ffffff' : BEAM_START} transparent opacity={0.12} depthWrite={false} toneMapped={false} />
       </mesh>
 
       {/* 1. Módulo Lunar con su Hitbox */}
