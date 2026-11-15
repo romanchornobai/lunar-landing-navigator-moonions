@@ -20,7 +20,7 @@ import { INTRO_START_AZIMUTH, IntroCameraFlight } from './IntroCameraFlight'
 // Georeference, mirroring and height units: lib/southPoleGrid.ts (registered against LRO LOLA GDR, see DATA_SOURCES.md).
 const BASE = '/models/south_pole'
 /** Resting camera position (scene units); the intro flight ends here. */
-const DEFAULT_CAMERA: [number, number, number] = [0, 80, 115]
+const DEFAULT_CAMERA: [number, number, number] = [0, 38, 88] // ~96 units away, ~23 deg above the horizon: low view to read the relief
 
 /** Selected 15 x 15 km area: scene centre and its lat / lon (sent to the local backend). */
 interface SelectedArea {

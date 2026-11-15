@@ -7,7 +7,7 @@ import { useFrame, useThree } from '@react-three/fiber'
  * starts far and high, orbits ~150 deg while descending and closing in, and stops at the default view.
  * OrbitControls (makeDefault) are disabled while it plays. `onProgress` gets 0..1 every frame.
  */
-const DURATION_S = 6.5
+const DURATION_S = 4.5
 const START = { radius: 270, polar: THREE.MathUtils.degToRad(14), azimuth: THREE.MathUtils.degToRad(-150) }
 
 /** Azimuth where the flight starts (rad, atan2(x, z) convention): used to order the marker reveal. */
