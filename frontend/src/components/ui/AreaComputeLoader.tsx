@@ -40,7 +40,7 @@ export function AreaComputeLoader({ done, total }: AreaComputeLoaderProps) {
         <span>{total > 0 ? `${Math.round(ratio * 100)} %` : ''}</span>
       </div>
       <div className="mt-0.5 text-center text-[9px] tracking-[0.18em] text-neutral-500">
-        LOLA HORIZON 100 KM · SUN AND EARTH JPL HORIZONS 2026–2029
+        LOLA HORIZON 200 KM · SUN AND EARTH JPL HORIZONS 2026–2029
       </div>
     </div>
   )
