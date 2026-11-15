@@ -14,16 +14,21 @@ const ROWS = [
   { key: 'sun' as const, url: CELESTIAL_MODELS.sun, earthLight: false },
 ]
 
-const ANIMATION_MS = 7000 // the whole period is played day by day in this time, whatever its length
+const ANIMATION_MS = 7000 // the whole period is played in this time, whatever its length
+const REVEAL_MS = 450 // bars cascade in before the playback starts
+const STAGGER_MS = 60 // delay between consecutive columns
 const HOUR_MS = 3600 * 1000
 
-/** Cumulative hours with Sun / Earth visible at the end of each day, per point. */
+/** Hourly cumulative hours with Sun / Earth visible, per point, over the chosen period. */
 interface ComparisonRun {
+  id: number // changes on every EMPEZAR (restarts the reveal animation)
   startMs: number
+  hours: number
   nDays: number
-  hoursAtDay: Int32Array // hours elapsed at the end of day d
   lit: Record<string, { sun: Int32Array; earth: Int32Array }>
 }
+
+let runCounter = 0
 
 function buildRun(startDay: string, endDay: string): ComparisonRun | null {
   const startMs = Date.parse(`${startDay}T00:00:00Z`)
@@ -32,47 +37,74 @@ function buildRun(startDay: string, endDay: string): ComparisonRun | null {
   const h1 = Math.min(EPHEMERIS_HOURS, Math.round((endMs - EPHEMERIS_START_MS) / HOUR_MS))
   if (h1 <= h0) return null
   const n = h1 - h0
-  const nDays = Math.ceil(n / 24)
-  const hoursAtDay = new Int32Array(nDays)
-  for (let d = 0; d < nDays; d++) hoursAtDay[d] = Math.min((d + 1) * 24, n)
   const lit: ComparisonRun['lit'] = {}
   for (const c of COLUMNS) {
     const series = visibilitySeries(c.id, h0, h1, DEFAULT_MAST_M)
     if (!series) return null
-    const cum = { sun: new Int32Array(nDays), earth: new Int32Array(nDays) }
+    const cum = { sun: new Int32Array(n), earth: new Int32Array(n) }
     let sun = 0
     let earth = 0
     for (let i = 0; i < n; i++) {
       sun += series.sun[i]
       earth += series.earth[i]
-      if ((i + 1) % 24 === 0 || i === n - 1) {
-        const d = Math.floor(i / 24)
-        cum.sun[d] = sun
-        cum.earth[d] = earth
-      }
+      cum.sun[i] = sun
+      cum.earth[i] = earth
     }
     lit[c.id] = cum
   }
-  return { startMs: EPHEMERIS_START_MS + h0 * HOUR_MS, nDays, hoursAtDay, lit }
+  return { id: ++runCounter, startMs: EPHEMERIS_START_MS + h0 * HOUR_MS, hours: n, nDays: Math.ceil(n / 24), lit }
 }
 
-/** Full-width bar: white = share of the elapsed time with visibility, red = without. */
-function VisibilityBar({ ratio }: { ratio: number | null }) {
+/** Smooth playback: slow start and end, constant pace in the middle. */
+const easeInOut = (t: number) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2)
+
+/** Wide minimal bar: white = share of the elapsed time with visibility, red = without. */
+function VisibilityBar({
+  ratio,
+  best,
+  reveal,
+  runId,
+}: {
+  ratio: number | null
+  best: boolean
+  /** 0..1 entrance of the bar (cascade from the left). */
+  reveal: number
+  runId: number | null
+}) {
+  const pct = ratio === null ? null : ratio * 100
   return (
-    <div className="w-full flex flex-col items-center gap-1.5 px-3">
-      <div className="w-full h-3.5 p-[2px] border border-white/70 bg-black/60 rounded-[1px]">
-        <div className="w-full h-full flex overflow-hidden">
-          {ratio !== null && (
-            <>
-              <div className="h-full bg-white" style={{ width: `${ratio * 100}%`, boxShadow: '0 0 6px rgba(255,255,255,0.7)' }} />
-              <div className="h-full bg-red-500/90 flex-1" />
-            </>
-          )}
-        </div>
+    <div className="w-full px-3 flex flex-col gap-2.5">
+      <div className="flex items-baseline justify-between h-7">
+        <span className="font-mono text-[26px] leading-none font-light tabular-nums text-white">
+          {pct === null ? <span className="text-neutral-600">—</span> : Math.round(pct)}
+          {pct !== null && <span className="text-[12px] text-neutral-400 ml-1">%</span>}
+        </span>
+        {best && (
+          <span
+            className="px-1.5 py-[2px] text-[9px] font-bold tracking-[0.25em] text-black bg-white rounded-[2px]"
+            key={`best-${runId}`}
+          >
+            MEJOR
+          </span>
+        )}
       </div>
-      <span className="text-[12px] font-bold tracking-[0.12em] text-white tabular-nums">
-        {ratio === null ? '—' : `${Math.round(ratio * 100)} %`}
-      </span>
+      <div
+        className={`relative w-full h-[22px] overflow-hidden rounded-[2px] origin-left ${pct === null ? 'bg-white/[0.07]' : 'bg-red-500/70'} ${
+          best ? 'outline outline-1 outline-white/60 outline-offset-[3px] shadow-[0_0_16px_1px_rgba(255,255,255,0.35)]' : ''
+        }`}
+        style={pct === null ? undefined : { transform: `scaleX(${reveal})`, opacity: reveal }}
+      >
+        {pct !== null && (
+          <>
+            <div className="absolute inset-y-0 left-0 bg-white" style={{ width: `${pct}%` }} />
+            {/* bright edge that travels with the value */}
+            <div
+              className="absolute inset-y-0 w-[2px] bg-white"
+              style={{ left: `calc(${pct}% - 1px)`, boxShadow: '0 0 10px 2px rgba(255,255,255,0.85)' }}
+            />
+          </>
+        )}
+      </div>
     </div>
   )
 }
@@ -119,7 +151,8 @@ export const SiteComparisonPanel: React.FC<SiteComparisonPanelProps> = ({ onClos
   const [startDay, setStartDay] = useState(MIN_DAY)
   const [endDay, setEndDay] = useState(MAX_DAY)
   const [run, setRun] = useState<ComparisonRun | null>(null)
-  const [day, setDay] = useState(0)
+  const [progress, setProgress] = useState(0) // 0..1 of the period played so far
+  const [sinceStartMs, setSinceStartMs] = useState(0) // drives the bar entrance cascade
   const [running, setRunning] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const raf = useRef<number | null>(null)
@@ -128,7 +161,7 @@ export const SiteComparisonPanel: React.FC<SiteComparisonPanelProps> = ({ onClos
     if (raf.current !== null) cancelAnimationFrame(raf.current)
   }, [])
 
-  // EMPEZAR: compute every point at once (hourly, LOLA horizon + JPL Horizons) and play it day by day in 7 s.
+  // EMPEZAR: compute every point at once (hourly, LOLA horizon + JPL Horizons) and play the period in 7 s.
   const start = useCallback(async () => {
     if (raf.current !== null) cancelAnimationFrame(raf.current)
     setError(null)
@@ -144,13 +177,16 @@ export const SiteComparisonPanel: React.FC<SiteComparisonPanelProps> = ({ onClos
       return
     }
     setRun(r)
-    setDay(0)
+    setProgress(0)
+    setSinceStartMs(0)
     setRunning(true)
-    const t0 = performance.now()
+    const tStart = performance.now()
+    const t0 = tStart + REVEAL_MS // let the bars appear first
     const tick = (now: number) => {
-      const progress = Math.min(1, (now - t0) / ANIMATION_MS)
-      setDay(Math.min(r.nDays - 1, Math.floor(progress * r.nDays)))
-      if (progress < 1) raf.current = requestAnimationFrame(tick)
+      const t = Math.max(0, Math.min(1, (now - t0) / ANIMATION_MS))
+      setSinceStartMs(now - tStart)
+      setProgress(easeInOut(t))
+      if (t < 1) raf.current = requestAnimationFrame(tick)
       else {
         raf.current = null
         setRunning(false)
@@ -159,7 +195,31 @@ export const SiteComparisonPanel: React.FC<SiteComparisonPanelProps> = ({ onClos
     raf.current = requestAnimationFrame(tick)
   }, [startDay, endDay])
 
-  const currentDate = run ? new Date(run.startMs + (day + 1) * 24 * HOUR_MS - HOUR_MS).toISOString().slice(0, 10) : null
+  // Elapsed hours of the period at the current playback position (at least the first hour)
+  const elapsedH = run ? Math.max(1, Math.round(progress * run.hours)) : 0
+  const currentDay = run ? Math.min(run.nDays, Math.floor((elapsedH - 1) / 24) + 1) : 0
+  const currentDate = run ? new Date(run.startMs + (elapsedH - 1) * HOUR_MS).toISOString().slice(0, 10) : null
+  const ratioOf = (id: string, key: 'sun' | 'earth') => (run ? run.lit[id][key][elapsedH - 1] / elapsedH : null)
+  const finished = run !== null && !running
+  // Entrance of each bar: ease-out over 450 ms after its cascade delay (1 once the run is over)
+  const revealAt = (delayMs: number) => {
+    if (!running) return 1
+    const t = Math.max(0, Math.min(1, (sinceStartMs - delayMs) / 450))
+    return 1 - Math.pow(1 - t, 3)
+  }
+  const bestOf = (key: 'sun' | 'earth') => {
+    if (!finished) return null
+    let best: string | null = null
+    let bestV = -1
+    for (const c of COLUMNS) {
+      const v = ratioOf(c.id, key) ?? -1
+      if (v > bestV + 1e-9) {
+        bestV = v
+        best = c.id
+      }
+    }
+    return best
+  }
 
   // Keep start <= end: moving one bound past the other drags the other along.
   const changeStart = (v: string) => {
@@ -202,10 +262,19 @@ export const SiteComparisonPanel: React.FC<SiteComparisonPanelProps> = ({ onClos
         >
           {running ? 'CALCULANDO…' : 'EMPEZAR'}
         </button>
-        {(run || error) && (
-          <div className="basis-full text-center text-[11px] tracking-[0.25em] text-neutral-300">
-            {error ??
-              `DÍA ${day + 1} / ${run!.nDays} · ${currentDate}`}
+        {error && <div className="basis-full text-center text-[11px] tracking-[0.25em] text-red-300">{error}</div>}
+        {run && !error && (
+          <div className="basis-full flex flex-col items-center gap-1.5 pt-1">
+            <div className="relative w-[min(420px,60vw)] h-[2px] bg-white/15">
+              <div className="absolute inset-y-0 left-0 bg-white" style={{ width: `${progress * 100}%` }} />
+              <div
+                className="absolute top-1/2 w-2 h-2 -translate-y-1/2 -translate-x-1/2 rounded-full bg-white"
+                style={{ left: `${progress * 100}%`, boxShadow: '0 0 8px 2px rgba(255,255,255,0.8)' }}
+              />
+            </div>
+            <div className="text-[11px] tracking-[0.25em] text-neutral-300 tabular-nums">
+              DÍA {currentDay} / {run.nDays} · {currentDate}
+            </div>
           </div>
         )}
       </div>
@@ -238,20 +307,21 @@ export const SiteComparisonPanel: React.FC<SiteComparisonPanelProps> = ({ onClos
                     <SpinningModelCanvas url={row.url} earthLight={row.earthLight} />
                   </div>
                 </div>
-                {COLUMNS.map((c) => {
-                  const lit = run?.lit[c.id]
-                  const ratio = run && lit ? lit[row.key][day] / run.hoursAtDay[day] : null
-                  return (
-                    <div key={`${row.key}-${c.id}`} className="h-36 border-l border-b border-white/10 flex items-center">
-                      <VisibilityBar ratio={ratio} />
-                    </div>
-                  )
-                })}
+                {COLUMNS.map((c, ci) => (
+                  <div key={`${row.key}-${c.id}`} className="h-36 border-l border-b border-white/10 flex items-center">
+                    <VisibilityBar
+                      ratio={ratioOf(c.id, row.key)}
+                      best={bestOf(row.key) === c.id}
+                      reveal={revealAt(ci * STAGGER_MS + (row.key === 'sun' ? STAGGER_MS / 2 : 0))}
+                      runId={run?.id ?? null}
+                    />
+                  </div>
+                ))}
               </React.Fragment>
             ))}
           </div>
           <p className="mt-3 text-center font-mono text-[10px] tracking-[0.18em] text-neutral-400">
-            BLANCO: CON SOL / TIERRA VISIBLE · ROJO: SIN · MÁSTIL {DEFAULT_MAST_M} M · HORIZONTE LRO LOLA 100 KM · SOL Y
+            BLANCO: CON SOL / TIERRA VISIBLE · ROJO: SIN · MEJOR: MÁS ALTO DE CADA FILA · MÁSTIL {DEFAULT_MAST_M} M · HORIZONTE LRO LOLA 100 KM · SOL Y
             TIERRA JPL HORIZONS
           </p>
         </SciFiHudPanel>
