@@ -136,7 +136,7 @@ const earthFragment = /* glsl */ `
   void main() {
     float lambert = max(dot(normalize(vNormalW), sunDir), 0.0);
     vec3 c = texture2D(map, vUv).rgb * (1.25 * lambert + 0.015);
-    // Night vision: only the contour (limb) of the disc is lit, a thin bluish rim.
+    // Limb rim: a thin bluish glow on the edge of the disc.
     float limb = pow(1.0 - max(dot(normalize(vNormalW), normalize(vViewW)), 0.0), 4.0);
     c += rim * limb * vec3(0.55, 0.75, 1.0);
     gl_FragColor = vec4(c, 1.0);
@@ -167,8 +167,9 @@ function Earth({ dir, sunDir, night }: { dir: THREE.Vector3; sunDir: THREE.Vecto
     setNorm({ center: box.getCenter(new THREE.Vector3()), radius: box.getSize(new THREE.Vector3()).x / 2 })
   }, [model])
   uniforms.sunDir.value.copy(sunDir)
-  // Night vision: a thin lit contour makes the Earth easy to find (legibility, not physical).
-  uniforms.rim.value = night ? 1.6 : 0
+  // A thin lit contour makes the Earth easy to find (legibility, not physical): strong in night vision,
+  // subtle (but present) while the Sun is up.
+  uniforms.rim.value = night ? 1.6 : 0.7
 
   const r = EARTH_DIST * Math.tan(EARTH_RADIUS_DEG * DEG)
   const s = norm ? r / norm.radius : 0
