@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
+import { ArrowLeft } from 'lucide-react'
 import { SciFiHudPanel } from './SciFiHudPanel'
 import { CELESTIAL_MODELS, SpinningModelCanvas } from './CelestialReadout'
 import { SITES_IN_3D } from '../../data/sites'
@@ -25,6 +26,8 @@ interface ComparisonRun {
   hours: number
   nDays: number
   lit: Record<string, { sun: Int32Array; earth: Int32Array }>
+  /** Raw hourly visibility (1 = visible), kept for the per-site detail view. */
+  series: Record<string, { sun: Uint8Array; earth: Uint8Array }>
 }
 
 function buildRun(startDay: string, endDay: string): ComparisonRun | null {
@@ -35,9 +38,11 @@ function buildRun(startDay: string, endDay: string): ComparisonRun | null {
   if (h1 <= h0) return null
   const n = h1 - h0
   const lit: ComparisonRun['lit'] = {}
+  const all: ComparisonRun['series'] = {}
   for (const c of COLUMNS) {
     const series = visibilitySeries(c.id, h0, h1, DEFAULT_MAST_M)
     if (!series) return null
+    all[c.id] = series
     const cum = { sun: new Int32Array(n), earth: new Int32Array(n) }
     let sun = 0
     let earth = 0
@@ -49,7 +54,166 @@ function buildRun(startDay: string, endDay: string): ComparisonRun | null {
     }
     lit[c.id] = cum
   }
-  return { startMs: EPHEMERIS_START_MS + h0 * HOUR_MS, hours: n, nDays: Math.ceil(n / 24), lit }
+  return { startMs: EPHEMERIS_START_MS + h0 * HOUR_MS, hours: n, nDays: Math.ceil(n / 24), lit, series: all }
+}
+
+/** Longest run of consecutive hours with value 0 (no visibility) [h]. Runs cut by the period edges count as-is. */
+function longestGap(s: Uint8Array): number {
+  let best = 0
+  let cur = 0
+  for (let i = 0; i < s.length; i++) {
+    cur = s[i] ? 0 : cur + 1
+    if (cur > best) best = cur
+  }
+  return best
+}
+
+/** Hours -> "N h" below 48 h, otherwise "N,N días" (Earth days of 24 h). */
+const fmtHours = (h: number) => (h < 48 ? `${h} h` : `${(h / 24).toFixed(1).replace('.', ',')} días`)
+
+/** One canvas strip: each pixel column = share of its hours with visibility (white) vs. none (dim red). */
+function TimelineStrip({ data }: { data: Uint8Array }) {
+  const ref = useRef<HTMLCanvasElement>(null)
+  useEffect(() => {
+    const cv = ref.current
+    if (!cv) return
+    const w = (cv.width = Math.max(1, Math.round(cv.clientWidth * devicePixelRatio)))
+    const h = (cv.height = Math.max(1, Math.round(cv.clientHeight * devicePixelRatio)))
+    const ctx = cv.getContext('2d')
+    if (!ctx) return
+    ctx.clearRect(0, 0, w, h)
+    const n = data.length
+    for (let x = 0; x < w; x++) {
+      const a = Math.floor((x * n) / w)
+      const b = Math.max(a + 1, Math.floor(((x + 1) * n) / w))
+      let on = 0
+      for (let i = a; i < b; i++) on += data[i]
+      const f = on / (b - a)
+      ctx.fillStyle = `rgba(239,68,68,${0.55 * (1 - f)})`
+      ctx.fillRect(x, 0, 1, h)
+      ctx.fillStyle = `rgba(255,255,255,${f})`
+      ctx.fillRect(x, 0, 1, h)
+    }
+  }, [data])
+  return <canvas ref={ref} className="w-full h-[18px] block" />
+}
+
+/** Per-site detail page shown inside the comparison panel once the run is over. */
+function SiteDetail({ siteId, run, onBack }: { siteId: string; run: ComparisonRun; onBack: () => void }) {
+  const site = SITES_IN_3D.find((s) => s.id === siteId)!
+  const s = run.series[siteId]
+  const stats = React.useMemo(() => {
+    let both = 0
+    for (let i = 0; i < s.sun.length; i++) both += s.sun[i] & s.earth[i]
+    const n = s.sun.length
+    const sun = run.lit[siteId].sun[n - 1]
+    const earth = run.lit[siteId].earth[n - 1]
+    return { n, sun, earth, both, nightMax: longestGap(s.sun), noEarthMax: longestGap(s.earth) }
+  }, [s, run, siteId])
+  const pct = (v: number) => `${Math.round((v / stats.n) * 100)}%`
+  const endDate = new Date(run.startMs + (stats.n - 1) * HOUR_MS).toISOString().slice(0, 10)
+  const startDate = new Date(run.startMs).toISOString().slice(0, 10)
+  const { latitude, longitude, elevation_m } = site.coordinates
+  // Entrance: each block fades/slides in a little after the previous one
+  const enter = (i: number): React.CSSProperties => ({ animation: `cmpDetailIn 0.4s cubic-bezier(0.16,1,0.3,1) ${i * 70}ms both` })
+
+  const metrics = [
+    { label: 'SOL VISIBLE', value: pct(stats.sun), sub: `${stats.sun} h` },
+    { label: 'TIERRA VISIBLE (DTE)', value: pct(stats.earth), sub: `${stats.earth} h` },
+    { label: 'SOL + TIERRA', value: pct(stats.both), sub: `${stats.both} h` },
+    { label: 'NOCHE MÁS LARGA', value: fmtHours(stats.nightMax), sub: 'sin Sol seguido' },
+    { label: 'SIN TIERRA MÁS LARGO', value: fmtHours(stats.noEarthMax), sub: 'sin enlace DTE seguido' },
+  ]
+
+  return (
+    <div className="font-mono text-white select-none">
+      <style>{`@keyframes cmpDetailIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }`}</style>
+
+      {/* Title bar: back arrow + site name */}
+      <div className="flex items-center gap-4 pb-3 border-b border-white/25" style={enter(0)}>
+        <button
+          type="button"
+          onClick={onBack}
+          aria-label="Volver a la comparativa"
+          className="w-9 h-9 flex items-center justify-center border border-white/40 hover:border-white hover:bg-white hover:text-black transition-colors cursor-pointer"
+        >
+          <ArrowLeft size={18} />
+        </button>
+        <div className="min-w-0">
+          <div className={`text-[16px] font-bold tracking-[0.18em] truncate ${site.kind === 'science' ? 'text-sky-400' : ''}`}>
+            {site.name.toUpperCase()}
+          </div>
+          <div className="text-[10px] tracking-[0.22em] text-neutral-400">
+            {site.kind === 'science' ? 'ZONA EN SOMBRA PERMANENTE · INTERÉS CIENTÍFICO' : 'CANDIDATO DE ATERRIZAJE'}
+            {site.nasa_region ? ` · ${site.nasa_region.toUpperCase()}` : ''}
+          </div>
+        </div>
+      </div>
+
+      <div className="grid md:grid-cols-[1fr_1.35fr] gap-x-8 gap-y-5 pt-5">
+        {/* Left: site facts from the cited publication + LOLA */}
+        <div className="flex flex-col gap-4 text-[12px] leading-relaxed">
+          <div className="grid grid-cols-3 gap-2" style={enter(1)}>
+            {[
+              ['LAT', `${latitude.toFixed(3)}°`],
+              ['LON', `${longitude.toFixed(3)}°`],
+              ['ALTURA', `${elevation_m} m`],
+            ].map(([k, v]) => (
+              <div key={k} className="border border-white/15 px-2 py-1.5">
+                <div className="text-[9px] tracking-[0.25em] text-neutral-500">{k}</div>
+                <div className="text-[13px] tabular-nums">{v}</div>
+              </div>
+            ))}
+          </div>
+          <p className="text-neutral-300" style={enter(2)}>{site.description}</p>
+          <div style={enter(3)}>
+            <div className="text-[9px] tracking-[0.25em] text-neutral-500 mb-1">PUBLICADO</div>
+            <p className="text-neutral-300">{site.published}</p>
+          </div>
+          <div className="flex flex-col gap-1" style={enter(4)}>
+            {site.sources.map((src) => (
+              <a
+                key={src.url}
+                href={src.url}
+                target="_blank"
+                rel="noreferrer"
+                className="text-[10px] tracking-[0.08em] text-neutral-400 hover:text-white underline underline-offset-2"
+              >
+                {src.label}
+              </a>
+            ))}
+          </div>
+        </div>
+
+        {/* Right: what this run computed for the site (LOLA horizon + JPL Horizons, hourly) */}
+        <div className="flex flex-col gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {metrics.map((m, i) => (
+              <div key={m.label} className="border border-white/15 px-3 py-2" style={enter(1 + i)}>
+                <div className="text-[9px] tracking-[0.22em] text-neutral-500">{m.label}</div>
+                <div className="text-[22px] font-light leading-tight tabular-nums">{m.value}</div>
+                <div className="text-[9px] tracking-[0.15em] text-neutral-500">{m.sub}</div>
+              </div>
+            ))}
+          </div>
+          <div className="flex flex-col gap-2" style={enter(6)}>
+            {(['sun', 'earth'] as const).map((k) => (
+              <div key={k} className="flex items-center gap-3">
+                <span className="w-14 text-[9px] tracking-[0.22em] text-neutral-400">{k === 'sun' ? 'SOL' : 'TIERRA'}</span>
+                <div className="flex-1 min-w-0">
+                  <TimelineStrip data={s[k]} />
+                </div>
+              </div>
+            ))}
+            <div className="flex justify-between pl-[68px] text-[9px] tracking-[0.15em] text-neutral-500 tabular-nums">
+              <span>{startDate}</span>
+              <span>{endDate}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 /** Smooth playback: slow start and end, constant pace in the middle. */
@@ -123,6 +287,7 @@ export const SiteComparisonPanel: React.FC<SiteComparisonPanelProps> = ({ onClos
   const [sinceStartMs, setSinceStartMs] = useState(0) // drives the bar entrance cascade
   const [running, setRunning] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [detailId, setDetailId] = useState<string | null>(null) // site shown in the detail page, null = table
   const raf = useRef<number | null>(null)
 
   useEffect(() => () => {
@@ -145,6 +310,7 @@ export const SiteComparisonPanel: React.FC<SiteComparisonPanelProps> = ({ onClos
       return
     }
     setRun(r)
+    setDetailId(null)
     setProgress(0)
     setSinceStartMs(0)
     setRunning(true)
@@ -244,12 +410,17 @@ export const SiteComparisonPanel: React.FC<SiteComparisonPanelProps> = ({ onClos
       </div>
 
       <div className="w-[min(1000px,92vw)]" onClick={(e) => e.stopPropagation()}>
-        <SciFiHudPanel badgeTitle="COMPARATIVA">
+        <SciFiHudPanel badgeTitle={detailId ? 'DETALLE' : 'COMPARATIVA'}>
+          {detailId && run && finished ? (
+            <SiteDetail siteId={detailId} run={run} onBack={() => setDetailId(null)} />
+          ) : (
+          <>
+          <style>{`@keyframes cmpTableIn { from { opacity: 0; } to { opacity: 1; } }`}</style>
           <div
             className="grid font-mono text-white select-none"
-            style={{ gridTemplateColumns: `88px repeat(${COLUMNS.length}, minmax(0, 1fr))` }}
+            style={{ gridTemplateColumns: `88px repeat(${COLUMNS.length}, minmax(0, 1fr))`, animation: 'cmpTableIn 0.3s ease-out both' }}
           >
-            {/* Header row: empty corner + site names */}
+            {/* Header row: empty corner + site names (clickable once the run is over -> detail page) */}
             <div />
             {COLUMNS.map((c) => (
               <div
@@ -259,7 +430,17 @@ export const SiteComparisonPanel: React.FC<SiteComparisonPanelProps> = ({ onClos
                 }`}
                 title={c.science ? 'Zona en sombra permanente (interés científico, no aterrizaje)' : undefined}
               >
-                {c.label}
+                {finished ? (
+                  <button
+                    type="button"
+                    onClick={() => setDetailId(c.id)}
+                    className="tracking-[0.18em] font-bold cursor-pointer underline decoration-white/30 underline-offset-4 hover:decoration-current hover:drop-shadow-[0_0_6px_rgba(255,255,255,0.6)] transition-all"
+                  >
+                    {c.label}
+                  </button>
+                ) : (
+                  c.label
+                )}
               </div>
             ))}
 
@@ -285,7 +466,10 @@ export const SiteComparisonPanel: React.FC<SiteComparisonPanelProps> = ({ onClos
           </div>
           <p className="mt-3 text-center font-mono text-[10px] tracking-[0.2em] text-neutral-500">
             % DEL TIEMPO CON SOL / TIERRA VISIBLE · MÁSTIL {DEFAULT_MAST_M} M
+            {finished ? ' · PULSA UN SITIO PARA VER EL DETALLE' : ''}
           </p>
+          </>
+          )}
         </SciFiHudPanel>
       </div>
     </div>
