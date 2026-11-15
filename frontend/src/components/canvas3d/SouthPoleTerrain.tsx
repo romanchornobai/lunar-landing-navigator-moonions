@@ -64,6 +64,8 @@ interface TerrainProps {
   compute: AreaComputeState
   onCompute: () => void
   onCloseArea: () => void
+  /** True while the black explainer cover is up: the floating panel is not mounted at all. */
+  hidePanel: boolean
 }
 
 function Terrain({
@@ -75,6 +77,7 @@ function Terrain({
   compute,
   onCompute,
   onCloseArea,
+  hidePanel,
 }: TerrainProps) {
   const buffer = useLoader(THREE.FileLoader, `${BASE}/lunar_elevation_1200.bin`, (loader) => {
     loader.setResponseType('arraybuffer')
@@ -183,7 +186,7 @@ function Terrain({
 
       {bestPosition && <BestPointBeacon position={bestPosition} />}
 
-      {area && areaAnchor && (
+      {area && areaAnchor && !hidePanel && (
         <AreaPanelAnchor anchor={areaAnchor} area={area} state={compute} onCompute={onCompute} onClose={onCloseArea} />
       )}
     </group>
@@ -279,6 +282,7 @@ export default function SouthPoleTerrain() {
             compute={compute}
             onCompute={handleCompute}
             onCloseArea={handleCloseArea}
+            hidePanel={explainerOpen}
           />
         </Suspense>
         <OrbitControls

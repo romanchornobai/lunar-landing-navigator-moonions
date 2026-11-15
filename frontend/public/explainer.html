@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
+<script>if (/[?&]embed/.test(location.search)) document.documentElement.classList.add("embed");</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Cómo funciona · Lunar Landing Site Navigator</title>
 <meta name="description" content="Cuatro animaciones cortas que explican cómo el Lunar Landing Site Navigator encuentra el mejor punto de aterrizaje con relieve LRO LOLA y efemérides de JPL Horizons.">
@@ -105,13 +106,13 @@
     .time, .scene-dur { display: none; }
   }
   /* ---------- embedded mode (?embed=1): one animation at a time, full screen, no page chrome ---------- */
-  body.embed { background: #000; overflow: hidden; }
-  body.embed .wrap { max-width: none; padding: 0; }
-  body.embed header, body.embed footer, body.embed .scene-head, body.embed .caption, body.embed .note, body.embed .controls { display: none; }
-  body.embed section.scene { display: none; margin: 0; position: fixed; inset: 0; align-items: center; justify-content: center; }
-  body.embed section.scene.active { display: flex; }
-  body.embed .frame { width: min(100vw, calc(100vh * 16 / 9)); border: 0; }
-  body.embed .frame::after { display: none; }
+  html.embed, html.embed body { background: #000; overflow: hidden; }
+  html.embed .wrap { max-width: none; padding: 0; }
+  html.embed header, html.embed footer, html.embed .scene-head, html.embed .caption, html.embed .note, html.embed .controls { display: none; }
+  html.embed section.scene { display: none; margin: 0; position: fixed; inset: 0; align-items: center; justify-content: center; }
+  html.embed section.scene.active { display: flex; }
+  html.embed .frame { width: min(100vw, calc(100vh * 16 / 9)); border: 0; }
+  html.embed .frame::after { display: none; }
 </style>
 </head>
 <body>
@@ -974,7 +975,7 @@
     // embedded in the app: the parent steps through the parts (postMessage 'explainer-step'); each step plays the
     // timeline up to its stop time and waits there. Stops are in seconds of each scene's timeline.
     if (new URLSearchParams(location.search).has("embed")) {
-      document.body.classList.add("embed");
+      
       const STEPS = [[2.9, 4.1, 6], [2.6, 5.0, 7], [4.4, 7], [2.2, 4.4, 6]];
       const flat = STEPS.flatMap((st, si) => st.map((_, k) => [si, k]));
       let tw = null;

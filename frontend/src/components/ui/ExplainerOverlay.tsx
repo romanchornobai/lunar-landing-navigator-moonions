@@ -58,7 +58,7 @@ export function ExplainerOverlay({ progress, onPlay }: ExplainerOverlayProps) {
   const arrow = 'w-12 h-12 flex items-center justify-center text-white transition-opacity cursor-pointer disabled:opacity-20 disabled:cursor-default'
 
   return (
-    <div className="absolute inset-0 z-[60] bg-black">
+    <div className="absolute inset-0 z-[20000000] bg-black">
       <iframe
         ref={frame}
         src="/explainer.html?embed=1"
@@ -89,15 +89,13 @@ export function ExplainerOverlay({ progress, onPlay }: ExplainerOverlayProps) {
         )}
       </div>
 
-      {/* Bottom: previous / next part */}
-      <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-10 flex items-center gap-6">
-        <button onMouseDown={(e) => e.preventDefault()} className={arrow} onClick={() => go(-1)} disabled={part <= 0} aria-label="Parte anterior">
-          <ChevronLeft size={30} strokeWidth={1.5} />
-        </button>
-        <button onMouseDown={(e) => e.preventDefault()} className={arrow} onClick={() => go(1)} disabled={part === total - 1} aria-label="Parte siguiente">
-          <ChevronRight size={30} strokeWidth={1.5} />
-        </button>
-      </div>
+      {/* Bottom corners: previous / next step */}
+      <button className={`${arrow} absolute bottom-5 left-6 z-10`} onMouseDown={(e) => e.preventDefault()} onClick={() => go(-1)} disabled={part <= 0} aria-label="Parte anterior">
+        <ChevronLeft size={34} strokeWidth={1.5} />
+      </button>
+      <button className={`${arrow} absolute bottom-5 right-6 z-10`} onMouseDown={(e) => e.preventDefault()} onClick={() => go(1)} disabled={part === total - 1} aria-label="Parte siguiente">
+        <ChevronRight size={34} strokeWidth={1.5} />
+      </button>
     </div>
   )
 }
