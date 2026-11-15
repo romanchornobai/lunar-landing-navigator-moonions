@@ -34,7 +34,13 @@ function facingUv(): [number, number] {
  * Copy of `source` with ENGRAVING darkened into it (soft edges). `strength` 0..1 = how much the letters are darkened.
  * Equirectangular stretch at that latitude is compensated so the letters keep their proportions on the sphere.
  */
-function engrave(source: THREE.Texture, strength: number, colorSpace: THREE.ColorSpace): THREE.CanvasTexture {
+function engrave(
+  source: THREE.Texture,
+  strength: number,
+  colorSpace: THREE.ColorSpace,
+  /** Edge softness relative to the font size (small = crisp walls in the relief). */
+  blurRel: number,
+): THREE.CanvasTexture {
   const img = source.image as HTMLImageElement | ImageBitmap
   const w = img.width
   const h = img.height
@@ -46,17 +52,21 @@ function engrave(source: THREE.Texture, strength: number, colorSpace: THREE.Colo
 
   const [u, v] = facingUv()
   const lat = (v - 0.5) * Math.PI
-  const fontPx = Math.round(h * 0.055)
+  const fontPx = Math.round(h * 0.032)
   ctx.save()
   ctx.translate(u * w, (1 - v) * h)
   ctx.scale(1 / Math.max(0.2, Math.cos(lat)), 1)
   ctx.font = `900 ${fontPx}px "Arial Black", "Helvetica Neue", Arial, sans-serif`
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
-  ;(ctx as unknown as { letterSpacing: string }).letterSpacing = `${Math.round(fontPx * 0.12)}px`
-  ctx.filter = `blur(${Math.max(1, Math.round(fontPx * 0.025))}px)`
+  ;(ctx as unknown as { letterSpacing: string }).letterSpacing = `${Math.round(fontPx * 0.18)}px`
+  ctx.filter = `blur(${Math.max(0.6, fontPx * blurRel).toFixed(1)}px)`
   ctx.fillStyle = `rgba(0, 0, 0, ${strength})`
   ctx.fillText(ENGRAVING, 0, 0)
+  // Thin dark outline: sharper letter edges
+  ctx.lineWidth = Math.max(1, fontPx * 0.03)
+  ctx.strokeStyle = `rgba(0, 0, 0, ${strength * 0.6})`
+  ctx.strokeText(ENGRAVING, 0, 0)
   ctx.restore()
 
   const tex = new THREE.CanvasTexture(canvas)
@@ -71,8 +81,8 @@ function Moon() {
   colorMap.anisotropy = Math.min(8, maxAniso)
 
   // Engraved copies: letters sunk into the relief (elevation) and slightly darker in colour
-  const engravedColor = useMemo(() => engrave(colorMap, 0.22, THREE.SRGBColorSpace), [colorMap])
-  const engravedElevation = useMemo(() => engrave(elevationMap, 0.35, THREE.NoColorSpace), [elevationMap])
+  const engravedColor = useMemo(() => engrave(colorMap, 0.3, THREE.SRGBColorSpace, 0.02), [colorMap])
+  const engravedElevation = useMemo(() => engrave(elevationMap, 0.6, THREE.NoColorSpace, 0.012), [elevationMap])
   useEffect(
     () => () => {
       engravedColor.dispose()
