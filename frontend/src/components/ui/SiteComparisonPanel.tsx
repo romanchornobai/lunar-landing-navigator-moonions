@@ -21,14 +21,11 @@ const HOUR_MS = 3600 * 1000
 
 /** Hourly cumulative hours with Sun / Earth visible, per point, over the chosen period. */
 interface ComparisonRun {
-  id: number // changes on every EMPEZAR (restarts the reveal animation)
   startMs: number
   hours: number
   nDays: number
   lit: Record<string, { sun: Int32Array; earth: Int32Array }>
 }
-
-let runCounter = 0
 
 function buildRun(startDay: string, endDay: string): ComparisonRun | null {
   const startMs = Date.parse(`${startDay}T00:00:00Z`)
@@ -52,58 +49,29 @@ function buildRun(startDay: string, endDay: string): ComparisonRun | null {
     }
     lit[c.id] = cum
   }
-  return { id: ++runCounter, startMs: EPHEMERIS_START_MS + h0 * HOUR_MS, hours: n, nDays: Math.ceil(n / 24), lit }
+  return { startMs: EPHEMERIS_START_MS + h0 * HOUR_MS, hours: n, nDays: Math.ceil(n / 24), lit }
 }
 
 /** Smooth playback: slow start and end, constant pace in the middle. */
 const easeInOut = (t: number) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2)
 
-/** Wide minimal bar: white = share of the elapsed time with visibility, red = without. */
-function VisibilityBar({
-  ratio,
-  best,
-  reveal,
-  runId,
-}: {
-  ratio: number | null
-  best: boolean
-  /** 0..1 entrance of the bar (cascade from the left). */
-  reveal: number
-  runId: number | null
-}) {
+/** Minimal bar: white = share of the elapsed time with visibility, red = without. */
+function VisibilityBar({ ratio, best, reveal }: { ratio: number | null; best: boolean; reveal: number }) {
   const pct = ratio === null ? null : ratio * 100
   return (
-    <div className="w-full px-3 flex flex-col gap-2.5">
-      <div className="flex items-baseline justify-between h-7">
-        <span className="font-mono text-[26px] leading-none font-light tabular-nums text-white">
-          {pct === null ? <span className="text-neutral-600">—</span> : Math.round(pct)}
-          {pct !== null && <span className="text-[12px] text-neutral-400 ml-1">%</span>}
-        </span>
-        {best && (
-          <span
-            className="px-1.5 py-[2px] text-[9px] font-bold tracking-[0.25em] text-black bg-white rounded-[2px]"
-            key={`best-${runId}`}
-          >
-            MEJOR
-          </span>
-        )}
-      </div>
-      <div
-        className={`relative w-full h-[22px] overflow-hidden rounded-[2px] origin-left ${pct === null ? 'bg-white/[0.07]' : 'bg-red-500/70'} ${
-          best ? 'outline outline-1 outline-white/60 outline-offset-[3px] shadow-[0_0_16px_1px_rgba(255,255,255,0.35)]' : ''
+    <div className="w-full px-3 flex flex-col gap-2">
+      <span
+        className={`font-mono text-[24px] leading-none font-light tabular-nums ${
+          pct === null ? 'text-neutral-700' : best ? 'text-white' : 'text-neutral-400'
         }`}
+      >
+        {pct === null ? '—' : `${Math.round(pct)}%`}
+      </span>
+      <div
+        className={`relative w-full h-[22px] overflow-hidden origin-left ${pct === null ? 'bg-white/[0.06]' : 'bg-red-500/60'}`}
         style={pct === null ? undefined : { transform: `scaleX(${reveal})`, opacity: reveal }}
       >
-        {pct !== null && (
-          <>
-            <div className="absolute inset-y-0 left-0 bg-white" style={{ width: `${pct}%` }} />
-            {/* bright edge that travels with the value */}
-            <div
-              className="absolute inset-y-0 w-[2px] bg-white"
-              style={{ left: `calc(${pct}% - 1px)`, boxShadow: '0 0 10px 2px rgba(255,255,255,0.85)' }}
-            />
-          </>
-        )}
+        {pct !== null && <div className="absolute inset-y-0 left-0 bg-white" style={{ width: `${pct}%` }} />}
       </div>
     </div>
   )
@@ -267,10 +235,6 @@ export const SiteComparisonPanel: React.FC<SiteComparisonPanelProps> = ({ onClos
           <div className="basis-full flex flex-col items-center gap-1.5 pt-1">
             <div className="relative w-[min(420px,60vw)] h-[2px] bg-white/15">
               <div className="absolute inset-y-0 left-0 bg-white" style={{ width: `${progress * 100}%` }} />
-              <div
-                className="absolute top-1/2 w-2 h-2 -translate-y-1/2 -translate-x-1/2 rounded-full bg-white"
-                style={{ left: `${progress * 100}%`, boxShadow: '0 0 8px 2px rgba(255,255,255,0.8)' }}
-              />
             </div>
             <div className="text-[11px] tracking-[0.25em] text-neutral-300 tabular-nums">
               DÍA {currentDay} / {run.nDays} · {currentDate}
@@ -313,16 +277,14 @@ export const SiteComparisonPanel: React.FC<SiteComparisonPanelProps> = ({ onClos
                       ratio={ratioOf(c.id, row.key)}
                       best={bestOf(row.key) === c.id}
                       reveal={revealAt(ci * STAGGER_MS + (row.key === 'sun' ? STAGGER_MS / 2 : 0))}
-                      runId={run?.id ?? null}
                     />
                   </div>
                 ))}
               </React.Fragment>
             ))}
           </div>
-          <p className="mt-3 text-center font-mono text-[10px] tracking-[0.18em] text-neutral-400">
-            BLANCO: CON SOL / TIERRA VISIBLE · ROJO: SIN · MEJOR: MÁS ALTO DE CADA FILA · MÁSTIL {DEFAULT_MAST_M} M · HORIZONTE LRO LOLA 100 KM · SOL Y
-            TIERRA JPL HORIZONS
+          <p className="mt-3 text-center font-mono text-[10px] tracking-[0.2em] text-neutral-500">
+            % DEL TIEMPO CON SOL / TIERRA VISIBLE · MÁSTIL {DEFAULT_MAST_M} M
           </p>
         </SciFiHudPanel>
       </div>

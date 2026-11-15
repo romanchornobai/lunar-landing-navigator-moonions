@@ -355,8 +355,9 @@ export default function SouthPoleTerrain() {
           />
         </button>
 
-        {/* Round view toggle: shows a live preview of the other view (2D map in 3D, spinning terrain in 2D) */}
-        <div className="relative">
+        {/* Round view toggle: shows a live preview of the other view (2D map in 3D, spinning terrain in 2D).
+            Hidden while the comparison panel is open. */}
+        <div className={`relative ${isComparisonOpen ? 'hidden' : ''}`}>
         <button
           onClick={() => setViewMode((m) => (m === '3d' ? '2d' : '3d'))}
           className="relative w-24 h-24 rounded-full overflow-hidden border border-white/50 bg-[#020408] cursor-pointer transition-all duration-300 active:scale-95 shadow-[0_0_12px_rgba(255,255,255,0.35)] hover:border-white hover:shadow-[0_0_18px_rgba(255,255,255,0.7)]"
