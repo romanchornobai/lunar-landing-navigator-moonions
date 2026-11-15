@@ -37,6 +37,8 @@ export const LanderMarkerWithHud: React.FC<LanderMarkerWithHudProps> = ({
   const cardHoverRef = useRef(false);
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const landerMeshRef = useRef<THREE.Group>(null);
+  const anchorRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const { camera, size } = useThree();
   // Side the card opens to: towards the screen centre, so the card (and its source links) stays on screen.
   const [screenSide, setScreenSide] = useState<'left' | 'right' | null>(null);
@@ -62,6 +64,20 @@ export const LanderMarkerWithHud: React.FC<LanderMarkerWithHudProps> = ({
   useFrame((_, delta) => {
     if (landerMeshRef.current && isHovered) {
       landerMeshRef.current.rotation.y += delta * 1.5;
+    }
+    // Keep the card fully inside the viewport: shift it vertically when it would overflow.
+    const anchor = anchorRef.current;
+    const panel = panelRef.current;
+    if (isHovered && anchor && panel) {
+      const margin = 8;
+      const baseTop = -22; // px relative to the anchor (matches the `top` style below)
+      const h = panel.offsetHeight;
+      const anchorY = anchor.getBoundingClientRect().top;
+      const top = anchorY + baseTop - h / 2; // panel is centred on baseTop (translateY(-50%))
+      let dy = 0;
+      if (top < margin) dy = margin - top;
+      else if (top + h > window.innerHeight - margin) dy = window.innerHeight - margin - (top + h);
+      panel.style.top = `${baseTop + dy}px`;
     }
   });
 
@@ -147,6 +163,7 @@ export const LanderMarkerWithHud: React.FC<LanderMarkerWithHudProps> = ({
         {isHovered && (
           <Html position={[0, 1.2, 0]} center style={{ pointerEvents: 'none' }}>
             <div
+              ref={anchorRef}
               onMouseEnter={handleCardEnter}
               onMouseLeave={handleCardLeave}
               style={{
@@ -290,6 +307,7 @@ export const LanderMarkerWithHud: React.FC<LanderMarkerWithHudProps> = ({
 
               {/* CONTENEDOR CON LA ANIMACIÓN HOLOGRÁFICA EXPANSIVA */}
               <div
+                ref={panelRef}
                 style={{
                   position: 'absolute',
                   ...(direction === 'right'
