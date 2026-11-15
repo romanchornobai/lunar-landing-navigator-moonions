@@ -117,21 +117,28 @@ function Sun({ dir, fraction }: { dir: THREE.Vector3; fraction: number }) {
 const earthVertex = /* glsl */ `
   varying vec2 vUv;
   varying vec3 vNormalW;
+  varying vec3 vViewW;
   void main() {
     vUv = uv;
     vNormalW = normalize(mat3(modelMatrix) * normal);
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    vec4 wp = modelMatrix * vec4(position, 1.0);
+    vViewW = normalize(cameraPosition - wp.xyz);
+    gl_Position = projectionMatrix * viewMatrix * wp;
   }
 `
 const earthFragment = /* glsl */ `
   uniform sampler2D map;
   uniform vec3 sunDir;
-  uniform float ambient;
+  uniform float rim;
   varying vec2 vUv;
   varying vec3 vNormalW;
+  varying vec3 vViewW;
   void main() {
     float lambert = max(dot(normalize(vNormalW), sunDir), 0.0);
-    vec3 c = texture2D(map, vUv).rgb * (1.25 * lambert + ambient);
+    vec3 c = texture2D(map, vUv).rgb * (1.25 * lambert + 0.015);
+    // Night vision: only the contour (limb) of the disc is lit, a thin bluish rim.
+    float limb = pow(1.0 - max(dot(normalize(vNormalW), normalize(vViewW)), 0.0), 4.0);
+    c += rim * limb * vec3(0.55, 0.75, 1.0);
     gl_FragColor = vec4(c, 1.0);
     #include <colorspace_fragment>
   }
@@ -139,8 +146,7 @@ const earthFragment = /* glsl */ `
 
 function Earth({ dir, sunDir, night }: { dir: THREE.Vector3; sunDir: THREE.Vector3; night: boolean }) {
   const { scene } = useGLTF(EARTH_URL)
-  const glow = useMemo(() => glowTexture('170,205,255'), [])
-  const uniforms = useMemo(() => ({ sunDir: { value: new THREE.Vector3() }, ambient: { value: 0.015 } }), [])
+  const uniforms = useMemo(() => ({ sunDir: { value: new THREE.Vector3() }, rim: { value: 0 } }), [])
   const model = useMemo(() => {
     const m = scene.clone(true)
     m.traverse((o) => {
@@ -148,7 +154,7 @@ function Earth({ dir, sunDir, night }: { dir: THREE.Vector3; sunDir: THREE.Vecto
       if (!mesh.isMesh) return
       const src = mesh.material as THREE.MeshStandardMaterial
       mesh.material = new THREE.ShaderMaterial({
-        uniforms: { map: { value: src.map }, sunDir: uniforms.sunDir, ambient: uniforms.ambient },
+        uniforms: { map: { value: src.map }, sunDir: uniforms.sunDir, rim: uniforms.rim },
         vertexShader: earthVertex,
         fragmentShader: earthFragment,
       })
@@ -161,25 +167,13 @@ function Earth({ dir, sunDir, night }: { dir: THREE.Vector3; sunDir: THREE.Vecto
     setNorm({ center: box.getCenter(new THREE.Vector3()), radius: box.getSize(new THREE.Vector3()).x / 2 })
   }, [model])
   uniforms.sunDir.value.copy(sunDir)
-  // Night vision: the unlit side is lifted (legibility, not physical) and a halo makes the Earth easy to find.
-  uniforms.ambient.value = night ? 1.1 : 0.015
+  // Night vision: a thin lit contour makes the Earth easy to find (legibility, not physical).
+  uniforms.rim.value = night ? 1.6 : 0
 
   const r = EARTH_DIST * Math.tan(EARTH_RADIUS_DEG * DEG)
   const s = norm ? r / norm.radius : 0
   return (
     <group position={dir.clone().multiplyScalar(EARTH_DIST)} rotation={[Math.PI, 0, 0]}>
-      {night && (
-        <>
-          <sprite scale={[r * 6, r * 6, 1]}>
-            <spriteMaterial map={glow} transparent opacity={1} blending={THREE.AdditiveBlending}
-              depthWrite={false} toneMapped={false} />
-          </sprite>
-          <sprite scale={[r * 16, r * 16, 1]}>
-            <spriteMaterial map={glow} transparent opacity={0.6} blending={THREE.AdditiveBlending}
-              depthWrite={false} toneMapped={false} />
-          </sprite>
-        </>
-      )}
       {norm && (
         <group scale={s}>
           <primitive object={model} position={norm.center.clone().negate()} />
