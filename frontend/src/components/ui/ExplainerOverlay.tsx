@@ -20,6 +20,7 @@ export function ExplainerOverlay({ progress, onPlay }: ExplainerOverlayProps) {
   const [total, setTotal] = useState(DEFAULT_STEPS)
   const frame = useRef<HTMLIFrameElement>(null)
   const ready = useRef(false)
+  const [shown, setShown] = useState(false) // the page stays invisible until it is in embed mode
 
   const send = useCallback((index: number) => {
     if (ready.current) frame.current?.contentWindow?.postMessage({ type: 'explainer-step', index }, '*')
@@ -36,6 +37,7 @@ export function ExplainerOverlay({ progress, onPlay }: ExplainerOverlayProps) {
     const onMessage = (e: MessageEvent) => {
       if (e.data?.type === 'explainer-ready') {
         ready.current = true
+        setShown(true)
         if (typeof e.data.total === 'number') setTotal(e.data.total)
         send(part)
       }
@@ -63,7 +65,7 @@ export function ExplainerOverlay({ progress, onPlay }: ExplainerOverlayProps) {
         ref={frame}
         src="/explainer.html?embed=1"
         title="Cómo se calcula el mejor punto"
-        className="absolute inset-0 w-full h-full border-0"
+        className={`absolute inset-0 w-full h-full border-0 ${shown ? 'opacity-100' : 'opacity-0'}`}
       />
 
       {/* Top right: minimal loader, then Play */}

@@ -3,7 +3,9 @@ import { useLocation } from 'react-router-dom'
 import { useProgress } from '@react-three/drei'
 import { SceneLoader } from './SceneLoader'
 
-const MIN_MS = 1500 // the loader is always shown at least this long
+const MIN_MS = 300 // short grace so the view's assets start being tracked before we trust `active === false`
+const FILL_MS = 1500 // nominal duration of the bar animation (it jumps to 100% when loading finishes)
+const EXTRA_MS = 100 // after the last asset: EXTRA_MS + FINISH_MS = 0.4 s until the fade-out starts
 const MAX_MS = 20000 // safety net if an asset never reports as finished
 const FADE_MS = 500
 const FINISH_MS = 300 // time the bar takes to reach 100% before the fade-out starts
@@ -31,6 +33,7 @@ export function RouteLoader() {
   const [readyPath, setReadyPath] = useState<string | null>(null)
   const [mounted, setMounted] = useState(true)
   const [minPath, setMinPath] = useState<string | null>(null)
+  const [idlePath, setIdlePath] = useState<string | null>(null)
 
   // Derived, so the overlay covers the new view in the very same render as the navigation.
   // (minElapsed is keyed by path so a stale "true" from the previous navigation can't end the loader early.)
@@ -38,7 +41,8 @@ export function RouteLoader() {
   const minElapsed = minPath === pathname
 
   // Loading is complete: minimum time reached and nothing left to load.
-  const complete = loading && minElapsed && !active
+  const idle = loading && minElapsed && !active
+  const complete = loading && idlePath === pathname
 
   // Timers per navigation: minimum duration and the safety net.
   useEffect(() => {
@@ -49,6 +53,13 @@ export function RouteLoader() {
       clearTimeout(max)
     }
   }, [pathname])
+
+  // Nothing left to load for EXTRA_MS (restarts if a new asset starts loading).
+  useEffect(() => {
+    if (!idle) return
+    const t = setTimeout(() => setIdlePath(pathname), EXTRA_MS)
+    return () => clearTimeout(t)
+  }, [idle, pathname])
 
   // When complete the bar finishes to 100% (250 ms); then fade out.
   useEffect(() => {
@@ -72,7 +83,7 @@ export function RouteLoader() {
   return (
     <SceneLoader
       key={pathname}
-      durationMs={MIN_MS}
+      durationMs={FILL_MS}
       done={complete || !loading}
       title={titleFor(pathname)}
       hidden={!loading}

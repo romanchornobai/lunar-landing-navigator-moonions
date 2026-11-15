@@ -976,6 +976,7 @@
     // timeline up to its stop time and waits there. Stops are in seconds of each scene's timeline.
     if (new URLSearchParams(location.search).has("embed")) {
       
+      document.documentElement.classList.add("embed");  // also set by the inline script in <head>
       const STEPS = [[2.9, 4.1, 6], [2.6, 5.0, 7], [4.4, 7], [2.2, 4.4, 6]];
       const flat = STEPS.flatMap((st, si) => st.map((_, k) => [si, k]));
       let tw = null;
