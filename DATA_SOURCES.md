@@ -83,6 +83,37 @@ Frontend: in the South Pole 3D view the selector button picks a 15 x 15 km squar
 CALCULAR streams the search from the local backend (`services/areaSearch.ts`, Vite proxies `/api` to :8000), shows the
 progress at the top and the best point (beacon + panel). Without the local backend the panel reports it is unavailable.
 
+## Assumptions and limits of the visibility model
+Applies to the horizon, Sun and Direct-to-Earth (DTE) results (`backend/app/services`, `frontend/src/lib/visibility.ts`).
+
+1. **Reference frame (checked).** The LOLA GDR DEMs are in the "Mean Earth / Polar Axis of DE421" (ME) frame. A Horizons
+   query for a user-defined Moon site (`CENTER=coord@301`, 2026-11-15) reports `Center pole/equ: MEAN_ME (high precision)`,
+   DE441, radius 1737.4 km, so both use the mean-Earth frame and the same reference sphere. The remaining difference is
+   DE421 vs DE441 lunar orientation. JPL quotes lunar surface coordinates improving from ~100 m to tens of cm with its
+   2021 update (https://ssd.jpl.nasa.gov/announcements/an20210929.html). Even 100 m is 0.003 deg, ~100 times below
+   the solar radius (0.266 deg). Not measured directly; this is an upper bound taken from that announcement.
+2. **Spherical Moon, R = 1737.4 km** (the DEM reference). The horizon uses the tangent-plane approximation
+   `alpha = atan((h - h_obs - d^2 / 2R) / d)`. Against the exact spherical geometry it over-estimates the angle by
+   <= 0.001 deg for terrain up to 2 km above the observer at 100 km, <= 0.007 deg for 5 km at 100 km, and 0.07 deg only
+   in the extreme case of a 5 km wall at 10 km. Always below the solar radius.
+3. **Earth is a point.** DTE is active when the Earth's centre is above the horizon. The Earth's disc is ~1.8 to 2.05 deg
+   across seen from the Moon, so a link can be partly blocked just before/after the reported window. The Sun disc is
+   modelled (R = 0.266 deg, constant), the Earth disc is not.
+4. **Fixed 2 m mast and 20/40 m DEM.** Boulders, small ridges and anything below the DEM resolution are not in the
+   horizon. LOLA has interpolated gaps near the pole. The surface is assumed to be the DEM, no lander footprint.
+5. **Coverage.** The DEMs end at 80 deg S (40 m) and 85 deg S (20 m). Ray samples with no DEM are ignored (counted as
+   `n_missing`), so a horizon is incomplete for points whose 100 km rays leave the 80 deg S cap. Also, the 100 km range
+   cuts off terrain farther away, which can only raise the true horizon.
+6. **Ephemerides come from 4 sites.** The Sun/Earth directions of any other point are rotated from the nearest of the 4
+   Horizons sites (exact for a direction fixed in the Moon frame; the parallax error is bounded in step 3 above).
+   Coverage 2026-11-14 .. 2029-11-14, hourly samples: events shorter than one hour (sunsets, grazing passes) are
+   sampled, not resolved.
+7. **Illumination only.** Solar power is a visibility proxy (time-averaged visible disc fraction), not a flux or thermal
+   model: no panel orientation, albedo or regolith scattering. No shadowing from the lander or from sub-DEM features.
+8. **Validation so far.** Adaptive vs uniform ray sampling (5 sites, max 0.04 deg), the browser vs Python
+   implementations (identical percentages for 5 points), and CR1 against Gläser et al. 2014 (92 % lit). More published
+   points (for example Mazarico et al. 2011 illumination maps) would strengthen it.
+
 ## 3D assets and textures: provenance to verify
 These have no recorded origin or license yet. Confirm and fill in before the final submission.
 
