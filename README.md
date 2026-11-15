@@ -23,8 +23,13 @@ with time running faster, and any 15 x 15 km area can be searched for its best l
 - **Stand next to the lander.** Sun and Earth move over the LOLA terrain at true angular size; time can be sped up or
   reversed, and the HUD tells when each one rises or sets behind the terrain. When the Sun is fully hidden, a
   night-vision view keeps the scene readable.
-- **Find the best point in an area.** Select any 15 x 15 km square and the backend ranks its highest points by Sun and
-  Earth visibility, with the horizon of the winner.
+- **What if the landing slips?** Under the date, a strip shows Sun and Earth visibility 15 days before and after the
+  chosen date (white = visible, red = hidden); click it to jump to another date.
+- **See the sky move.** PATHS draws the Sun and Earth tracks of the next 30 days: the Sun circles the sky just above
+  the horizon, and the Earth traces a small loop, the Moon's libration. Where the terrain hides a track, it turns dashed.
+- **Find the best point in an area.** Select any 15 x 15 km square and the backend ranks its 150 highest points by Sun
+  and Earth visibility. Every point is drawn as a coloured column (red = worst, white = best), so you can see how much
+  a few hundred metres change the result.
 
 ## Designed for everyone
 The navigator is built so that a mission planner, a teacher and someone who has never heard of a DEM can all use it.
@@ -42,7 +47,9 @@ The navigator is built so that a mission planner, a teacher and someone who has 
 1. **Terrain.** LRO LOLA polar DEMs: 20 m/px near the site, 40 m/px beyond 85 S.
 2. **Horizon.** From a 2 m mast, 360 rays (one per degree) follow great circles up to 200 km; the horizon in each
    direction is the highest terrain angle, with exact spherical geometry of the Moon.
-3. **Sun and Earth.** Hourly apparent azimuth and elevation from JPL Horizons, 2026-2029.
+3. **Sun and Earth.** Hourly apparent azimuth and elevation from JPL Horizons, 2026-2029, seen from the lunar
+   surface, so the Moon's libration and orbital variations are included. There is no atmosphere, so no refraction:
+   the horizon is only the terrain and the curvature of the Moon.
 4. **Visibility.** The Sun counts as visible when any part of its disc is above the horizon (the visible share of the
    disc is computed exactly); the Direct-to-Earth link is active when the Earth's centre is above it.
 

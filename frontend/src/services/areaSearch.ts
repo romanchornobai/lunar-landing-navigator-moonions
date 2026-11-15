@@ -30,6 +30,10 @@ export interface AreaSearchResult {
   rank_by: string
   best: (AreaCandidateStats & { horizon_deg: number[] }) | null
   top: AreaCandidateStats[]
+  /** Every evaluated candidate (same fields as top), in ranking order. */
+  all: AreaCandidateStats[]
+  /** Field of AreaCandidateStats used for the ranking (default 'sun_and_dte'). */
+  rank_key: 'sun_and_dte' | 'sun_mean_fraction' | 'dte'
   model: { mast_m: number; sun_radius_deg: number; azimuth_step_deg: number; ray_max_m: number; time_step_h: number }
   elapsed_s: number
 }

@@ -8,6 +8,7 @@ import { SITES_IN_3D, getSite3DPosition, scenePointToLunarCoords } from '../../d
 import { GRID, MEAN_Z, SCALE_Y, TERRAIN_SIZE, getTerrainHeight, latLonToScene } from '../../lib/southPoleGrid'
 import { SiteMarker } from './SiteMarker'
 import { AreaHighlight, BestPointBeacon, clampAreaCenter } from './AreaHighlight'
+import { AreaHeatmap } from './AreaHeatmap'
 import { SiteComparisonPanel } from '../ui/SiteComparisonPanel'
 import { AreaHoloPanel, type AreaComputeState } from '../ui/AreaHoloPanel'
 import { ExplainerOverlay } from '../ui/ExplainerOverlay'
@@ -215,6 +216,9 @@ function Terrain({
         <SiteMarker key={site.id} site={site} position={position} revealed={(revealRank.get(site.id) ?? 0) < revealed} />
       ))}
 
+      {compute.status === 'done' && compute.result.all?.length > 0 && (
+        <AreaHeatmap points={compute.result.all} valueKey={compute.result.rank_key ?? 'sun_and_dte'} elevations={elevations} />
+      )}
       {bestPosition && <BestPointBeacon position={bestPosition} />}
 
       {area && areaAnchor && !hidePanel && (
@@ -407,8 +411,8 @@ export default function SouthPoleTerrain() {
         <button
           onClick={() => setViewMode((m) => (m === '3d' ? '2d' : '3d'))}
           className="relative w-24 h-24 rounded-full overflow-hidden border border-white/50 bg-[#020408] cursor-pointer transition-all duration-300 active:scale-95 shadow-[0_0_12px_rgba(255,255,255,0.35)] hover:border-white hover:shadow-[0_0_18px_rgba(255,255,255,0.7)]"
-          title={viewMode === '3d' ? 'Ver mapa 2D' : 'Ver terreno 3D'}
-          aria-label={viewMode === '3d' ? 'Ver mapa 2D' : 'Ver terreno 3D'}
+          title={viewMode === '3d' ? 'Show the 2D map' : 'Show the 3D terrain'}
+          aria-label={viewMode === '3d' ? 'Show the 2D map' : 'Show the 3D terrain'}
         >
           <div className="absolute inset-0 pointer-events-none">
             {viewMode === '3d' ? <SouthPolarMap interactive={false} /> : <MiniSouthPoleTerrain />}

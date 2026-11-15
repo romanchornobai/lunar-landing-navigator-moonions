@@ -9,17 +9,24 @@ import { ChevronLeft } from 'lucide-react'
 import { CockpitTelemetryHud, type LandingSiteData } from '../ui/CockpitTelemetryHud'
 import { FlightDateSelector } from '../ui/FlightDateSelector'
 import { SITES, type SiteKey } from './LandingSite'
-import { EPHEMERIS_START_MS, loadEphemeridesBuffer } from '@/utils/ephemerisClient'
+import { EPHEMERIS_HOURS, EPHEMERIS_START_MS, loadEphemeridesBuffer } from '@/utils/ephemerisClient'
 import {
   horizonAt,
   horizonProfile,
   hoursUntilVisibilityChange,
   localDirectionsAt,
+  localTracks,
   sunDiscFraction,
   SUN_RADIUS_DEG,
+  visibilitySeries,
 } from '@/lib/visibility'
+import { SkyPaths } from './SkyPaths'
+import { VisibilityWindowStrip } from '../ui/VisibilityWindowStrip'
 
 type Vec3 = [number, number, number]
+
+const WINDOW_DAYS = 15 // visibility strip: days before / after the mission date
+const PATH_DAYS = 30 // sky paths: days ahead (one lunar day ~29.5 d, one libration cycle ~27.6 d)
 
 // Green image-intensifier look: luminance -> green tint, brighter and a bit more contrast.
 const NIGHT_VISION_FILTER = 'grayscale(1) sepia(1) hue-rotate(78deg) saturate(3.2) brightness(1.2) contrast(1.15)'
@@ -189,6 +196,27 @@ export function LandingSceneClean({ siteId = 'cr1' }: LandingSceneCleanProps) {
 
   const nightVision = !!sky && !sky.sun.visible // no part of the solar disc above the terrain
 
+  // Visibility strip: +-WINDOW_DAYS around the mission date (hourly). Recomputed once per simulated hour.
+  const nowHour = Math.floor((missionDate.getTime() - EPHEMERIS_START_MS) / 3.6e6)
+  const windowSeries = useMemo(() => {
+    if (!ephemerisReady) return null
+    const h0 = Math.max(0, nowHour - WINDOW_DAYS * 24)
+    const h1 = Math.min(EPHEMERIS_HOURS, nowHour + WINDOW_DAYS * 24)
+    const s = visibilitySeries(site.profile, h0, h1)
+    return s ? { ...s, nowIndex: nowHour - h0 } : null
+  }, [ephemerisReady, site.profile, nowHour])
+
+  // Sky paths: next PATH_DAYS days from the start of the current simulated day (rebuilt once per day).
+  const [showPaths, setShowPaths] = useState(false)
+  const pathDay = Math.floor(nowHour / 24)
+  const paths = useMemo(
+    () =>
+      ephemerisReady && showPaths
+        ? localTracks(site.lat, site.lon, pathDay * 24, pathDay * 24 + PATH_DAYS * 24)
+        : null,
+    [ephemerisReady, showPaths, site.lat, site.lon, pathDay],
+  )
+
   // HUD check marks follow the terrain-aware visibility.
   const hudEphemeris = useMemo(
     () =>
@@ -233,6 +261,8 @@ export function LandingSceneClean({ siteId = 'cr1' }: LandingSceneCleanProps) {
           )}
         </Suspense>
 
+        {paths && <SkyPaths siteLonDeg={siteLonDeg} sun={paths.sun} earth={paths.earth} days={PATH_DAYS} />}
+
         {/* 3D content */}
         <Suspense fallback={null}>
           <LandingTerrainModel key={modelPath} modelPath={modelPath} />
@@ -263,9 +293,20 @@ export function LandingSceneClean({ siteId = 'cr1' }: LandingSceneCleanProps) {
         </button>
       </div>
 
-      {/* Mission date selector, top center */}
-      <div className="absolute top-5 left-1/2 -translate-x-1/2 z-50">
+      {/* Mission date selector, top center, with the +-15 day Sun / Earth visibility strip and the sky paths toggle */}
+      <div className="absolute top-5 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-2">
         <FlightDateSelector siteId={siteId} currentDate={missionDate} onDateChange={setMissionDate} />
+        {windowSeries && (
+          <VisibilityWindowStrip
+            sun={windowSeries.sun}
+            earth={windowSeries.earth}
+            nowIndex={windowSeries.nowIndex}
+            spanDays={WINDOW_DAYS}
+            onPick={(dh) => setMissionDate(new Date(missionDate.getTime() + dh * 3.6e6))}
+            showPaths={showPaths}
+            onTogglePaths={() => setShowPaths((v) => !v)}
+          />
+        )}
       </div>
 
       {/* Retro Sci-Fi Cockpit Telemetry HUD driven by the JPL Horizons ephemerides */}

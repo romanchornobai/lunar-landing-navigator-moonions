@@ -33,6 +33,29 @@ function Cell({ label, value, strong }: { label: string; value: string; strong?:
   )
 }
 
+const RANK_LABEL = { sun_and_dte: 'SUN + EARTH', sun_mean_fraction: 'SUNLIGHT', dte: 'EARTH (DTE)' } as const
+
+/** Range of the ranking value over all evaluated points, with the colour scale of the 3D columns (AreaHeatmap). */
+function AreaSpread({ result }: { result: AreaSearchResult }) {
+  const key = result.rank_key ?? 'sun_and_dte'
+  const values = result.all.map((p) => p[key])
+  const lo = Math.min(...values)
+  const hi = Math.max(...values)
+  return (
+    <div className="pt-2 border-t border-white/10">
+      <span className="text-[9px] text-neutral-400 block uppercase tracking-widest mb-1">
+        {RANK_LABEL[key]} ACROSS THIS AREA · {values.length} POINTS
+      </span>
+      <div className="flex items-center gap-2">
+        <span className="text-xs font-bold text-red-400">{pct(lo)}</span>
+        <div className="h-1.5 flex-1 rounded-full bg-gradient-to-r from-red-500 to-white" />
+        <span className="text-xs font-bold text-white">{pct(hi)}</span>
+      </div>
+      <p className="mt-1 text-[9px] leading-snug text-neutral-400">A few hundred metres can change the result this much.</p>
+    </div>
+  )
+}
+
 /** Holographic panel of a selected 15 x 15 km area: COMPUTE button, progress and best point found. */
 export function AreaHoloPanel({ center, state, direction, onCompute, onClose }: AreaHoloPanelProps) {
   const best = state.status === 'done' ? state.result.best : null
@@ -117,6 +140,7 @@ export function AreaHoloPanel({ center, state, direction, onCompute, onClose }: 
                   <Cell label="LONGEST NIGHT" value={days(best.longest_dark_h)} />
                   <Cell label="LONGEST DTE BLACKOUT" value={days(best.longest_dte_blackout_h)} />
                 </div>
+                {state.status === 'done' && state.result.all?.length > 1 && <AreaSpread result={state.result} />}
                 {state.status === 'done' && (
                   <p className="text-[9px] leading-snug text-neutral-400">
                     {state.total} candidates · {state.period ? `${state.period[0].slice(0, 10)} → ${state.period[1].slice(0, 10)}` : ''} ·

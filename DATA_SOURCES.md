@@ -71,9 +71,9 @@ made with `sharp` by scaling 16-bit values to 8-bit (value / 256), then downsamp
 ## Processing
 All GLBs are meshopt-compressed and quantized with glTF Transform (`@gltf-transform/cli`, MIT); embedded textures re-encoded to WebP. Geometry is not simplified. See `ASSETS.md` > Optimization.
 
-### Best landing point in an area (local backend, `backend/app/`)
+### Best landing point in an area (backend, `backend/app/`)
 `GET /api/area-search/stream` (Server-Sent Events) and `POST /api/area-search` search a square area (default 15 x 15 km)
-of the cap (center lat <= -84) for the best point. Not part of the public site: it needs the git-ignored LOLA DEMs.
+of the cap (center lat <= -84) for the best point. Runs on the public site (Docker, see README) and locally; it needs the git-ignored LOLA DEMs.
 1. Candidates: the highest LOLA pixel of every 250 m cell; the 150 highest are kept (configurable).
 2. Per candidate (process pool): horizon every 1 deg with 200 km rays and the exact spherical geometry above
    (`services/terrain.py`; ray samples every 20 m up to 4 km, then every 0.5 % of the distance: max 0.04 deg difference
@@ -86,8 +86,11 @@ of the cap (center lat <= -84) for the best point. Not part of the public site: 
 3. Ranking by share of hours with Sun and Earth visible at once (or Sun mean visible fraction, or DTE).
 Timing on a 12-core laptop: ~6 s for 150 candidates, ~11.5 s for 300.
 Frontend: in the South Pole 3D view the selector button picks a 15 x 15 km square (blue overlay, `AreaHighlight.tsx`);
-CALCULAR streams the search from the local backend (`services/areaSearch.ts`, Vite proxies `/api` to :8000), shows the
-progress at the top and the best point (beacon + panel). Without the local backend the panel reports it is unavailable.
+COMPUTE streams the search from the backend (`services/areaSearch.ts`; `/api` is proxied to the backend by Vite in
+development and by nginx on the public site), shows the progress and the best point (beacon + panel). Every evaluated
+candidate is drawn as a column (`AreaHeatmap.tsx`): height and colour scale linearly from the lowest (red) to the
+highest (white) ranking value inside that area, and the panel shows that range. Candidate positions use the regional
+georeference (+-0.9 km). Without the backend the panel reports it is unavailable.
 
 ### Explainer animations (`frontend/public/explainer.html`)
 Four short animations (candidates, horizon, Sun and Earth against the horizon, ranking) drawn from the real products of
@@ -165,6 +168,13 @@ Routes: `cr1` (Connecting Ridge CR1, Gläser et al. 2014), `malapert`, `degerlac
 `shackleton` route (-89.54, 129.20), which lies on Shackleton's inner wall (LOLA -2317 m, horizon 14-27 deg all
 around, so never sunlit). CR1 directions are re-projected from the Shackleton buffer site (22.6 km away, Earth parallax
 < 0.004 deg) with `reprojector` in `lib/visibility.ts`; its horizon is the `connecting-ridge-cr1` profile.
+
+Visibility strip (`components/ui/VisibilityWindowStrip.tsx`): hourly Sun (any part of the disc) and Earth (centre)
+visibility of the site from `visibilitySeries`, 15 days before and after the mission date, same model as the HUD.
+Sky paths (`components/canvas3d/SkyPaths.tsx`, `localTracks` in `lib/visibility.ts`): the hourly Sun and Earth
+directions of the next 30 days from the same JPL Horizons buffer and re-projection, drawn at the bodies' distances
+(solid where the LOLA horizon ring does not hide them, dashed through the terrain). The Earth loop is the optical
+libration contained in the Horizons topocentric directions; nothing is added or modelled on top of them.
 
 ### CR1 site terrain (`frontend/public/models/connecting_ridge_cr1/`)
 Built from the same LOLA GDR DEMs with `python backend/app/scripts/make_site_terrain.py --key connecting_ridge_cr1

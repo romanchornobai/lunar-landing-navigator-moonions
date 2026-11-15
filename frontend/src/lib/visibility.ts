@@ -174,3 +174,27 @@ export function visibilitySeries(siteId: string, h0: number, h1: number, mast = 
   }
   return out
 }
+
+/**
+ * Hourly local (azimuth, elevation) of the Sun and the Earth at (lat, lon) over hours [h0, h1) of the ephemeris buffer
+ * (clamped to its coverage), interleaved [az0, el0, az1, el1, ...] in degrees. Same re-projection as the rest of the
+ * model. The Earth track shows the optical libration of the Moon (the Earth moves several degrees in azimuth and
+ * elevation over a month), which comes with the JPL Horizons topocentric directions.
+ */
+export function localTracks(lat: number, lon: number, h0: number, h1: number) {
+  const a = Math.max(0, Math.floor(h0))
+  const b = Math.min(EPHEMERIS_HOURS, Math.floor(h1))
+  if (b <= a) return null
+  const { src, toLocal } = reprojector(lat, lon)
+  const out = { h0: a, sun: new Float32Array(2 * (b - a)), earth: new Float32Array(2 * (b - a)) }
+  for (const body of ['sun', 'earth'] as const) {
+    const raw = getRawTrack(src, body, a, b)
+    if (!raw) return null
+    for (let i = 0; i < b - a; i++) {
+      const [az, el] = toLocal(raw[2 * i], raw[2 * i + 1])
+      out[body][2 * i] = az
+      out[body][2 * i + 1] = el
+    }
+  }
+  return out
+}
