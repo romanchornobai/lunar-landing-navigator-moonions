@@ -7,7 +7,7 @@ Every dataset and model used by the app, with provenance. Update this file whene
 | Data | Used for | Source | Local files |
 |---|---|---|---|
 | LRO LOLA polar stereographic DEM (GDR `ldem_85s_20m`, 20 m/px native, R = 1737.4 km) | 15 km x 15 km terrain of the 4 candidate sites (Shackleton Connecting Ridge, Malapert Massif, De Gerlache/Faustini Rim, Nobile Rim 1), resampled to 501x501 (30 m/px) | NASA Planetary Data System, Geosciences Node (WUSTL), LRO LOLA | `frontend/public/models/<site>/*.glb`, `*_heightmap_16bit.png`, `*_meta.json` |
-| LRO LOLA GDR polar stereographic DEMs `LDEM_85S_20M` (20 m/px, to 85 S) and `LDEM_80S_40M` (40 m/px, to 80 S), DATA_SET_ID `LRO-L-LOLA-4-GDR-V1.0`, 16-bit DN x 0.5 m relative to R = 1737.4 km, frame "Mean Earth/Polar Axis of DE421" | 360 deg topographic horizon H(theta) of each site, rays of 100 km with lunar curvature correction (20 m grid near the sites, 40 m grid where the 85 S grid ends: far field of Malapert and Nobile) | NASA PDS Geosciences Node, https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/img/ | Source: `data/dem/ldem_85s_20m.img`, `ldem_80s_40m.img` + `.lbl` (**git-ignored**, ~920 MB). Result: `frontend/src/data/horizonProfiles.json` |
+| LRO LOLA GDR polar stereographic DEMs `LDEM_85S_20M` (20 m/px, to 85 S) and `LDEM_80S_40M` (40 m/px, to 80 S), DATA_SET_ID `LRO-L-LOLA-4-GDR-V1.0`, 16-bit DN x 0.5 m relative to R = 1737.4 km, frame "Mean Earth/Polar Axis of DE421" | 360 deg topographic horizon H(theta) of each site, rays of 200 km with exact spherical geometry (20 m grid near the sites, 40 m grid where the 85 S grid ends: far field of Malapert and Nobile) | NASA PDS Geosciences Node, https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/img/ | Source: `data/dem/ldem_85s_20m.img`, `ldem_80s_40m.img` + `.lbl` (**git-ignored**, ~920 MB). Result: `frontend/src/data/horizonProfiles.json` |
 | LROC / LOLA polar DTM, ~212 x 212 km square around Shackleton (see georeference below) | Regional South Pole 3D terrain, 1200x1200 elevation grid | NASA Moon Trek, https://trek.nasa.gov/moon/ | `frontend/public/models/south_pole/lunar_elevation_1200.bin` and derived albedo/normal/AO 2K maps |
 | LRO LROC WAC mosaic v2 (`LRO_WAC_Mosaic_SPole60_100m_v02`, ~100 m/px, to 60 S) LRO LROC NAC mosaic (`LRO_NAC_Mosaic_SPole85.5_1mp`, 1 m/px source, to 85.5 S) and LRO LROC NAC mosaic of Malapert Massif (`LRO_NAC_Mosaic_0_67mpp_Malapert_Massif_SP`, 0.67 m/px source, zoom to ~1 m/px), South Polar Stereographic IAU2000:30120 (R = 1737.4 km) | 2D South Pole map (base mosaic + high-resolution overlay when zoomed in) | NASA Moon Trek WMTS, https://trek.nasa.gov/tiles/Moon/SP/<layer>/1.0.0/WMTSCapabilities.xml (layer index: https://trek.nasa.gov/tiles/apidoc/trekAPI.html?body=moon) | `frontend/public/tiles/moon_sp/<layer>/{z}/{row}/{col}.png` + `manifest.json` (**git-ignored**): all zoom levels (WAC 0-5, NAC 0-11, Malapert NAC 0-13) within +-10 km of each candidate site (clipped to each layer extent), read locally; everything else streamed from Trek at runtime. Tile grid in `frontend/src/lib/moonSouthPolarCrs.ts` |
 | CGI Moon Kit: LROC WAC color (8192x4096) and LOLA DEM (16-bit) | Global lunar sphere | NASA Scientific Visualization Studio, https://svs.gsfc.nasa.gov/4720/ | Source: `frontend/public/textures/lroc_color_16bit_srgb_8k.tif`, `ldem_16_uint.tif` (**git-ignored**). Used by the app: `moon_color_8k.jpg`, `moon_elevation_8bit.png` (8-bit derivatives, same resolution) |
@@ -27,8 +27,9 @@ R = 1737.4 km). The "published" text of each point repeats the source's values a
 | Malapert Massif (2D map only) | -85.99, 2.93 | Region named in NASA's Artemis III candidate lists (2022, 2024); approximate region coordinate, NASA publishes no point |
 | Nobile Rim 1 (2D map only) | -85.25, 35.80 | Same as Malapert |
 
-Check with our own model (2 m mast, 2026-11..2029-11, `backend/app/services`): CR1 lit 92 % of the time, mean 88 %
-(Gläser: 92 %, 88.1 %). Bussey's points (Kaguya topography, 2-decimal coordinates = +-300 m) give 41-60 % at the exact
+Check with our own model (2 m mast, 2026-11..2029-11, `backend/app/services`): CR1 lit 90.8 % of the time, mean
+visible disc 86.4 % (Gläser: 92 %, 88.1 %, over a full 18.6-year precession cycle). With 100 km rays we got 91.8 % /
+87.9 %: the 200 km rays find terrain beyond 100 km that sets the horizon on 16 % of CR1's azimuths. Bussey's points (Kaguya topography, 2-decimal coordinates = +-300 m) give 41-60 % at the exact
 coordinate and >85 % within ~1 km, so the published values refer to the local high, not to that exact pixel.
 
 ### Georeference of the regional 3D terrain
@@ -49,7 +50,8 @@ cd ../.. && python backend/app/scripts/compute_horizon.py
 The script (NumPy only) writes `frontend/src/data/horizonProfiles.json` for every point of `landingSites.json` (keyed by id): its LOLA ground height and, for
 mast heights of 2, 4 and 6 m, the horizon angle every 1 deg of azimuth (clockwise from local north) with the distance of
 the terrain point that sets it. Method: `h_obs = h_terrain + h_mast`; along each azimuth (great circle, 20 m steps,
-20 m to 100 km) `alpha = atan(((h_m - h_obs) - d^2 / (2 R)) / d)` and `H(theta) = max alpha`.
+20 m to 200 km) `alpha = atan2((R + h_m) cos(d/R) - (R + h_obs), (R + h_m) sin(d/R))` (exact on the sphere) and
+`H(theta) = max alpha`. Ray samples beyond the 80 S grid are skipped (far field of Malapert and Nobile, see limit 5).
 
 ### Getting the git-ignored Moon Trek tiles
 Run `python backend/app/scripts/download_trek_tiles.py` from the repo root (optional `--radius-km`). It writes the tiles and
@@ -71,11 +73,13 @@ All GLBs are meshopt-compressed and quantized with glTF Transform (`@gltf-transf
 `GET /api/area-search/stream` (Server-Sent Events) and `POST /api/area-search` search a square area (default 15 x 15 km)
 of the cap (center lat <= -84) for the best point. Not part of the public site: it needs the git-ignored LOLA DEMs.
 1. Candidates: the highest LOLA pixel of every 250 m cell; the 150 highest are kept (configurable).
-2. Per candidate (process pool): horizon every 1 deg with 100 km rays and the curvature correction above
-   (`services/terrain.py`; ray samples every 20 m up to 2 km, then every 0.5 % of the distance: max 0.04 deg difference
-   with uniform 20 m sampling on 5 test sites); hourly Sun / Earth directions from the JPL Horizons buffer of the nearest
+2. Per candidate (process pool): horizon every 1 deg with 200 km rays and the exact spherical geometry above
+   (`services/terrain.py`; ray samples every 20 m up to 4 km, then every 0.5 % of the distance: max 0.04 deg difference
+   with uniform 20 m sampling on 5 test sites; a 0.5 deg azimuth step changed the shares of CR1 and Nobile Rim 1 by
+   < 0.03 percentage points at ~1.7x the cost, so 1 deg is kept); hourly Sun / Earth directions from the JPL Horizons buffer of the nearest
    of the 4 sites, re-projected on the candidate's local horizon (`services/ephemeris.py`; Earth parallax error
-   < |distance to that site| / 356,000 km, e.g. 0.002 deg at 15 km); Sun disc fraction (R = 0.266 deg) and DTE line of
+   < |distance to that site| / 356,000 km, e.g. 0.002 deg at 15 km); Sun disc fraction (R = 0.266 deg, exact
+   circular-segment area above the horizon) and DTE line of
    sight (`services/visibility.py`); ground slope from the DEM (reported, not filtered).
 3. Ranking by share of hours with Sun and Earth visible at once (or Sun mean visible fraction, or DTE).
 Timing on a 12-core laptop: ~6 s for 150 candidates, ~11.5 s for 300.
@@ -92,18 +96,19 @@ Applies to the horizon, Sun and Direct-to-Earth (DTE) results (`backend/app/serv
    DE421 vs DE441 lunar orientation. JPL quotes lunar surface coordinates improving from ~100 m to tens of cm with its
    2021 update (https://ssd.jpl.nasa.gov/announcements/an20210929.html). Even 100 m is 0.003 deg, ~100 times below
    the solar radius (0.266 deg). Not measured directly; this is an upper bound taken from that announcement.
-2. **Spherical Moon, R = 1737.4 km** (the DEM reference). The horizon uses the tangent-plane approximation
-   `alpha = atan((h - h_obs - d^2 / 2R) / d)`. Against the exact spherical geometry it over-estimates the angle by
-   <= 0.001 deg for terrain up to 2 km above the observer at 100 km, <= 0.007 deg for 5 km at 100 km, and 0.07 deg only
-   in the extreme case of a 5 km wall at 10 km. Always below the solar radius.
+2. **Spherical Moon, R = 1737.4 km** (the DEM reference). The horizon angle is computed with the exact spherical
+   geometry `atan2((R + h_m) cos(d/R) - (R + h_obs), (R + h_m) sin(d/R))` (it replaced the tangent-plane formula
+   `atan((h - h_obs - d^2 / 2R) / d)`, which differed by <= 0.007 deg at 100 km). The DEM heights are relative to
+   this sphere, so no other shape model enters.
 3. **Earth is a point.** DTE is active when the Earth's centre is above the horizon. The Earth's disc is ~1.8 to 2.05 deg
    across seen from the Moon, so a link can be partly blocked just before/after the reported window. The Sun disc is
-   modelled (R = 0.266 deg, constant), the Earth disc is not.
+   modelled (R = 0.266 deg, constant: the true radius varies +-1.7 % over the year; visible share = exact area of the
+   circular segment above a locally straight horizon), the Earth disc is not.
 4. **Fixed 2 m mast and 20/40 m DEM.** Boulders, small ridges and anything below the DEM resolution are not in the
    horizon. LOLA has interpolated gaps near the pole. The surface is assumed to be the DEM, no lander footprint.
 5. **Coverage.** The DEMs end at 80 deg S (40 m) and 85 deg S (20 m). Ray samples with no DEM are ignored (counted as
-   `n_missing`), so a horizon is incomplete for points whose 100 km rays leave the 80 deg S cap. Also, the 100 km range
-   cuts off terrain farther away, which can only raise the true horizon.
+   `n_missing`), so a horizon is incomplete for points whose 200 km rays leave the 80 deg S cap (Malapert and Nobile
+   toward the equator). Also, the 200 km range cuts off terrain farther away, which can only raise the true horizon.
 6. **Ephemerides come from 4 sites.** The Sun/Earth directions of any other point are rotated from the nearest of the 4
    Horizons sites (exact for a direction fixed in the Moon frame; the parallax error is bounded in step 3 above).
    Coverage 2026-11-14 .. 2029-11-14, hourly samples: events shorter than one hour (sunsets, grazing passes) are
@@ -111,8 +116,9 @@ Applies to the horizon, Sun and Direct-to-Earth (DTE) results (`backend/app/serv
 7. **Illumination only.** Solar power is a visibility proxy (time-averaged visible disc fraction), not a flux or thermal
    model: no panel orientation, albedo or regolith scattering. No shadowing from the lander or from sub-DEM features.
 8. **Validation so far.** Adaptive vs uniform ray sampling (5 sites, max 0.04 deg), the browser vs Python
-   implementations (identical percentages for 5 points), CR1 against Gläser et al. 2014 (92 % lit), and the
-   ephemeris buffer against fresh Horizons queries (below). More published points (for example Mazarico et al. 2011
+   implementations (identical percentages for 5 points), CR1 against Gläser et al. 2014 (90.8 % vs 92 % lit), and the
+   ephemeris buffer against fresh Horizons queries (below, reproducible with
+   `python backend/app/scripts/validate_ephemerides.py`). More published points (for example Mazarico et al. 2011
    illumination maps) would strengthen it.
 
 ### Ephemeris buffer check (2026-11-15)

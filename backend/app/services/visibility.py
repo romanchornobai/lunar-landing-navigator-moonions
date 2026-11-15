@@ -3,7 +3,9 @@
 Sun (disc of apparent radius R_sun, with H = H(Az_sun)):
     fully visible   El_sun - R_sun >= H
     fully hidden    El_sun + R_sun <= H
-    partial         f = (El_sun + R_sun - H) / (2 R_sun), clipped to [0, 1]
+    partial         f = visible area of the disc above a straight horizon (circular segment):
+                    s = clip((El_sun - H) / R_sun, -1, 1),  f = 1 - (acos(s) - s sqrt(1 - s^2)) / pi
+                    (the horizon is locally a straight line across the 0.53 deg disc)
 DTE link active  <=>  El_earth > H(Az_earth)   (Earth centre above the terrain)
 """
 
@@ -12,7 +14,6 @@ from __future__ import annotations
 import numpy as np
 
 SUN_RADIUS_DEG = 0.266  # apparent solar radius seen from the Moon (~0.2666 deg at 1 AU; +-1.7 % over the year)
-
 
 def horizon_at(profile_deg: np.ndarray, az_deg: np.ndarray) -> np.ndarray:
     """Linear interpolation of a horizon sampled every 360/len(profile) deg from azimuth 0 (wraps at 360)."""
@@ -24,7 +25,9 @@ def horizon_at(profile_deg: np.ndarray, az_deg: np.ndarray) -> np.ndarray:
 
 
 def sun_visible_fraction(sun_el_deg: np.ndarray, horizon_deg: np.ndarray) -> np.ndarray:
-    return np.clip((sun_el_deg + SUN_RADIUS_DEG - horizon_deg) / (2 * SUN_RADIUS_DEG), 0.0, 1.0)
+    """Exact visible area fraction of the solar disc (0..1). f > 0 <=> any part of the disc above the terrain."""
+    s = np.clip((np.asarray(sun_el_deg) - horizon_deg) / SUN_RADIUS_DEG, -1.0, 1.0)
+    return 1.0 - (np.arccos(s) - s * np.sqrt(1.0 - s * s)) / np.pi
 
 
 def dte_visible(earth_el_deg: np.ndarray, horizon_deg: np.ndarray) -> np.ndarray:

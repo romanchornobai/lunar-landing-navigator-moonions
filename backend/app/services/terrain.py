@@ -11,9 +11,9 @@ Data: NASA PDS Geosciences Node, LRO LOLA GDR polar products (DATA_SET_ID LRO-L-
 
 Step 2, observer height:   h_obs = h_terrain(lat, lon) + h_mast
 Step 3, horizon:           along each azimuth theta (clockwise from local north, same convention as the JPL
-                           Horizons ephemerides) a great-circle ray is sampled at ground distances d:
-                               dh_eff(d) = (h_m - h_obs) - d^2 / (2 R)
-                               alpha(d)  = atan(dh_eff(d) / d)            [deg]
+                           Horizons ephemerides) a great-circle ray is sampled at ground (arc) distances d.
+                           Exact elevation angle on the sphere, delta = d / R:
+                               alpha(d)  = atan2((R + h_m) cos(delta) - (R + h_obs), (R + h_m) sin(delta))  [deg]
                                H(theta)  = max_d alpha(d)
 """
 
@@ -146,14 +146,18 @@ def ground_slope_deg(dems: list[PolarDem], lat: float, lon: float, step_m: float
     return float(np.degrees(np.arctan(np.hypot(gx, gy))))
 
 
-def full_ray_distances(min_m: float = 20.0, max_m: float = 100_000.0, step_m: float = 20.0) -> np.ndarray:
+RAY_MAX_M = 200_000.0  # ray length: a peak 8 km higher at 130 km still rises ~1.4 deg, so 100 km was too short
+
+
+def full_ray_distances(min_m: float = 20.0, max_m: float = RAY_MAX_M, step_m: float = 20.0) -> np.ndarray:
     """Uniform ray sampling (the reference used by compute_horizon.py)."""
     return np.arange(min_m, max_m + 0.5 * step_m, step_m)
 
 
-def adaptive_ray_distances(min_m: float = 20.0, max_m: float = 100_000.0, near_step_m: float = 20.0,
+def adaptive_ray_distances(min_m: float = 20.0, max_m: float = RAY_MAX_M, near_step_m: float = 20.0,
                            rel_step: float = 0.005) -> np.ndarray:
-    """20 m steps near the observer, then steps of 0.5 % of the distance (845 samples instead of 5000 to 100 km).
+    """20 m steps near the observer, then steps of 0.5 % of the distance (845 samples instead of 5000 to 100 km,
+    ~985 to 200 km).
     Benchmarked against the uniform 20 m sampling on 5 sites: max |dH| 0.04 deg, mean 0.002 deg
     (well below the 0.27 deg solar radius)."""
     out, d = [], min_m
@@ -173,12 +177,16 @@ def horizon_profile(dems: list[PolarDem], lat: float, lon: float, az: np.ndarray
     h_m = sample_terrain(dems, x, y)
     n_missing = int(np.isnan(h_m).sum())
 
-    curvature = d**2 / (2 * R_MOON_M)  # m, drop of the surface below the local tangent plane
+    # Exact spherical geometry: observer at radius R + h_obs, terrain point at radius R + h_m, central angle
+    # delta = d / R. In the observer's local frame the point is at horizontal (R + h_m) sin(delta) and vertical
+    # (R + h_m) cos(delta) - (R + h_obs), so no tangent-plane (d^2 / 2R) approximation is needed.
+    delta = d / R_MOON_M
+    sin_d, cos_d = np.sin(delta)[None, :], np.cos(delta)[None, :]
+    r_m = R_MOON_M + h_m
     out = {}
     for mast in masts:
-        h_obs = h_ground + mast
-        dh_eff = (h_m - h_obs) - curvature[None, :]
-        alpha = np.degrees(np.arctan(dh_eff / d[None, :]))
+        r_obs = R_MOON_M + h_ground + mast
+        alpha = np.degrees(np.arctan2(r_m * cos_d - r_obs, r_m * sin_d))
         alpha = np.where(np.isnan(alpha), -np.inf, alpha)
         k = np.argmax(alpha, axis=1)
         out[mast] = (alpha[np.arange(len(az)), k], d[k])

@@ -1,6 +1,7 @@
 /**
  * Step 4 of the visibility model in the browser (same formulas as backend/app/services/visibility.py):
- *   Sun visible fraction  f = clip((El_sun + R_sun - H(Az_sun)) / (2 R_sun), 0, 1), R_sun = 0.266 deg
+ *   Sun visible           any part of the disc above the terrain: El_sun + R_sun > H(Az_sun), R_sun = 0.266 deg
+ *                         (the backend also computes the exact visible area fraction; this file only needs f > 0)
  *   DTE link active       El_earth > H(Az_earth)
  * H(theta): LOLA horizon of each site (data/horizonProfiles.json, backend/app/scripts/compute_horizon.py).
  * Sun / Earth directions: hourly JPL Horizons buffer (utils/ephemerisClient.ts) of the nearest of its 4 sites,

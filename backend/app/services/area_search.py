@@ -3,7 +3,7 @@
 Pipeline (timed on a 12-core laptop: ~6 s for 150 candidates, ~11.5 s for 300):
   1. Candidates: the area is split in cells (default 250 m); the highest LOLA pixel of each cell is a candidate
      (illumination and Earth visibility favour local highs). The N highest candidates are kept.
-  2. For every candidate, in a process pool: horizon H(theta) every 1 deg with 100 km rays (terrain.py, adaptive ray
+  2. For every candidate, in a process pool: horizon H(theta) every 1 deg with 200 km rays (terrain.py, adaptive ray
      sampling), Sun / Earth tracks at that point over the requested dates (ephemeris.py) and the step-4 visibility
      statistics (visibility.py).
   3. Ranking by the chosen criterion (default: share of time with Sun AND Earth visible at once).
@@ -23,10 +23,14 @@ import numpy as np
 from . import ephemeris, terrain
 from .visibility import SUN_RADIUS_DEG, visibility_stats
 
+# 1 deg azimuth step: 0.5 deg was tested on CR1 and Nobile Rim 1 and changes the visibility shares by < 0.03
+# percentage points while taking ~1.7x longer.
 AZ_STEP_DEG = 1.0
 AZIMUTHS = np.arange(0.0, 360.0, AZ_STEP_DEG)
-RAY_DISTANCES = terrain.adaptive_ray_distances(max_m=100_000.0)
-MAX_CENTER_LAT = -84.0  # LOLA 80S grid must cover area + 100 km rays (lat -84 -> r 182 km; 80S grid to 304 km)
+RAY_DISTANCES = terrain.adaptive_ray_distances(max_m=terrain.RAY_MAX_M)
+# LOLA 80S grid (to r = 304 km) must cover the area and most of the rays: lat -84 -> r 182 km, so rays
+# toward the equator leave the grid after ~120 km (those samples are skipped and counted in ray_samples_outside_dem).
+MAX_CENTER_LAT = -84.0
 
 RANK_KEYS = {"sun_and_dte": "sun_and_dte", "sun": "sun_mean_fraction", "dte": "dte"}
 
