@@ -12,7 +12,7 @@ interface SiteMarkerProps {
   revealed?: boolean
 }
 
-export function SiteMarker({ site, position, lineHeight = 4.0, revealed = true }: SiteMarkerProps) {
+export function SiteMarker({ site, position, lineHeight = 6.0, revealed = true }: SiteMarkerProps) {
   const navigate = useNavigate()
 
   const siteData = useMemo(() => {

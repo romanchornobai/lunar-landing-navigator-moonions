@@ -30,13 +30,15 @@ interface LanderMarkerWithHudProps {
 }
 
 const POP_S = 0.7;
+/** Lander model scale (scene units per model unit); larger than before so the markers read at the overview zoom. */
+const LANDER_SCALE = 0.03;
 /** Ease-out with a small overshoot, so the marker "pops" into place. */
 const easeOutBack = (t: number) => 1 + 2.2 * Math.pow(t - 1, 3) + 1.2 * Math.pow(t - 1, 2);
 
 export const LanderMarkerWithHud: React.FC<LanderMarkerWithHudProps> = ({
   site,
   onLandOnSite,
-  lineHeight = 4.0,
+  lineHeight = 6.0,
   revealed = true,
 }) => {
   const rootRef = useRef<THREE.Group>(null);
@@ -61,13 +63,9 @@ export const LanderMarkerWithHud: React.FC<LanderMarkerWithHudProps> = ({
     return clone;
   }, [scene]);
 
-  // Línea minimalista vertical desde el suelo hasta el módulo
-  const lineObject = useMemo(() => {
-    const pts = [new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, lineHeight, 0)];
-    const geom = new THREE.BufferGeometry().setFromPoints(pts);
-    const mat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.85 });
-    return new THREE.Line(geom, mat);
-  }, [lineHeight]);
+  // Marker colour: white for landing candidates, ice blue for permanently shadowed science targets
+  const accent = site.kind === 'science' ? '#38bdf8' : '#ffffff';
+  const haloRef = useRef<THREE.Mesh>(null);
 
   // Rotación suave del lander cuando está en hover
   useFrame((_, delta) => {
@@ -80,6 +78,13 @@ export const LanderMarkerWithHud: React.FC<LanderMarkerWithHudProps> = ({
       const y = easeOutBack(Math.min(1, t * 1.4));
       const xz = easeOutBack(Math.max(0, (t - 0.15) / 0.85));
       root.scale.set(Math.max(1e-3, xz), Math.max(1e-3, y), Math.max(1e-3, xz));
+    }
+    // Halo: expands and fades out every 2 s
+    const halo = haloRef.current;
+    if (halo) {
+      const p = (performance.now() / 2000) % 1;
+      halo.scale.setScalar(1 + p * 1.8);
+      (halo.material as THREE.MeshBasicMaterial).opacity = 0.6 * (1 - p);
     }
     if (landerMeshRef.current && isHovered) {
       landerMeshRef.current.rotation.y += delta * 1.5;
@@ -146,17 +151,28 @@ export const LanderMarkerWithHud: React.FC<LanderMarkerWithHudProps> = ({
 
   return (
     <group ref={rootRef} position={[groundPos.x, groundPos.y, groundPos.z]} visible={revealed}>
-      {/* 0. Punto de anclaje en el suelo y línea blanca minimalista */}
-      <mesh position={[0, 0.04, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[0.25, 0.42, 32]} />
-        <meshBasicMaterial color="#ffffff" side={THREE.DoubleSide} transparent opacity={0.85} />
+      {/* 0. Ground anchor: solid ring + a pulsing halo, and a vertical beam up to the lander */}
+      <mesh position={[0, 0.06, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[0.5, 0.8, 48]} />
+        <meshBasicMaterial color={accent} side={THREE.DoubleSide} transparent opacity={0.95} toneMapped={false} />
       </mesh>
-      <primitive object={lineObject} />
+      <mesh ref={haloRef} position={[0, 0.05, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[0.8, 0.95, 48]} />
+        <meshBasicMaterial color={accent} side={THREE.DoubleSide} transparent opacity={0.6} depthWrite={false} toneMapped={false} />
+      </mesh>
+      <mesh position={[0, lineHeight / 2, 0]}>
+        <cylinderGeometry args={[0.06, 0.06, lineHeight, 8]} />
+        <meshBasicMaterial color={accent} transparent opacity={0.9} toneMapped={false} />
+      </mesh>
+      <mesh position={[0, lineHeight / 2, 0]}>
+        <cylinderGeometry args={[0.22, 0.22, lineHeight, 12, 1, true]} />
+        <meshBasicMaterial color={accent} transparent opacity={0.12} depthWrite={false} toneMapped={false} />
+      </mesh>
 
       {/* 1. Módulo Lunar con su Hitbox */}
       <group position={[0, lineHeight, 0]}>
         <group
-          scale={0.018}
+          scale={LANDER_SCALE}
           onPointerEnter={handleLanderEnter}
           onPointerLeave={handleLanderLeave}
         >
@@ -180,7 +196,7 @@ export const LanderMarkerWithHud: React.FC<LanderMarkerWithHudProps> = ({
 
         {/* 2. Tarjeta Holográfica proyectada al hacer Hover */}
         {isHovered && (
-          <Html position={[0, 1.2, 0]} center style={{ pointerEvents: 'none' }}>
+          <Html position={[0, 2.0, 0]} center style={{ pointerEvents: 'none' }}>
             <div
               ref={anchorRef}
               onMouseEnter={handleCardEnter}
