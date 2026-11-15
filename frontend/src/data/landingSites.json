@@ -4,7 +4,11 @@
     "name": "Connecting Ridge (CR1)",
     "shortName": "CR1",
     "kind": "landing",
-    "coordinates": { "latitude": -89.4395, "longitude": -137.1934, "elevation_m": 1958 },
+    "coordinates": {
+      "latitude": -89.4395,
+      "longitude": -137.1934,
+      "elevation_m": 1958
+    },
     "description": "Ridge connecting the Shackleton and de Gerlache craters. Point CR1 (spot 1) of the LOLA illumination study.",
     "published": "Illuminated 92 % of the time at 2 m above ground (mean 88.1 %); longest night 4.6 days. 19-year simulation, LOLA 20 m/px.",
     "nasa_region": "Connecting Ridge (Artemis III candidate 2022)",
@@ -21,7 +25,11 @@
     "name": "Shackleton Rim (Point A)",
     "shortName": "SHACKLETON A",
     "kind": "landing",
-    "coordinates": { "latitude": -89.68, "longitude": -166.0, "elevation_m": 1592 },
+    "coordinates": {
+      "latitude": -89.68,
+      "longitude": -166.0,
+      "elevation_m": 1592
+    },
     "description": "Point on the rim of Shackleton crater. Complementary to Point B: when one is dark, the other usually has Sun.",
     "published": "Illuminated more than 80 % of 2020; together with Point B, more than 94 % of the time. Kaguya topography.",
     "nasa_region": null,
@@ -38,7 +46,11 @@
     "name": "Peak near Shackleton (Point D)",
     "shortName": "PEAK D",
     "kind": "landing",
-    "coordinates": { "latitude": -88.74, "longitude": 124.5, "elevation_m": 1454 },
+    "coordinates": {
+      "latitude": -88.74,
+      "longitude": 124.5,
+      "elevation_m": 1454
+    },
     "description": "Small ridge extending from the Shackleton rim along the 120° E meridian. The most illuminated point of the Bussey et al. study.",
     "published": "Illuminated 86 % of 2020; longest night ~11.5 days (winter). Mahanti et al. 2024 place an area here (88.79° S, 124.5° E) illuminated ~80 % of the time.",
     "nasa_region": "Peak near Shackleton (Artemis III candidate 2022)",
@@ -59,7 +71,11 @@
     "name": "De Gerlache Rim (Point C)",
     "shortName": "DE GERLACHE C",
     "kind": "landing",
-    "coordinates": { "latitude": -88.71, "longitude": -68.7, "elevation_m": 1765 },
+    "coordinates": {
+      "latitude": -88.71,
+      "longitude": -68.7,
+      "elevation_m": 1765
+    },
     "description": "Point on the rim of de Gerlache crater with stable illumination and the shortest eclipses of the study.",
     "published": "Illuminated more than 80 % of 2020; the shortest maximum eclipse of all points studied (~6 days). Kaguya topography.",
     "nasa_region": null,
@@ -76,7 +92,11 @@
     "name": "Permanent Shadow (PSR 4)",
     "shortName": "PSR 4",
     "kind": "science",
-    "coordinates": { "latitude": -88.963, "longitude": 129.783, "elevation_m": 975 },
+    "coordinates": {
+      "latitude": -88.963,
+      "longitude": 129.783,
+      "elevation_m": 975
+    },
     "description": "Science-interest zone, not a landing site: it never receives direct sunlight and may contain water ice. Center of the permanently shadowed region SP_889630_1297830.",
     "published": "Permanently shadowed region of 6 km² inside the Peak near Shackleton region (Table 1 of the study).",
     "nasa_region": "Peak near Shackleton (Artemis III candidate 2022)",
@@ -93,7 +113,11 @@
     "name": "Malapert Massif",
     "shortName": "MALAPERT",
     "kind": "landing",
-    "coordinates": { "latitude": -85.99, "longitude": 2.93, "elevation_m": 5127 },
+    "coordinates": {
+      "latitude": -85.99,
+      "longitude": 2.93,
+      "elevation_m": 5127
+    },
     "description": "One of the highest mountains of the lunar South Pole, facing the Earth. Outside the regional 3D terrain.",
     "published": "Artemis III candidate region in 2022 and 2024. Approximate region coordinate: NASA does not publish a specific point.",
     "nasa_region": "Malapert Massif (Artemis III candidate 2022 and 2024)",
@@ -110,7 +134,11 @@
     "name": "Nobile Crater Rim (Rim 1)",
     "shortName": "NOBILE",
     "kind": "landing",
-    "coordinates": { "latitude": -85.25, "longitude": 35.8, "elevation_m": 6504 },
+    "coordinates": {
+      "latitude": -85.25,
+      "longitude": 35.8,
+      "elevation_m": 6504
+    },
     "description": "Western rim of Nobile crater, next to Mons Mouton. Outside the regional 3D terrain.",
     "published": "Artemis III candidate region in 2022 and 2024. Approximate region coordinate: NASA does not publish a specific point.",
     "nasa_region": "Nobile Rim 1 (Artemis III candidate 2022 and 2024)",
@@ -119,6 +147,31 @@
       {
         "label": "NASA 2024, Artemis III landing regions update",
         "url": "https://www.nasa.gov/news-release/nasa-provides-update-on-artemis-iii-moon-landing-regions/"
+      }
+    ]
+  },
+  {
+    "id": "im2-athena",
+    "name": "IM-2 Athena (Mons Mouton)",
+    "shortName": "IM-2",
+    "kind": "mission",
+    "coordinates": {
+      "latitude": -84.7906,
+      "longitude": 29.1957,
+      "elevation_m": 5322
+    },
+    "description": "Intuitive Machines IM-2 Athena, a NASA CLPS lander, touched down near the center of Mons Mouton on 6 March 2025, the southernmost lunar landing so far. It came to rest on its side inside a 20 m crater.",
+    "published": "Landing point located by LROC in NAC image M1495922531LR: 84.7906 S, 29.1957 E. Intended site -84.78, 29.13 E, inside one of the Artemis III candidate regions.",
+    "nasa_region": "Mons Mouton (CLPS IM-2; Artemis III candidate region)",
+    "scene_key": null,
+    "sources": [
+      {
+        "label": "LROC 2025, IM-2 Athena Seen Obliquely",
+        "url": "https://www.lroc.asu.edu/images/1408"
+      },
+      {
+        "label": "LROC 2025, IM-2 Landing Region",
+        "url": "https://www.lroc.asu.edu/images/1401"
       }
     ]
   }

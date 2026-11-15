@@ -11,7 +11,7 @@ interface LanderMarkerWithHudProps {
     name: string;
     shortName: string;
     /** 'science': permanently shadowed region (drawn as a beacon, not a lander). */
-    kind?: 'landing' | 'science';
+    kind?: 'landing' | 'science' | 'mission';
     description?: string;
     sources?: { label: string; url: string }[];
     coordinates: {

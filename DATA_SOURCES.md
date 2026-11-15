@@ -26,6 +26,12 @@ R = 1737.4 km). The "published" text of each point repeats the source's values a
 | PSR 4 (permanent shadow, science target) | -88.963, 129.783 | Mahanti et al. 2024, Planet. Sci. J. 5, 62, Table 1 (SP_889630_1297830), https://iopscience.iop.org/article/10.3847/PSJ/ad1b50 |
 | Malapert Massif (2D map only) | -85.99, 2.93 | Region named in NASA's Artemis III candidate lists (2022, 2024); approximate region coordinate, NASA publishes no point |
 | Nobile Rim 1 (2D map only) | -85.25, 35.80 | Same as Malapert |
+| IM-2 Athena, CLPS mission (2D map + comparison) | -84.7906, 29.1957 | Actual touchdown point (6 March 2025) located by LROC in NAC M1495922531LR, https://www.lroc.asu.edu/images/1408 (intended site -84.78, 29.13 E: https://www.lroc.asu.edu/images/1401). Height from `LDEM_80S_40M` (outside the 85 S grid). VIPER (west of Nobile) is not added: NASA publishes an exploration area, not a point |
+
+IM-2 horizon: same settings as the other points (`compute_horizon.py`: 1 deg, 20 m to 200 km, 20 m step), added to
+`horizonProfiles.json` without recomputing the others. 6.7 % of its ray samples fall outside the 80 S grid (rays toward
+the equator beyond ~146 km). Terrain there would need to be ~10 km higher than the site to raise the horizon above
+1.5 deg, so the missing far field does not change the Sun or Earth results in practice (an assumption, not measured).
 
 Check with our own model (2 m mast, 2026-11..2029-11, `backend/app/services`): CR1 lit 90.8 % of the time, mean
 visible disc 86.4 % (Gläser: 92 %, 88.1 %, over a full 18.6-year precession cycle). With 100 km rays we got 91.8 % /
@@ -123,7 +129,7 @@ Applies to the horizon, Sun and Direct-to-Earth (DTE) results (`backend/app/serv
    horizon. LOLA has interpolated gaps near the pole. The surface is assumed to be the DEM, no lander footprint.
 5. **Coverage.** The DEMs end at 80 deg S (40 m) and 85 deg S (20 m). Ray samples with no DEM are ignored (counted as
    `n_missing`), so a horizon is incomplete for points whose 200 km rays leave the 80 deg S cap (Malapert and Nobile
-   toward the equator). Also, the 200 km range cuts off terrain farther away, which can only raise the true horizon.
+   toward the equator; IM-2 likewise). Also, the 200 km range cuts off terrain farther away, which can only raise the true horizon.
 6. **Ephemerides come from 4 sites.** The Sun/Earth directions of any other point are rotated from the nearest of the 4
    Horizons sites (exact for a direction fixed in the Moon frame; the parallax error is bounded in step 3 above).
    Coverage 2026-11-14 .. 2029-11-14, hourly samples: events shorter than one hour (sunsets, grazing passes) are

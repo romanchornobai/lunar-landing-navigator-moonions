@@ -17,7 +17,8 @@ with time running faster, and any 15 x 15 km area can be searched for its best l
 
 ## What it does
 - **From orbit to the ground.** A 3D Moon, then the South Pole with the published candidate landing points (Artemis III
-  regions, Bussey et al. 2010, Gläser et al. 2014, Mahanti et al. 2024), each linked to the study it comes from.
+  regions, Bussey et al. 2010, Gläser et al. 2014, Mahanti et al. 2024) and the real touchdown point of the CLPS
+  mission IM-2 Athena (located by LROC), each linked to its source.
 - **Compare sites in seconds.** The share of time with the Sun and with the Earth visible, for every point, over
   2026-11-14 .. 2029-11-14, played back as an animated bar chart.
 - **Stand next to the lander.** Sun and Earth move over the LOLA terrain at true angular size; time can be sped up or

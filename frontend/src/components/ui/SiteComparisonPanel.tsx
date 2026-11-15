@@ -2,12 +2,17 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { ArrowLeft, Moon, SatelliteDish } from 'lucide-react'
 import { SciFiHudPanel } from './SciFiHudPanel'
 import { CELESTIAL_MODELS, SpinningModelCanvas } from './CelestialReadout'
-import { SITES_IN_3D } from '../../data/sites'
+import { COMPARISON_SITES } from '../../data/sites'
 import { EPHEMERIS_HOURS, EPHEMERIS_START_MS, loadEphemeridesBuffer } from '../../utils/ephemerisClient'
 import { DEFAULT_MAST_M, visibilitySeries } from '../../lib/visibility'
 
 // Columns: the published points on the regional 3D terrain (data/landingSites.json), in file order.
-const COLUMNS = SITES_IN_3D.map((s) => ({ id: s.id, label: s.shortName, science: s.kind === 'science' }))
+const COLUMNS = COMPARISON_SITES.map((s) => ({
+  id: s.id,
+  label: s.shortName,
+  science: s.kind === 'science',
+  mission: s.kind === 'mission',
+}))
 
 // Rows: Earth (DTE line of sight) and Sun (any part of the disc above the terrain).
 const ROWS = [
@@ -100,7 +105,7 @@ function TimelineStrip({ data }: { data: Uint8Array }) {
 
 /** Per-site detail page shown inside the comparison panel once the run is over. */
 function SiteDetail({ siteId, run, onBack }: { siteId: string; run: ComparisonRun; onBack: () => void }) {
-  const site = SITES_IN_3D.find((s) => s.id === siteId)!
+  const site = COMPARISON_SITES.find((s) => s.id === siteId)!
   const s = run.series[siteId]
   const stats = React.useMemo(() => {
     let both = 0
@@ -131,7 +136,7 @@ function SiteDetail({ siteId, run, onBack }: { siteId: string; run: ComparisonRu
           <ArrowLeft size={18} />
         </button>
         <div className="min-w-0">
-          <div className={`text-[16px] font-bold tracking-[0.18em] truncate ${site.kind === 'science' ? 'text-sky-400' : ''}`}>
+          <div className={`text-[16px] font-bold tracking-[0.18em] truncate ${site.kind === 'science' ? 'text-sky-400' : site.kind === 'mission' ? 'text-amber-300' : ''}`}>
             {site.name.toUpperCase()}
           </div>
           <div className="text-[10px] tracking-[0.2em] text-neutral-400 tabular-nums">
@@ -459,9 +464,15 @@ export const SiteComparisonPanel: React.FC<SiteComparisonPanelProps> = ({ onClos
               <div
                 key={c.id}
                 className={`py-3 px-1 text-center text-[11px] sm:text-[12px] font-bold tracking-[0.18em] border-b border-white/25 ${
-                  c.science ? 'text-sky-400' : ''
+                  c.science ? 'text-sky-400' : c.mission ? 'text-amber-300' : ''
                 }`}
-                title={c.science ? 'Permanently shadowed zone (science interest, not a landing site)' : undefined}
+                title={
+                  c.science
+                    ? 'Permanently shadowed zone (science interest, not a landing site)'
+                    : c.mission
+                      ? 'Actual landing site of a flown mission (CLPS)'
+                      : undefined
+                }
               >
                 {finished ? (
                   <button

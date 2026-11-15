@@ -23,8 +23,11 @@ export interface LandingSite {
   id: string
   name: string
   shortName: string
-  /** 'landing': illuminated landing candidate; 'science': permanently shadowed region (water ice target). */
-  kind: 'landing' | 'science'
+  /**
+   * 'landing': illuminated landing candidate; 'science': permanently shadowed region (water ice target);
+   * 'mission': actual landing site of a flown mission (e.g. CLPS IM-2).
+   */
+  kind: 'landing' | 'science' | 'mission'
   coordinates: LandingSiteCoordinates
   description: string
   /** Values as published by the source (conditions included). */
@@ -57,6 +60,11 @@ export function getSite3DPosition(site: LandingSite, elevations?: Float32Array):
   const p = latLonToScene(site.coordinates.latitude, site.coordinates.longitude, elevations)
   return isInsideTerrain(p[0], p[2]) ? p : null
 }
+
+/** Sites of the comparison table: the ones on the 3D terrain plus flown missions (they have a LOLA horizon too). */
+export const COMPARISON_SITES: LandingSite[] = LANDING_SITES.filter(
+  (s) => getSite3DPosition(s) !== null || s.kind === 'mission',
+)
 
 /** Sites drawn on the regional 3D terrain. */
 export const SITES_IN_3D: LandingSite[] = LANDING_SITES.filter((s) => getSite3DPosition(s) !== null)

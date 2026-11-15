@@ -213,12 +213,14 @@ export default function SouthPolarMap({
           pathOptions={
             s.kind === 'science'
               ? { color: '#38bdf8', weight: 1, fillColor: '#38bdf8', fillOpacity: 1 }
-              : { color: '#ff2a2a', weight: 1, fillColor: '#ff2a2a', fillOpacity: 1 }
+              : s.kind === 'mission'
+                ? { color: '#fcd34d', weight: 2, fillColor: '#f59e0b', fillOpacity: 1 }
+                : { color: '#ff2a2a', weight: 1, fillColor: '#ff2a2a', fillOpacity: 1 }
           }
         >
           {interactive && (
             <Tooltip direction="right" offset={[8, 0]} className="polar-site-tooltip">
-              {s.name}
+              {s.kind === 'mission' ? `${s.name} · MISSION` : s.name}
             </Tooltip>
           )}
         </CircleMarker>
