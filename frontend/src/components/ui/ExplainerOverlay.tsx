@@ -10,13 +10,13 @@ interface ExplainerOverlayProps {
 }
 
 /**
- * Full-screen black cover with the explainer animations, opened on demand from the info button (which also asks the
- * browser for fullscreen). PROCEED plays the next part; after the last one the cover closes and the view returns.
- * Space / right arrow do the same as PROCEED; Esc closes at any time. Each part shows its title, what it means and
- * the data it comes from (the iframe page).
+ * Black cover with the explainer animations, opened on demand from the info button. The first part starts by itself.
+ * PROCEED plays the next part; after the last one the cover closes and the view returns. Space / right arrow do the
+ * same as PROCEED; Esc closes at any time. Each part shows its title, what it means and the data it comes from (the
+ * iframe page).
  */
 export function ExplainerOverlay({ onProceed }: ExplainerOverlayProps) {
-  const [part, setPart] = useState(-1) // -1: black, waiting for the first PROCEED
+  const [part, setPart] = useState(0) // the first part starts as soon as the page is ready
   const [total, setTotal] = useState(DEFAULT_STEPS)
   const frame = useRef<HTMLIFrameElement>(null)
   const ready = useRef(false)
@@ -33,14 +33,6 @@ export function ExplainerOverlay({ onProceed }: ExplainerOverlayProps) {
   }, [part, total, onProceed])
 
   useEffect(() => send(part), [part, send])
-
-  // Leaving the animations leaves browser fullscreen too
-  useEffect(
-    () => () => {
-      if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {})
-    },
-    [],
-  )
 
   useEffect(() => {
     const onMessage = (e: MessageEvent) => {

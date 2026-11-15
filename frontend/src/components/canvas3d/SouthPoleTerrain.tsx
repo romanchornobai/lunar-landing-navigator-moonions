@@ -354,11 +354,7 @@ export default function SouthPoleTerrain() {
       <div className="absolute top-6 right-6 z-40 flex items-center gap-3">
         {/* How it works: opens the explainer animations (data sources and steps) on demand */}
         <button
-          onClick={() => {
-            setShowExplainer(true)
-            // full screen: requested here, inside the click, so the browser allows it
-            document.documentElement.requestFullscreen?.().catch(() => {})
-          }}
+          onClick={() => setShowExplainer(true)}
           className="group relative flex items-center justify-center w-10 h-10 text-white/80 drop-shadow-[0_0_6px_rgba(255,255,255,0.6)] hover:text-white hover:drop-shadow-[0_0_10px_rgba(255,255,255,0.95)] transition-all duration-300 select-none cursor-pointer active:scale-90"
           title="How the search works"
           aria-label="How the search works"
