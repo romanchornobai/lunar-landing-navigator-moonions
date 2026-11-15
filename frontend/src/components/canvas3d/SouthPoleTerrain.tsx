@@ -10,7 +10,7 @@ import { SiteMarker } from './SiteMarker'
 import { AreaHighlight, BestPointBeacon, clampAreaCenter } from './AreaHighlight'
 import { SiteComparisonPanel } from '../ui/SiteComparisonPanel'
 import { AreaHoloPanel, type AreaComputeState } from '../ui/AreaHoloPanel'
-import { AreaComputeLoader } from '../ui/AreaComputeLoader'
+import { ExplainerOverlay } from '../ui/ExplainerOverlay'
 import { startAreaSearch } from '../../services/areaSearch'
 import SouthPolarMap, { type MapViewInfo } from '../map2d/SouthPolarMap'
 import MiniSouthPoleTerrain from './MiniSouthPoleTerrain'
@@ -199,6 +199,7 @@ export default function SouthPoleTerrain() {
   const [hoverCenter, setHoverCenter] = useState<[number, number] | null>(null)
   const [area, setArea] = useState<SelectedArea | null>(null)
   const [compute, setCompute] = useState<AreaComputeState>({ status: 'idle' })
+  const [showExplainer, setShowExplainer] = useState(false)
   const cancelSearch = useRef<(() => void) | null>(null)
   const searchInfo = useRef<{ total: number; period: [string, string] | null }>({ total: 0, period: null })
 
@@ -231,6 +232,7 @@ export default function SouthPoleTerrain() {
     cancelSearch.current?.()
     searchInfo.current = { total: 0, period: null }
     setCompute({ status: 'computing', done: 0, total: 0 })
+    setShowExplainer(true)
     cancelSearch.current = startAreaSearch(area.latitude, area.longitude, {
       onStart: (d) => {
         searchInfo.current = { total: d.total, period: d.period_utc }
@@ -297,9 +299,12 @@ export default function SouthPoleTerrain() {
 
       {isComparisonOpen && <SiteComparisonPanel onClose={() => setIsComparisonOpen(false)} />}
 
-      {/* Area search progress (top centre) */}
-      {viewMode === '3d' && compute.status === 'computing' && (
-        <AreaComputeLoader done={compute.done} total={compute.total} />
+      {/* Black cover with the explainer animations while the area search runs; Play returns to the 3D view */}
+      {viewMode === '3d' && showExplainer && (compute.status === 'computing' || compute.status === 'done') && (
+        <ExplainerOverlay
+          progress={compute.status === 'computing' ? { done: compute.done, total: compute.total } : null}
+          onPlay={() => setShowExplainer(false)}
+        />
       )}
 
       {/* Top Left: Navigation back to Lunar Globe */}

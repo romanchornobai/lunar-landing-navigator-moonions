@@ -104,6 +104,14 @@
     .wrap { padding-top: 40px; }
     .time, .scene-dur { display: none; }
   }
+  /* ---------- embedded mode (?embed=1): one animation at a time, full screen, no page chrome ---------- */
+  body.embed { background: #000; overflow: hidden; }
+  body.embed .wrap { max-width: none; padding: 0; }
+  body.embed header, body.embed footer, body.embed .scene-head, body.embed .caption, body.embed .note, body.embed .controls { display: none; }
+  body.embed section.scene { display: none; margin: 0; position: fixed; inset: 0; align-items: center; justify-content: center; }
+  body.embed section.scene.active { display: flex; }
+  body.embed .frame { width: min(100vw, calc(100vh * 16 / 9)); border: 0; }
+  body.embed .frame::after { display: none; }
 </style>
 </head>
 <body>
@@ -963,6 +971,19 @@
     const s4 = scenes[3];
     (function pulse() { if (s4.state.t >= 4.6 && !s4.tl.isActive()) s4.draw(); requestAnimationFrame(pulse); })();
 
+    // embedded in the app: the parent shows one part at a time (postMessage), each one plays and stays on its last frame
+    if (new URLSearchParams(location.search).has("embed")) {
+      document.body.classList.add("embed");
+      const show = (i) => {
+        scenes.forEach((s, k) => { s.root.classList.toggle("active", k === i); if (k !== i) s.tl.pause(0); });
+        setTimeout(() => { scenes[i].resize(); scenes[i].play(); }, 60);
+      };
+      window.addEventListener("message", (e) => { if (e.data && e.data.type === "explainer-part") show(clampIdx(e.data.index)); });
+      const clampIdx = (n) => Math.max(0, Math.min(scenes.length - 1, n | 0));
+      show(0);
+      parent.postMessage({ type: "explainer-ready" }, "*");
+      return;
+    }
     if (reduceMotion) { scenes.forEach((s) => s.tl.progress(1)); return; }
 
     // autoplay each scene once when it is mostly visible
