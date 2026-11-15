@@ -77,7 +77,7 @@ function ArtemisLander({ groundNormal = [-0.2871, 0.9229, -0.2567] }: { groundNo
 /** Resting camera (scene units, metres) and orbit target next to the lander. */
 const CAMERA_END: Vec3 = [-42.9, 23.4, -74.3] // azimuth 210 deg (atan2(x, z)), same distance and height
 const CAMERA_TARGET: Vec3 = [0, 1.5, 0]
-const INTRO_S = 2.6
+const INTRO_S = 1.6
 
 /**
  * Short opening move once the terrain and lander are loaded: the camera comes in from 1.6x farther and a bit higher,
