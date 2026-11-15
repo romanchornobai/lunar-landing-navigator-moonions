@@ -215,7 +215,7 @@ export const SceneLoader: React.FC<SceneLoaderProps> = ({ durationMs, done = fal
               ) : (
                 <>
                   <DigitStrip animation={`loaderDigitsTens ${ones * 9 * 10}ms steps(9, end) forwards`} />
-                  <DigitStrip animation={`loaderDigitsOnes ${ones * 10}ms steps(10, end) infinite`} />
+                  <DigitStrip animation={`loaderDigitsOnes ${ones * 10}ms steps(10, end) 9.9 forwards`} />
                 </>
               )}
               %]
