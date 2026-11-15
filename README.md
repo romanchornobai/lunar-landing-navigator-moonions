@@ -2,6 +2,8 @@
 
 NASA Space Apps Challenge 2026 · Zaragoza, Spain · Team **Moonions**
 
+**Live app: https://moonions.goodcarpenter.es**
+
 > Where and when should we land at the lunar South Pole to have sunlight for power and the Earth in view for radio?
 > Pick a site and a date, and watch the Sun and the Earth move over the real terrain.
 
@@ -86,6 +88,11 @@ python -m venv .venv
 .venv/Scripts/python -m uvicorn app.main:app --port 8000
 ```
 Without the backend, the area search shows "Computation server unavailable"; the rest of the app works.
+
+## Deployment
+The live app runs with Docker Compose (`docker-compose.yml`, `deploy/`): nginx serves the built frontend and proxies
+`/api` to the FastAPI backend. The LOLA DEMs (`data/dem/`) and the Moon Trek tiles (`frontend/public/tiles/`) are
+mounted from the server, not stored in git. `deploy/update.sh` pulls `main` from GitHub and rebuilds.
 
 ## Built with
 React, TypeScript, Vite, Three.js (@react-three/fiber, drei), Tailwind, Zustand, Leaflet · Python, FastAPI, NumPy.
