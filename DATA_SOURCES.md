@@ -89,6 +89,16 @@ Frontend: in the South Pole 3D view the selector button picks a 15 x 15 km squar
 CALCULAR streams the search from the local backend (`services/areaSearch.ts`, Vite proxies `/api` to :8000), shows the
 progress at the top and the best point (beacon + panel). Without the local backend the panel reports it is unavailable.
 
+### Explainer animations (`frontend/public/explainer.html`)
+Four short animations (candidates, horizon, Sun and Earth against the horizon, ranking) drawn from the real products of
+one area search centred on Connecting Ridge CR1 (15 x 15 km, 150 candidates, same pipeline and parameters as above).
+`python backend/app/scripts/export_explainer_data.py` (needs `data/dem/`) runs `services/area_search.py` and exports
+`data/baked/explainer_data.json`, also injected into the HTML: LOLA hillshade/height of the area (from
+`LDEM_85S_20M`) and of a 400 x 400 km region (from `LDEM_80S_40M`), the cell maxima and the 150 candidates, one real ray
+profile and the 360-value horizon of the best point, a 45-day Sun/Earth track from the JPL Horizons buffer, and the
+hourly Sun/DTE state of the 10 best candidates. Maps are display renderings (hillshade, relief exaggerated x2 for
+contrast); no number on screen is invented. Library: GSAP 3.12.5 (cdnjs), fonts Inter and JetBrains Mono (Google Fonts).
+
 ## Assumptions and limits of the visibility model
 Applies to the horizon, Sun and Direct-to-Earth (DTE) results (`backend/app/services`, `frontend/src/lib/visibility.ts`).
 
