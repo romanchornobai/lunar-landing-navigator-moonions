@@ -110,3 +110,28 @@ export function getEphemerisAt(siteKey: string, date: Date): EphemerisSample | n
   })
   return out
 }
+
+/** Planetocentric lat / lon (deg) of the 4 sites the buffer was computed for (same order as EPHEMERIS_SITES). */
+export const EPHEMERIS_SITE_LATLON: Record<EphemerisSiteKey, [number, number]> = {
+  shackleton: [-89.54, 129.2],
+  malapert: [-85.99, 2.93],
+  nobile: [-85.25, 35.8],
+  degerlache: [-88.71, -68.7],
+}
+
+/**
+ * Raw hourly [azimuth, elevation] pairs of one body seen from one buffer site, hours [h0, h1).
+ * Returns null if the buffer is not loaded.
+ */
+export function getRawTrack(
+  siteKey: EphemerisSiteKey,
+  body: 'sun' | 'earth',
+  h0: number,
+  h1: number,
+): Float32Array | null {
+  if (!buffer) return null
+  const site = EPHEMERIS_SITES.indexOf(siteKey)
+  const bi = BODIES.indexOf(body)
+  const start = recordIndex(site, bi, h0)
+  return buffer.subarray(start, start + (h1 - h0) * 2)
+}

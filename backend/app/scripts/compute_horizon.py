@@ -47,18 +47,15 @@ sys.path.insert(0, str(ROOT / "backend"))
 from app.services.terrain import R_MOON_M, horizon_profile, open_dems, polar_xy  # noqa: E402
 
 OUT_JSON = ROOT / "frontend" / "src" / "data" / "horizonProfiles.json"
-MODELS_DIR = ROOT / "frontend" / "public" / "models"
 
 MAST_HEIGHTS_M = (2.0, 4.0, 6.0)  # sensor height above the ground (typical lander mast 2-6 m)
 
-# Site keys follow the ephemeris buffer order (frontend/src/utils/ephemerisClient.ts).
-# lat / lon (planetocentric, east-positive) and the folder of the 15 km scene, whose *_meta.json has the
-# DEM elevation at the site center (used as a cross-check).
+# Sites: every point of frontend/src/data/landingSites.json (published coordinates, see DATA_SOURCES.md), keyed by id.
+SITES_JSON = ROOT / "frontend" / "src" / "data" / "landingSites.json"
 SITES = {
-    "shackleton": {"id": "shackleton-connecting-ridge", "lat": -89.54, "lon": 129.20, "model": "shackleton_rim"},
-    "malapert": {"id": "malapert-massif", "lat": -85.99, "lon": 2.93, "model": "malapert_massif"},
-    "nobile": {"id": "nobile-rim-1", "lat": -85.25, "lon": 35.80, "model": "nobile_rim_1"},
-    "degerlache": {"id": "de-gerlache-rim", "lat": -88.71, "lon": -68.70, "model": "de_gerlache_rim"},
+    s["id"]: {"lat": s["coordinates"]["latitude"], "lon": s["coordinates"]["longitude"],
+              "elevation_m": s["coordinates"]["elevation_m"]}
+    for s in json.loads(SITES_JSON.read_text(encoding="utf-8"))
 }
 
 
@@ -94,17 +91,15 @@ def main() -> None:
 
     for key, site in SITES.items():
         h_ground, prof, n_missing = horizon_profile(dems, site["lat"], site["lon"], az, d, MAST_HEIGHTS_M)
-        meta_path = MODELS_DIR / site["model"] / f"{site['model']}_meta.json"
-        meta_elev = json.loads(meta_path.read_text())["elevation"]["center_abs_meters"]
         print(f"\n== {key}  lat {site['lat']}  lon {site['lon']}")
-        print(f"   ground height {h_ground:9.1f} m  (15 km scene meta: {meta_elev} m, diff {h_ground - meta_elev:+.1f} m)")
+        print(f"   ground height {h_ground:9.1f} m  (landingSites.json: {site['elevation_m']} m)")
         sx, sy = polar_xy(np.array([site["lat"]]), np.array([site["lon"]]))
         for dem in dems:  # consistency between the two grids (checks the pixel <-> x, y mapping of each)
             if dem.covers(sx, sy)[0]:
                 print(f"   {dem.name}: {dem.height(sx, sy)[0]:9.1f} m")
         if n_missing:
             print(f"   WARNING: {n_missing} ray samples outside DEM coverage (ignored)")
-        entry = {"id": site["id"], "lat": site["lat"], "lon": site["lon"], "ground_height_m": round(h_ground, 1),
+        entry = {"id": key, "lat": site["lat"], "lon": site["lon"], "ground_height_m": round(h_ground, 1),
                  "profiles": {}}
         for mast, (h, dist) in prof.items():
             i = int(np.argmax(h))

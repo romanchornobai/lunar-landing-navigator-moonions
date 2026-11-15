@@ -46,7 +46,7 @@ BASE=https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/
 for f in ldem_85s_20m ldem_80s_40m; do curl -fO $BASE/$f.lbl && curl -fO $BASE/$f.img; done
 cd ../.. && python backend/app/scripts/compute_horizon.py
 ```
-The script (NumPy only) writes `frontend/src/data/horizonProfiles.json`: for each site, its LOLA ground height and, for
+The script (NumPy only) writes `frontend/src/data/horizonProfiles.json` for every point of `landingSites.json` (keyed by id): its LOLA ground height and, for
 mast heights of 2, 4 and 6 m, the horizon angle every 1 deg of azimuth (clockwise from local north) with the distance of
 the terrain point that sets it. Method: `h_obs = h_terrain + h_mast`; along each azimuth (great circle, 20 m steps,
 20 m to 100 km) `alpha = atan(((h_m - h_obs) - d^2 / (2 R)) / d)` and `H(theta) = max alpha`.
@@ -89,3 +89,11 @@ These have no recorded origin or license yet. Confirm and fill in before the fin
 - [ ] `models/lander/lander.glb`: "reference Artemis lunar lander model", author/license unknown.
 - [ ] `models/celestial/Earth.glb`: author/license unknown.
 - [ ] `models/moon_texture/textures/moon_meteor_01_*_2k.jpg`: photogrammetric PBR regolith, author/license unknown.
+
+### Comparison table (`frontend/src/components/ui/SiteComparisonPanel.tsx`, `frontend/src/lib/visibility.ts`)
+Runs fully in the browser (no backend): for each point and every hour of the chosen dates, the Sun / Earth directions of the
+JPL Horizons buffer (nearest of its 4 sites, re-projected on the point's local horizon) are tested against the point's
+LOLA horizon (2 m mast). Sun counts as visible when any part of the disc is above the terrain; Earth when its centre is
+(DTE). The bars show the cumulative share of elapsed hours with / without visibility, played day by day in 7 s.
+Checked against the Python backend over 2026-11-14..2029-11-14: identical percentages for the 5 points.
+
