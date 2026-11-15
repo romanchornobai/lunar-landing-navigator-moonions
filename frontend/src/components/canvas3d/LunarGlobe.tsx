@@ -56,8 +56,8 @@ export default function LunarGlobe() {
         <OrbitControls enableDamping dampingFactor={0.05} minDistance={2.4} maxDistance={10.0} />
       </Canvas>
       <div className="absolute bottom-8 left-1/2 z-10 -translate-x-1/2">
-        <LedButton variant="compact" onClick={() => navigate('/vista-polar')}>
-          POLO SUR
+        <LedButton variant="compact" className="min-w-[190px]" onClick={() => navigate('/vista-polar')}>
+          EMPEZAR
         </LedButton>
       </div>
     </div>
