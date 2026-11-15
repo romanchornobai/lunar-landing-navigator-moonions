@@ -200,6 +200,7 @@ export default function SouthPoleTerrain() {
   const [area, setArea] = useState<SelectedArea | null>(null)
   const [compute, setCompute] = useState<AreaComputeState>({ status: 'idle' })
   const [showExplainer, setShowExplainer] = useState(false)
+  const explainerOpen = viewMode === '3d' && showExplainer && (compute.status === 'computing' || compute.status === 'done')
   const cancelSearch = useRef<(() => void) | null>(null)
   const searchInfo = useRef<{ total: number; period: [string, string] | null }>({ total: 0, period: null })
 
@@ -255,7 +256,7 @@ export default function SouthPoleTerrain() {
   return (
     <div style={{ position: 'relative', width: '100vw', height: '100vh', background: '#020408' }}>
       {/* 3D view stays mounted (no re-parse of the 1200x1200 mesh); it just stops rendering in 2D. */}
-      <div className={`absolute inset-0 ${viewMode === '3d' ? '' : 'invisible'}`}>
+      <div className={`absolute inset-0 ${viewMode === '3d' && !explainerOpen ? '' : 'invisible'}`}>
       <Canvas
         frameloop={viewMode === '3d' ? 'always' : 'never'}
         dpr={[1, 1.5]}
@@ -300,7 +301,7 @@ export default function SouthPoleTerrain() {
       {isComparisonOpen && <SiteComparisonPanel onClose={() => setIsComparisonOpen(false)} />}
 
       {/* Black cover with the explainer animations while the area search runs; Play returns to the 3D view */}
-      {viewMode === '3d' && showExplainer && (compute.status === 'computing' || compute.status === 'done') && (
+      {explainerOpen && (
         <ExplainerOverlay
           progress={compute.status === 'computing' ? { done: compute.done, total: compute.total } : null}
           onPlay={() => setShowExplainer(false)}

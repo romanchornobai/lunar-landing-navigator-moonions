@@ -139,9 +139,9 @@
         <canvas></canvas>
         <div class="fx hud">
           <div class="phase" data-a="0" data-b="1.4"><div class="kicker">01 · Candidatos</div><div class="headline">Área de 15 × 15 km con el relieve real de LOLA</div></div>
-          <div class="phase" data-a="1.4" data-b="2.85"><div class="kicker">01 · Candidatos</div><div class="headline">Celdas de 240 m: el punto más alto de cada una</div></div>
-          <div class="phase" data-a="2.85" data-b="4.2"><div class="kicker">01 · Candidatos</div><div class="headline">Un máximo local por celda</div></div>
-          <div class="phase" data-a="4.2" data-b="6"><div class="kicker">01 · Candidatos</div><div class="headline">Los 150 más altos son los candidatos</div></div>
+          <div class="phase" data-a="1.4" data-b="3.2"><div class="kicker">01 · Candidatos</div><div class="headline">Celdas de 240 m: el punto más alto de cada una</div></div>
+          <div class="phase" data-a="2.9" data-b="4.4"><div class="kicker">01 · Candidatos</div><div class="headline">Un máximo local por celda</div></div>
+          <div class="phase" data-a="4.1" data-b="6"><div class="kicker">01 · Candidatos</div><div class="headline">Los 150 más altos son los candidatos</div></div>
         </div>
       </div>
       <div class="controls"></div>
@@ -158,8 +158,8 @@
         <canvas></canvas>
         <div class="fx hud">
           <div class="phase" data-a="0" data-b="2.9"><div class="kicker">02 · Horizonte</div><div class="headline">El punto más empinado del rayo marca el horizonte</div></div>
-          <div class="phase" data-a="2.9" data-b="5.1"><div class="kicker">02 · Horizonte</div><div class="headline">360 rayos de hasta 200 km</div></div>
-          <div class="phase" data-a="5.1" data-b="7"><div class="kicker">02 · Horizonte</div><div class="headline">El horizonte real alrededor del punto</div></div>
+          <div class="phase" data-a="2.6" data-b="5.3"><div class="kicker">02 · Horizonte</div><div class="headline">360 rayos de hasta 200 km</div></div>
+          <div class="phase" data-a="5.0" data-b="7"><div class="kicker">02 · Horizonte</div><div class="headline">El horizonte real alrededor del punto</div></div>
         </div>
       </div>
       <div class="controls"></div>
@@ -175,7 +175,7 @@
       <div class="stage">
         <canvas></canvas>
         <div class="fx hud">
-          <div class="phase" data-a="0" data-b="4.4"><div class="kicker">03 · Sol y Tierra</div><div class="headline">Cada hora, 3 años: ¿el terreno tapa el Sol o la Tierra?</div></div>
+          <div class="phase" data-a="0" data-b="4.7"><div class="kicker">03 · Sol y Tierra</div><div class="headline">Cada hora, 3 años: ¿el terreno tapa el Sol o la Tierra?</div></div>
           <div class="phase" data-a="4.4" data-b="7"><div class="kicker">03 · Ocaso</div><div class="headline">Calculamos qué parte del disco solar se ve</div></div>
         </div>
       </div>
@@ -192,9 +192,9 @@
       <div class="stage">
         <canvas></canvas>
         <div class="fx hud">
-          <div class="phase" data-a="0" data-b="2.4"><div class="kicker">04 · Resultado</div><div class="headline">3 años de datos horarios en una sola barra</div></div>
-          <div class="phase" data-a="2.4" data-b="4.6"><div class="kicker">04 · Ranking</div><div class="headline">Gana quien tiene Sol y Tierra a la vez</div></div>
-          <div class="phase" data-a="4.6" data-b="6"><div class="kicker">04 · Resultado</div><div class="headline">El mejor punto del área</div></div>
+          <div class="phase" data-a="0" data-b="2.5"><div class="kicker">04 · Resultado</div><div class="headline">3 años de datos horarios en una sola barra</div></div>
+          <div class="phase" data-a="2.2" data-b="4.7"><div class="kicker">04 · Ranking</div><div class="headline">Gana quien tiene Sol y Tierra a la vez</div></div>
+          <div class="phase" data-a="4.4" data-b="6"><div class="kicker">04 · Resultado</div><div class="headline">El mejor punto del área</div></div>
         </div>
       </div>
       <div class="controls"></div>
@@ -484,7 +484,7 @@
         c.save(); c.beginPath(); c.rect(MX, MY, MS, MS); c.clip(); c.globalAlpha = mA;
         c.translate(MX + MS / 2, MY + MS / 2); c.scale(sc, sc); c.imageSmoothingQuality = "high";
         c.drawImage(this.map, -MS / 2, -MS / 2, MS, MS); c.restore();
-        const dk = 0.6 * E.io(seg(t, 2.7, 3.3));
+        const dk = 0.6 * E.io(seg(t, 3.0, 3.6));
         if (dk > 0) { c.fillStyle = `rgba(0,0,0,${dk})`; c.fillRect(MX, MY, MS, MS); }
         c.save(); c.globalAlpha = mA;
         c.strokeStyle = "rgba(255,255,255,.18)"; c.lineWidth = 1; c.strokeRect(MX + 0.5, MY + 0.5, MS - 1, MS - 1);
@@ -497,7 +497,7 @@
         c.restore();
       }
       // ---- grid of cells
-      const g = seg(t, 0.5, 1.45), gA = 1 - 0.75 * seg(t, 2.7, 3.3);
+      const g = seg(t, 0.5, 1.45), gA = 1 - 0.75 * seg(t, 3.0, 3.6);
       if (g > 0) {
         const st = MS / nb; c.save(); c.strokeStyle = rgba(COL.accent, 0.3 * gA); c.lineWidth = 0.7; c.beginPath();
         for (let i = 0; i <= nb; i++) {
@@ -517,7 +517,7 @@
         c.moveTo(cx0, cy0 + st / 2); c.bezierCurveTo(cx0 - 120, cy0 + st / 2, 700, 470, 640, 470); c.stroke(); c.restore();
       }
       // ---- cell maxima
-      const dp = seg(t, 2.75, 4.0), fe = E.io(seg(t, 4.2, 5.4));
+      const dp = seg(t, 3.0, 4.1), fe = E.io(seg(t, 4.2, 5.4));
       const keep = Math.round(lerp(N, A.order.length, fe)), gl = E.out(seg(t, 5.3, 5.9));
       if (dp > 0) {
         for (let i = 0; i < N; i++) {
@@ -533,7 +533,7 @@
         }
       }
       // ---- height threshold bar
-      const tb = E.out(seg(t, 4.05, 4.45));
+      const tb = E.out(seg(t, 4.2, 4.6));
       if (tb > 0) {
         const bx = 790, by = MY, bh = MS, hmin = this.hmin, hmax = this.hmax;
         c.save(); c.globalAlpha = tb;
@@ -551,8 +551,8 @@
       // ---- counter
       let val, label;
       if (t < 1.4) { val = A.pixels * E.out(seg(t, 0.15, 1.2)); label = "PÍXELES LOLA · 20 M"; }
-      else if (t < 2.85) { val = A.cells * E.out(seg(t, 1.45, 2.2)); label = `CELDAS DE ${fmt(A.cell_m)} M`; }
-      else if (t < 4.2) { val = A.cells * E.out(seg(t, 2.8, 4.0)); label = "MÁXIMOS LOCALES"; }
+      else if (t < 3.0) { val = A.cells * E.out(seg(t, 1.45, 2.2)); label = `CELDAS DE ${fmt(A.cell_m)} M`; }
+      else if (t < 4.2) { val = A.cells * E.out(seg(t, 3.0, 4.1)); label = "MÁXIMOS LOCALES"; }
       else { val = keep; label = keep === A.order.length ? "CANDIDATOS" : "PUNTOS"; }
       const cA = E.out(seg(t, 0.1, 0.6)), done = keep === A.order.length && t > 5;
       text(c, fmt(val), 86, 300, { size: 120, color: done ? COL.accent : COL.ink, alpha: cA, glow: true });
@@ -971,17 +971,24 @@
     const s4 = scenes[3];
     (function pulse() { if (s4.state.t >= 4.6 && !s4.tl.isActive()) s4.draw(); requestAnimationFrame(pulse); })();
 
-    // embedded in the app: the parent shows one part at a time (postMessage), each one plays and stays on its last frame
+    // embedded in the app: the parent steps through the parts (postMessage 'explainer-step'); each step plays the
+    // timeline up to its stop time and waits there. Stops are in seconds of each scene's timeline.
     if (new URLSearchParams(location.search).has("embed")) {
       document.body.classList.add("embed");
-      const show = (i) => {
-        scenes.forEach((s, k) => { s.root.classList.toggle("active", k === i); if (k !== i) s.tl.pause(0); });
-        setTimeout(() => { scenes[i].resize(); scenes[i].play(); }, 60);
+      const STEPS = [[2.9, 4.1, 6], [2.6, 5.0, 7], [4.4, 7], [2.2, 4.4, 6]];
+      const flat = STEPS.flatMap((st, si) => st.map((_, k) => [si, k]));
+      let tw = null;
+      const show = (n) => {
+        if (tw) tw.kill();
+        if (n < 0) { scenes.forEach((s) => { s.root.classList.remove("active"); s.tl.pause(0); }); return; }
+        const [si, k] = flat[Math.min(n, flat.length - 1)], from = k ? STEPS[si][k - 1] : 0, to = STEPS[si][k];
+        scenes.forEach((s, i) => { s.root.classList.toggle("active", i === si); if (i !== si) s.tl.pause(0); });
+        const s = scenes[si];
+        s.tl.pause(from);
+        setTimeout(() => { s.resize(); tw = s.tl.tweenFromTo(from, to, { ease: "none" }); }, 60);
       };
-      window.addEventListener("message", (e) => { if (e.data && e.data.type === "explainer-part") show(clampIdx(e.data.index)); });
-      const clampIdx = (n) => Math.max(0, Math.min(scenes.length - 1, n | 0));
-      show(0);
-      parent.postMessage({ type: "explainer-ready" }, "*");
+      window.addEventListener("message", (e) => { if (e.data && e.data.type === "explainer-step") show(e.data.index | 0); });
+      parent.postMessage({ type: "explainer-ready", total: flat.length }, "*");
       return;
     }
     if (reduceMotion) { scenes.forEach((s) => s.tl.progress(1)); return; }

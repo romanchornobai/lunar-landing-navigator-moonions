@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ChevronLeft, ChevronRight, Play } from 'lucide-react'
 
-/** Number of animations in /explainer.html (see its `?embed=1` mode). */
-const PARTS = 4
+/** Steps of /explainer.html in `?embed=1` mode; the page reports the real number when it is ready. */
+const DEFAULT_STEPS = 11
 
 interface ExplainerOverlayProps {
   /** Search progress while computing, null once the result is ready. */
@@ -12,21 +12,22 @@ interface ExplainerOverlayProps {
 
 /**
  * Black full-screen cover shown while the area search runs. It plays the explainer animations one part at a time
- * (Space / right arrow: next, left arrow: previous) and, top right, shows a minimal loader that turns into a Play
+ * (Space / right arrow: next step, left arrow: previous; nothing plays until the first Space) and, top right, shows a minimal loader that turns into a Play
  * button when the result is ready.
  */
 export function ExplainerOverlay({ progress, onPlay }: ExplainerOverlayProps) {
-  const [part, setPart] = useState(0)
+  const [part, setPart] = useState(-1) // -1: black, waiting for the first Space
+  const [total, setTotal] = useState(DEFAULT_STEPS)
   const frame = useRef<HTMLIFrameElement>(null)
   const ready = useRef(false)
 
   const send = useCallback((index: number) => {
-    if (ready.current) frame.current?.contentWindow?.postMessage({ type: 'explainer-part', index }, '*')
+    if (ready.current) frame.current?.contentWindow?.postMessage({ type: 'explainer-step', index }, '*')
   }, [])
 
   const go = useCallback(
-    (delta: number) => setPart((p) => Math.min(PARTS - 1, Math.max(0, p + delta))),
-    [],
+    (delta: number) => setPart((p) => Math.min(total - 1, Math.max(0, p + delta))),
+    [total],
   )
 
   useEffect(() => send(part), [part, send])
@@ -35,6 +36,7 @@ export function ExplainerOverlay({ progress, onPlay }: ExplainerOverlayProps) {
     const onMessage = (e: MessageEvent) => {
       if (e.data?.type === 'explainer-ready') {
         ready.current = true
+        if (typeof e.data.total === 'number') setTotal(e.data.total)
         send(part)
       }
     }
@@ -77,7 +79,7 @@ export function ExplainerOverlay({ progress, onPlay }: ExplainerOverlayProps) {
             <span className="w-9 text-right">{progress.total > 0 ? `${Math.round(ratio * 100)}%` : ''}</span>
           </div>
         ) : (
-          <button
+          <button onMouseDown={(e) => e.preventDefault()}
             onClick={onPlay}
             aria-label="Ver el punto calculado"
             className="w-11 h-11 flex items-center justify-center text-white border border-white/80 hover:bg-white hover:text-black transition-colors cursor-pointer drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]"
@@ -89,10 +91,10 @@ export function ExplainerOverlay({ progress, onPlay }: ExplainerOverlayProps) {
 
       {/* Bottom: previous / next part */}
       <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-10 flex items-center gap-6">
-        <button className={arrow} onClick={() => go(-1)} disabled={part === 0} aria-label="Parte anterior">
+        <button onMouseDown={(e) => e.preventDefault()} className={arrow} onClick={() => go(-1)} disabled={part <= 0} aria-label="Parte anterior">
           <ChevronLeft size={30} strokeWidth={1.5} />
         </button>
-        <button className={arrow} onClick={() => go(1)} disabled={part === PARTS - 1} aria-label="Parte siguiente">
+        <button onMouseDown={(e) => e.preventDefault()} className={arrow} onClick={() => go(1)} disabled={part === total - 1} aria-label="Parte siguiente">
           <ChevronRight size={30} strokeWidth={1.5} />
         </button>
       </div>
