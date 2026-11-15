@@ -19,6 +19,8 @@ const MOON_ROTATION_Y = -Math.PI / 2
  * and elevation rasters, at the point of the sphere facing the camera, so the relief shading carves it in.
  */
 const ENGRAVING = 'Moonions'
+/** How far above the facing point the engraving sits [deg of latitude]. */
+const ENGRAVING_LIFT_DEG = 9
 
 /** Texture UV (u, v) of the sphere point facing the camera (three.js SphereGeometry mapping, mesh rotated in Y). */
 function facingUv(): [number, number] {
@@ -40,6 +42,8 @@ function engrave(
   colorSpace: THREE.ColorSpace,
   /** Edge softness relative to the font size (small = crisp walls in the relief). */
   blurRel: number,
+  /** Colour layer only: inner wall shadow and grain. */
+  shaded = false,
 ): THREE.CanvasTexture {
   const img = source.image as HTMLImageElement | ImageBitmap
   const w = img.width
@@ -50,24 +54,58 @@ function engrave(
   const ctx = canvas.getContext('2d')!
   ctx.drawImage(img, 0, 0)
 
-  const [u, v] = facingUv()
+  const [u, v0] = facingUv()
+  const v = v0 + ENGRAVING_LIFT_DEG / 180 // a bit above the centre of the visible disc
   const lat = (v - 0.5) * Math.PI
   const fontPx = Math.round(h * 0.032)
-  ctx.save()
-  ctx.translate(u * w, (1 - v) * h)
-  ctx.scale(1 / Math.max(0.2, Math.cos(lat)), 1)
-  ctx.font = `900 ${fontPx}px "Arial Black", "Helvetica Neue", Arial, sans-serif`
-  ctx.textAlign = 'center'
-  ctx.textBaseline = 'middle'
-  ;(ctx as unknown as { letterSpacing: string }).letterSpacing = `${Math.round(fontPx * 0.18)}px`
+  const sx = 1 / Math.max(0.2, Math.cos(lat))
+
+  // Letters are drawn in an offscreen layer (mask), so the shading and grain stay inside them
+  const lw = Math.ceil(fontPx * ENGRAVING.length * 1.2 * sx)
+  const lh = Math.ceil(fontPx * 1.8)
+  const layer = document.createElement('canvas')
+  layer.width = lw
+  layer.height = lh
+  const lc = layer.getContext('2d')!
+  const drawText = (c: CanvasRenderingContext2D, dx = 0, dy = 0) => {
+    c.save()
+    c.translate(lw / 2 + dx, lh / 2 + dy)
+    c.scale(sx, 1)
+    c.font = `900 ${fontPx}px "Arial Black", "Helvetica Neue", Arial, sans-serif`
+    c.textAlign = 'center'
+    c.textBaseline = 'middle'
+    ;(c as unknown as { letterSpacing: string }).letterSpacing = `${Math.round(fontPx * 0.18)}px`
+    c.fillText(ENGRAVING, 0, 0)
+    c.restore()
+  }
+  // 1. Base fill of the carved floor
+  lc.fillStyle = `rgba(0, 0, 0, ${strength})`
+  drawText(lc)
+  if (shaded) {
+    // 2. Inner shadow on the upper-right walls (light comes from the upper right): letters minus a shifted copy
+    const o = Math.max(1, fontPx * 0.06)
+    const sh = document.createElement('canvas')
+    sh.width = lw
+    sh.height = lh
+    const sc = sh.getContext('2d')!
+    sc.fillStyle = 'rgba(0, 0, 0, 0.55)'
+    drawText(sc)
+    sc.globalCompositeOperation = 'destination-out'
+    sc.fillStyle = '#000'
+    drawText(sc, -o, o)
+    lc.drawImage(sh, 0, 0)
+    // 3. Fine grain inside the letters (rough carved floor)
+    lc.globalCompositeOperation = 'source-atop'
+    for (let i = 0; i < lw * lh * 0.04; i++) {
+      lc.fillStyle = Math.random() < 0.5 ? 'rgba(0,0,0,0.25)' : 'rgba(255,255,255,0.12)'
+      lc.fillRect(Math.random() * lw, Math.random() * lh, 1.5, 1.5)
+    }
+    lc.globalCompositeOperation = 'source-over'
+  }
+
   ctx.filter = `blur(${Math.max(0.6, fontPx * blurRel).toFixed(1)}px)`
-  ctx.fillStyle = `rgba(0, 0, 0, ${strength})`
-  ctx.fillText(ENGRAVING, 0, 0)
-  // Thin dark outline: sharper letter edges
-  ctx.lineWidth = Math.max(1, fontPx * 0.03)
-  ctx.strokeStyle = `rgba(0, 0, 0, ${strength * 0.6})`
-  ctx.strokeText(ENGRAVING, 0, 0)
-  ctx.restore()
+  ctx.drawImage(layer, u * w - lw / 2, (1 - v) * h - lh / 2)
+  ctx.filter = 'none'
 
   const tex = new THREE.CanvasTexture(canvas)
   tex.colorSpace = colorSpace
@@ -81,7 +119,7 @@ function Moon() {
   colorMap.anisotropy = Math.min(8, maxAniso)
 
   // Engraved copies: letters sunk into the relief (elevation) and slightly darker in colour
-  const engravedColor = useMemo(() => engrave(colorMap, 0.3, THREE.SRGBColorSpace, 0.02), [colorMap])
+  const engravedColor = useMemo(() => engrave(colorMap, 0.3, THREE.SRGBColorSpace, 0.012, true), [colorMap])
   const engravedElevation = useMemo(() => engrave(elevationMap, 0.6, THREE.NoColorSpace, 0.012), [elevationMap])
   useEffect(
     () => () => {
