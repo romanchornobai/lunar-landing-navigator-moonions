@@ -181,11 +181,13 @@ function Lights({ sunDir, sunFraction, earthDir, earthVisible, earthPhase }: {
 }) {
   const sunPos = sunDir.clone().multiplyScalar(1500)
   const earthPos = earthDir.clone().multiplyScalar(1500)
+  // Sun fully hidden: the scene is brightened (and tinted green by the night-vision filter in LandingSceneClean).
+  const night = sunFraction <= 0
   return (
     <>
       {/* Soft fill so shadowed terrain stays readable (the Moon has no sky light: this is for legibility). */}
-      <ambientLight color="#c9d1dc" intensity={0.42} />
-      <hemisphereLight args={['#aab4c3', '#3a3d44', 0.25]} />
+      <ambientLight color="#c9d1dc" intensity={night ? 0.95 : 0.42} />
+      <hemisphereLight args={['#aab4c3', '#3a3d44', night ? 0.6 : 0.25]} />
       <directionalLight
         position={sunPos}
         color="#fff4e2"
@@ -202,7 +204,7 @@ function Lights({ sunDir, sunFraction, earthDir, earthVisible, earthPhase }: {
         shadow-camera-bottom={-SHADOW_HALF}
       />
       {/* Earthshine: sunlight reflected by the Earth, proportional to its lit fraction. */}
-      <directionalLight position={earthPos} color="#a9bfe3" intensity={earthVisible ? 0.45 * earthPhase : 0} />
+      <directionalLight position={earthPos} color="#a9bfe3" intensity={earthVisible ? (night ? 1.0 : 0.45) * earthPhase : 0} />
     </>
   )
 }

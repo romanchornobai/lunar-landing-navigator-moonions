@@ -1,17 +1,4 @@
 {
-  "shackleton-connecting-ridge": {
-    "id": "shackleton-connecting-ridge",
-    "key": "shackleton_rim",
-    "name": "Shackleton Connecting Ridge",
-    "shortName": "Shackleton",
-    "lat": -89.54,
-    "lon": 129.20,
-    "centerElevationM": -2318,
-    "reliefSpanM": 4182,
-    "glbPath": "/models/shackleton_rim/shackleton_rim_15km.glb",
-    "description": "Cresta elevada con luz solar continua y enlace con la Tierra.",
-    "groundNormal": [-0.2871, 0.9229, -0.2567]
-  },
   "malapert-massif": {
     "id": "malapert-massif",
     "key": "malapert_massif",

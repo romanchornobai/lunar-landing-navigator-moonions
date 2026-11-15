@@ -148,6 +148,8 @@ when the visibility model says so; the HUD checks and the hover labels use the s
 Earth: centre, DTE), with the next rise / set from the hourly samples (1 h resolution, up to 60 days ahead). The Sun
 light is scaled by the exact visible disc fraction; earthshine by the Earth's lit fraction `(1 - s.e) / 2`. The
 ambient fill is for legibility only (the Moon has no sky light). Earth's rotation angle is not modelled, only its phase.
+Night vision: when no part of the solar disc is above the terrain, the 3D view (terrain, lander, Earth, labels; not the
+HUD) gets a green CSS filter and extra fill light for legibility. It is a visual aid, not a sensor model.
 Routes: `cr1` (Connecting Ridge CR1, Gläser et al. 2014), `malapert`, `degerlache`, `nobile`. CR1 replaced the former
 `shackleton` route (-89.54, 129.20), which lies on Shackleton's inner wall (LOLA -2317 m, horizon 14-27 deg all
 around, so never sunlit). CR1 directions are re-projected from the Shackleton buffer site (22.6 km away, Earth parallax

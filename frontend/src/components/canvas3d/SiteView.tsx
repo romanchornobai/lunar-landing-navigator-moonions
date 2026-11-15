@@ -3,7 +3,7 @@ import { useGLTF } from '@react-three/drei'
 import ViewCanvas from './ViewCanvas'
 
 // 15 km x 15 km LOLA terrain, 1:1 scale in meters, origin at the site center. See ASSETS.md.
-export const SITES = ['shackleton_rim', 'malapert_massif', 'de_gerlache_rim', 'nobile_rim_1'] as const
+export const SITES = ['connecting_ridge_cr1', 'malapert_massif', 'de_gerlache_rim', 'nobile_rim_1'] as const
 export type SiteId = (typeof SITES)[number]
 
 const LANDER_SCALE = 12 // native ~140 units -> ~1.7 units tall visually in meters scene (x1000 of 0.012)

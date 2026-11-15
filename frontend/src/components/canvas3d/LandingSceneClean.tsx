@@ -21,6 +21,9 @@ import {
 
 type Vec3 = [number, number, number]
 
+// Green image-intensifier look: luminance -> green tint, brighter and a bit more contrast.
+const NIGHT_VISION_FILTER = 'grayscale(1) sepia(1) hue-rotate(78deg) saturate(3.2) brightness(1.2) contrast(1.15)'
+
 const SITE_INFO_MAP: Record<SiteKey, { name: string; shortName: string }> = {
   cr1: { name: 'Connecting Ridge (CR1)', shortName: 'CR1' },
   malapert: { name: 'Macizo de Malapert (Peak A)', shortName: 'Malapert' },
@@ -131,6 +134,8 @@ export function LandingSceneClean({ siteId = 'cr1' }: LandingSceneCleanProps) {
     return { sun, earth }
   }, [ephemeris, profile, missionDate, site.profile])
 
+  const nightVision = !!sky && !sky.sun.visible // no part of the solar disc above the terrain
+
   // HUD check marks follow the terrain-aware visibility.
   const hudEphemeris = useMemo(
     () =>
@@ -145,6 +150,16 @@ export function LandingSceneClean({ siteId = 'cr1' }: LandingSceneCleanProps) {
 
   return (
     <div style={{ width: '100vw', height: '100vh', background: '#000000', position: 'relative' }}>
+      {/* Night vision: when the Sun is fully hidden by the terrain (no direct light) the whole 3D view (terrain, lander,
+          Earth, labels) gets a green intensifier look; the HUD stays untouched. */}
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          filter: nightVision ? NIGHT_VISION_FILTER : 'none',
+          transition: 'filter 0.6s ease',
+        }}
+      >
       <Canvas
         shadows
         camera={{ position: [0, 6.0, 22.0], fov: 50, near: 0.5, far: 35000.0 }}
@@ -181,6 +196,7 @@ export function LandingSceneClean({ siteId = 'cr1' }: LandingSceneCleanProps) {
           maxDistance={350.0}
         />
       </Canvas>
+      </div>
       <div className="absolute top-6 left-6 z-10">
         <button
           onClick={() => navigate('/vista-polar')}
