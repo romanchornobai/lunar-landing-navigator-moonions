@@ -14,6 +14,7 @@ import { ExplainerOverlay } from '../ui/ExplainerOverlay'
 import { startAreaSearch } from '../../services/areaSearch'
 import SouthPolarMap, { type MapViewInfo } from '../map2d/SouthPolarMap'
 import MiniSouthPoleTerrain from './MiniSouthPoleTerrain'
+import { SOUTH_POLE_ELEVATION_URL, decodeSouthPoleElevation } from '../../lib/southPoleElevation'
 import { INTRO_START_AZIMUTH, IntroCameraFlight } from './IntroCameraFlight'
 
 // Regional South Pole terrain: NASA Moon Trek (LRO LOLA) 1200x1200 Float32 grid, ~212 x 212 km around Shackleton.
@@ -82,16 +83,16 @@ function Terrain({
   onCloseArea,
   hidePanel,
 }: TerrainProps) {
-  const buffer = useLoader(THREE.FileLoader, `${BASE}/lunar_elevation_1200.bin`, (loader) => {
+  const buffer = useLoader(THREE.FileLoader, SOUTH_POLE_ELEVATION_URL, (loader) => {
     loader.setResponseType('arraybuffer')
   }) as unknown as ArrayBuffer
   const [albedo, normal, ao] = useLoader(THREE.TextureLoader, [
-    `${BASE}/lunar_albedo_2k.png`,
-    `${BASE}/lunar_normal_2k.png`,
-    `${BASE}/lunar_ao_2k.png`,
+    `${BASE}/lunar_albedo_2k.jpg`,
+    `${BASE}/lunar_normal_2k.webp`,
+    `${BASE}/lunar_ao_2k.jpg`,
   ])
 
-  const elevations = useMemo(() => new Float32Array(buffer), [buffer])
+  const elevations = useMemo(() => decodeSouthPoleElevation(buffer), [buffer])
 
   const geometry = useMemo(() => {
     const geom = new THREE.PlaneGeometry(TERRAIN_SIZE, TERRAIN_SIZE, GRID - 1, GRID - 1)

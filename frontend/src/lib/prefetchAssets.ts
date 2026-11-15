@@ -5,7 +5,7 @@
  */
 import * as THREE from 'three'
 import { useLoader } from '@react-three/fiber'
-import { useGLTF } from '@react-three/drei'
+import { useGLTF, useProgress } from '@react-three/drei'
 import { SOUTH_POLE_ELEVATION_URL, loadSouthPoleElevation } from './southPoleElevation'
 
 const SOUTH_POLE_TEXTURES = [
@@ -34,10 +34,15 @@ const MODELS = [
 let started = false
 
 /** Starts the prefetch once per page load (later calls do nothing). Order: South Pole view, site view, globe. */
-export function prefetchAllViews(delayMs = 800): void {
+export function prefetchAllViews(delayMs = 1500): void {
   if (started) return
   started = true
-  window.setTimeout(() => {
+  const run = () => {
+    // Wait until the current view has stopped loading (a view can load in several suspense steps).
+    if (useProgress.getState().active) {
+      window.setTimeout(run, 500)
+      return
+    }
     useLoader.preload(THREE.FileLoader, SOUTH_POLE_ELEVATION_URL, (loader) => {
       ;(loader as THREE.FileLoader).setResponseType('arraybuffer')
     })
@@ -46,5 +51,6 @@ export function prefetchAllViews(delayMs = 800): void {
     for (const url of MODELS) useGLTF.preload(url)
     useLoader.preload(THREE.TextureLoader, REGOLITH_TEXTURES)
     useLoader.preload(THREE.TextureLoader, GLOBE_TEXTURES)
-  }, delayMs)
+  }
+  window.setTimeout(run, delayMs)
 }
