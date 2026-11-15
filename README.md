@@ -1,45 +1,48 @@
 # Lunar Landing Site Navigator
 
-NASA Space Apps Challenge 2026, Zaragoza. Team **Moonions**.
+NASA Space Apps Challenge 2026 · Zaragoza, Spain · Team **Moonions**
 
-Compare landing sites and dates at the lunar South Pole: when the Sun (solar power) and the Earth (Direct-to-Earth
-radio link) are visible above the **real local horizon**, computed from LRO LOLA terrain and JPL Horizons ephemerides.
-For mission planners, educators and the general public.
+> Where and when should we land at the lunar South Pole to have sunlight for power and the Earth in view for radio?
+> Pick a site and a date, and watch the Sun and the Earth move over the real terrain.
+
+## High-level summary
+At the lunar South Pole the Sun never rises more than a degree or two above the horizon, so a ridge a few kilometres
+away decides whether a lander has power, and the Earth hides behind the same terrain and cuts the radio link.
+Lunar Landing Site Navigator turns NASA's own data into an answer anyone can read: for each candidate landing site
+and date it shows when the Sun and the Earth are visible above the **real local horizon**, computed from LRO LOLA
+terrain and JPL Horizons ephemerides. Sites can be compared side by side, explored in first person next to a lander
+with time running faster, and any 15 x 15 km area can be searched for its best landing point.
 
 ## What it does
-- **3D Moon and South Pole views** with published candidate landing points (Artemis III regions, Bussey et al. 2010,
-  Gläser et al. 2014, Mahanti et al. 2024), each linked to its source.
-- **Site comparison**: share of time with Sun and with Earth visible for every point, 2026-11-14 .. 2029-11-14.
-- **First-person site view** next to a lander: Sun and Earth move over the LOLA terrain, time can be accelerated, and
-  the HUD shows when the Sun / Earth rise or set behind the terrain.
-- **Best point in an area** (local backend): pick any 15 x 15 km square and rank its highest points by Sun + Earth
-  visibility.
+- **From orbit to the ground.** A 3D Moon, then the South Pole with the published candidate landing points (Artemis III
+  regions, Bussey et al. 2010, Gläser et al. 2014, Mahanti et al. 2024), each linked to the study it comes from.
+- **Compare sites in seconds.** The share of time with the Sun and with the Earth visible, for every point, over
+  2026-11-14 .. 2029-11-14, played back as an animated bar chart.
+- **Stand next to the lander.** Sun and Earth move over the LOLA terrain at true angular size; time can be sped up or
+  reversed, and the HUD tells when each one rises or sets behind the terrain. When the Sun is fully hidden, a
+  night-vision view keeps the scene readable.
+- **Find the best point in an area.** Select any 15 x 15 km square and the backend ranks its highest points by Sun and
+  Earth visibility, with the horizon of the winner.
 
-## Run it
-Frontend (from `frontend/`):
-```bash
-npm install
-npm run dev
-```
-Opens on http://localhost:5173. Everything except the area search runs in the browser, with no network calls for
-the visibility model.
+## Designed for everyone
+The navigator is built so that a mission planner, a teacher and someone who has never heard of a DEM can all use it.
+- **Minimal by design.** One question per screen, a dark retro interface with few words, and no number on screen
+  that is not computed from the data.
+- **Readable at a glance.** Results are bars and percentages (white = visible, red = hidden), not tables of angles;
+  the detail is there for whoever wants it.
+- **Learn by watching.** An animated explainer walks through the method step by step: terrain, horizon, Sun, Earth.
+- **No setup.** It runs in a web browser, and all visibility computations for the published sites happen in the page,
+  with no server or network calls.
+- **Every number has a source.** Each site links to its original study, and the data and their limits are documented
+  in [`DATA_SOURCES.md`](DATA_SOURCES.md).
 
-Backend for the area search (from `backend/`, needs the LOLA DEMs in `data/dem/`, see `DATA_SOURCES.md`):
-```bash
-python -m venv .venv
-.venv/Scripts/python -m pip install -r requirements.txt
-.venv/Scripts/python -m uvicorn app.main:app --port 8000
-```
-Without the backend, the area search shows "Computation server unavailable"; the rest of the app works.
-
-## Data
-- **LRO LOLA** polar DEMs LDEM_85S_20M (20 m/px) and LDEM_80S_40M (40 m/px), NASA PDS Geosciences Node.
-- **JPL Horizons** hourly apparent azimuth / elevation of the Sun (10) and Earth (399) for 4 South Pole sites,
-  2026-11-14 .. 2029-11-14.
-- **NASA Moon Trek** (LRO LROC WAC / NAC) tiles for the 2D map, NASA CGI Moon Kit for the globe.
-
-Full list, processing steps, assumptions and limits: [`DATA_SOURCES.md`](DATA_SOURCES.md). 3D asset parameters:
-[`ASSETS.md`](ASSETS.md).
+## How it works
+1. **Terrain.** LRO LOLA polar DEMs: 20 m/px near the site, 40 m/px beyond 85 S.
+2. **Horizon.** From a 2 m mast, 360 rays (one per degree) follow great circles up to 200 km; the horizon in each
+   direction is the highest terrain angle, with exact spherical geometry of the Moon.
+3. **Sun and Earth.** Hourly apparent azimuth and elevation from JPL Horizons, 2026-2029.
+4. **Visibility.** The Sun counts as visible when any part of its disc is above the horizon (the visible share of the
+   disc is computed exactly); the Direct-to-Earth link is active when the Earth's centre is above it.
 
 ## Validation
 | Check | Result |
@@ -49,17 +52,43 @@ Full list, processing steps, assumptions and limits: [`DATA_SOURCES.md`](DATA_SO
 | Browser vs Python implementation, 5 points, 2026-11-14..2029-11-14 | identical percentages |
 | Adaptive vs uniform 20 m ray sampling, 5 sites | max 0.04 deg |
 
-Horizon model: LRO LOLA 20 m DEM near the site (40 m beyond 85 S), 360 rays every 1 deg along great circles up to
-200 km, exact spherical geometry. The Sun counts as visible when any part of its disc is above the terrain.
+Assumptions and limits (point-like Earth, 1 h time step, no features smaller than the DEM, ...) are listed in
+[`DATA_SOURCES.md`](DATA_SOURCES.md).
+
+## NASA data
+- **LRO LOLA** GDR polar DEMs LDEM_85S_20M and LDEM_80S_40M, NASA PDS Geosciences Node.
+- **JPL Horizons** apparent azimuth / elevation of the Sun (10) and the Earth (399) seen from 4 South Pole sites.
+- **NASA Moon Trek** (LRO LROC WAC / NAC) tiles for the 2D map, **NASA CGI Moon Kit** for the globe.
+
+Full list with links, processing steps and versions: [`DATA_SOURCES.md`](DATA_SOURCES.md). 3D asset parameters:
+[`ASSETS.md`](ASSETS.md).
 
 ## Use of AI
-The code was written during the event by the team with the help of an AI coding assistant (Anthropic's Claude, via
-Claude Code), which was also used to search and read the scientific literature and data documentation. All data come
-from the cited NASA / JPL sources; no AI-generated data, images or results are shown as real. The team reviewed and
-validated the results (see Validation).
+This project is the team's work. The idea, the scientific approach, the architecture, every design and data decision,
+and all testing and validation (including the checks against JPL Horizons and the published CR1 study) were done by
+the team. We used Anthropic's Claude (through Claude Code) as a coding assistant to turn our ideas and designs into
+code faster and to help search the scientific literature. The team directed and reviewed that work at every step:
+we decided what to build, checked each change in the app and verified the results against the data. No AI-generated
+data, images or results are presented as real; every number comes from the cited NASA / JPL sources.
 
-## Stack
-React, TypeScript, Vite, Three.js (@react-three/fiber, drei), Tailwind, Zustand, Leaflet; Python, FastAPI, NumPy.
+## Run it locally
+Frontend (from `frontend/`):
+```bash
+npm install
+npm run dev
+```
+Opens on http://localhost:5173. Everything except the area search runs in the browser.
+
+Backend for the area search (from `backend/`, needs the LOLA DEMs in `data/dem/`, see `DATA_SOURCES.md`):
+```bash
+python -m venv .venv
+.venv/Scripts/python -m pip install -r requirements.txt
+.venv/Scripts/python -m uvicorn app.main:app --port 8000
+```
+Without the backend, the area search shows "Computation server unavailable"; the rest of the app works.
+
+## Built with
+React, TypeScript, Vite, Three.js (@react-three/fiber, drei), Tailwind, Zustand, Leaflet · Python, FastAPI, NumPy.
 
 ## License
 [MIT](LICENSE)
