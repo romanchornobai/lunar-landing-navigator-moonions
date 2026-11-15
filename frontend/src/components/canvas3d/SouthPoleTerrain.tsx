@@ -3,7 +3,7 @@ import * as THREE from 'three'
 import { Canvas, useLoader, useThree } from '@react-three/fiber'
 import { Html, OrbitControls, Stars } from '@react-three/drei'
 import { useNavigate } from 'react-router-dom'
-import { BarChart3, ChevronLeft, Crosshair } from 'lucide-react'
+import { BarChart3, ChevronLeft, Crosshair, Info } from 'lucide-react'
 import { SITES_IN_3D, getSite3DPosition, scenePointToLunarCoords } from '../../data/sites'
 import { GRID, MEAN_Z, SCALE_Y, TERRAIN_SIZE, getTerrainHeight, latLonToScene } from '../../lib/southPoleGrid'
 import { SiteMarker } from './SiteMarker'
@@ -233,7 +233,8 @@ export default function SouthPoleTerrain() {
   const [area, setArea] = useState<SelectedArea | null>(null)
   const [compute, setCompute] = useState<AreaComputeState>({ status: 'idle' })
   const [showExplainer, setShowExplainer] = useState(false)
-  const explainerOpen = viewMode === '3d' && showExplainer && (compute.status === 'computing' || compute.status === 'done')
+  // The animations open only on demand (info button); computing never covers the south pole view.
+  const explainerOpen = showExplainer
   const cancelSearch = useRef<(() => void) | null>(null)
   const searchInfo = useRef<{ total: number; period: [string, string] | null }>({ total: 0, period: null })
 
@@ -266,7 +267,6 @@ export default function SouthPoleTerrain() {
     cancelSearch.current?.()
     searchInfo.current = { total: 0, period: null }
     setCompute({ status: 'computing', done: 0, total: 0 })
-    setShowExplainer(true)
     cancelSearch.current = startAreaSearch(area.latitude, area.longitude, {
       onStart: (d) => {
         searchInfo.current = { total: d.total, period: d.period_utc }
@@ -335,13 +335,8 @@ export default function SouthPoleTerrain() {
 
       {isComparisonOpen && <SiteComparisonPanel onClose={() => setIsComparisonOpen(false)} />}
 
-      {/* Black cover with the explainer animations while the area search runs; Play returns to the 3D view */}
-      {explainerOpen && (
-        <ExplainerOverlay
-          progress={compute.status === 'computing' ? { done: compute.done, total: compute.total } : null}
-          onPlay={() => setShowExplainer(false)}
-        />
-      )}
+      {/* Black cover with the explainer animations, opened by the info button; PROCEED returns to the south pole view */}
+      {explainerOpen && <ExplainerOverlay onProceed={() => setShowExplainer(false)} />}
 
       {/* Top Left: Navigation back to Lunar Globe */}
       <div className="absolute top-6 left-6 z-20">
@@ -357,6 +352,15 @@ export default function SouthPoleTerrain() {
 
       {/* Top Right: Coordinate Probe Icon Button */}
       <div className="absolute top-6 right-6 z-40 flex items-center gap-3">
+        {/* How it works: opens the explainer animations (data sources and steps) on demand */}
+        <button
+          onClick={() => setShowExplainer(true)}
+          className="group relative flex items-center justify-center w-10 h-10 text-white/80 drop-shadow-[0_0_6px_rgba(255,255,255,0.6)] hover:text-white hover:drop-shadow-[0_0_10px_rgba(255,255,255,0.95)] transition-all duration-300 select-none cursor-pointer active:scale-90"
+          title="How the search works"
+          aria-label="How the search works"
+        >
+          <Info className="w-7 h-7" strokeWidth={1.5} />
+        </button>
         {/* Site comparison panel toggle (icon only) */}
         <button
           onClick={() => setIsComparisonOpen((prev) => !prev)}

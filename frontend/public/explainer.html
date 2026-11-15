@@ -108,10 +108,17 @@
   /* ---------- embedded mode (?embed=1): one animation at a time, full screen, no page chrome ---------- */
   html.embed, html.embed body { background: #000; overflow: hidden; }
   html.embed .wrap { max-width: none; padding: 0; }
-  html.embed header, html.embed footer, html.embed .scene-head, html.embed .caption, html.embed .note, html.embed .controls { display: none; }
-  html.embed section.scene { display: none; margin: 0; position: fixed; inset: 0; align-items: center; justify-content: center; }
-  html.embed section.scene.active { display: flex; }
-  html.embed .frame { width: min(100vw, calc(100vh * 16 / 9)); border: 0; }
+  html.embed header, html.embed footer, html.embed .controls { display: none; }
+  /* the active part: title, animation, then what it shows and where the data comes from (all sized to the 16:9 frame) */
+  html.embed section.scene { display: none; margin: 0; position: fixed; inset: 0; }
+  html.embed section.scene.active { display: flex; flex-direction: column; justify-content: center; gap: 12px; padding: 72px 24px 24px; }
+  html.embed section.scene.active > * { width: min(calc(100vw - 48px), calc((100vh - 260px) * 16 / 9)); margin: 0; }
+  html.embed .scene-dur { display: none; }
+  html.embed .scene-head { display: flex; margin: 0; }
+  html.embed .caption { display: block; margin: 0; font-size: 15px; line-height: 1.5; }
+  html.embed .note { display: block; margin: 0; font-size: 12px; line-height: 1.55; }
+  html.embed .note a { color: var(--accent); }
+  html.embed .frame { width: 100%; }
   html.embed .frame::after { display: none; }
 </style>
 </head>
@@ -147,26 +154,26 @@
       </div>
       <div class="controls"></div>
     </div>
-    <p class="caption">We keep the <b>highest point of each 240&nbsp;m cell</b> and, of all of them, the <b>150 highest</b>.</p>
-    <p class="note">LRO LOLA LDEM_85S_20M (heights above R = 1737.4 km). Area centered on Connecting Ridge CR1 (89.44° S, 137.19° W), polar stereographic projection.</p>
+    <p class="caption">The 15 × 15 km square is split into <b>cells of about 240&nbsp;m</b> (12 × 12 LOLA pixels). We keep the <b>highest point of each cell</b> and, of all of them, the <b>150 highest</b>: these are the candidate landing points.</p>
+    <p class="note"><b>Data:</b> NASA LRO LOLA polar DEM LDEM_85S_20M, 20 m per pixel, heights relative to the lunar radius R = 1737.4 km (NASA Planetary Data System, Geosciences Node). Area centred on Connecting Ridge CR1 (89.44° S, 137.19° W), polar stereographic projection; CR1 position from Gläser et al. (2014, EPSC 2014-136).</p>
   </section>
 
   <!-- ===================================================== 2 -->
   <section class="scene" id="s2">
-    <div class="scene-head"><span class="scene-num">02</span><h2 class="scene-title">El horizonte real</h2><span class="scene-dur">7 s</span></div>
+    <div class="scene-head"><span class="scene-num">02</span><h2 class="scene-title">The real horizon, from a 2 m mast</h2><span class="scene-dur">7 s</span></div>
     <div class="frame">
       <div class="stage">
         <canvas></canvas>
         <div class="fx hud">
           <div class="phase" data-a="0" data-b="2.9"><div class="kicker">02 · Horizon</div><div class="headline">The steepest point along the ray sets the horizon</div></div>
-          <div class="phase" data-a="2.6" data-b="5.3"><div class="kicker">02 · Horizon</div><div class="headline">360 rayos de hasta 200 km</div></div>
-          <div class="phase" data-a="5.0" data-b="7"><div class="kicker">02 · Horizon</div><div class="headline">El horizonte real alrededor del punto</div></div>
+          <div class="phase" data-a="2.6" data-b="5.3"><div class="kicker">02 · Horizon</div><div class="headline">360 rays, up to 200 km each</div></div>
+          <div class="phase" data-a="5.0" data-b="7"><div class="kicker">02 · Horizon</div><div class="headline">The real horizon around the point</div></div>
         </div>
       </div>
       <div class="controls"></div>
     </div>
-    <p class="caption">From a <b>2&nbsp;m mast</b> we cast <b>360 rays of up to 200&nbsp;km</b> over the real terrain: the steepest obstacle along each ray is the horizon.</p>
-    <p class="note">Real LOLA profile along one azimuth, with the exact curvature of the lunar sphere (no flat-ground approximation). Vertical scale exaggerated.</p>
+    <p class="caption">From a <b>2&nbsp;m mast</b> on the best point we cast <b>360 rays (one per degree) of up to 200&nbsp;km</b> over the real terrain. The steepest obstacle along each ray is the horizon: anything lower in that direction is hidden.</p>
+    <p class="note"><b>Data:</b> LRO LOLA heights, polar DEM LDEM_85S_20M near the site and LDEM_80S_40M for the 400 × 400 km region (NASA PDS Geosciences Node). The curvature of the lunar sphere (R = 1737.4 km) is included, with no flat-ground approximation. Vertical scale exaggerated.</p>
   </section>
 
   <!-- ===================================================== 3 -->
@@ -182,8 +189,8 @@
       </div>
       <div class="controls"></div>
     </div>
-    <p class="caption">Every hour for 3 years, <b>JPL Horizons</b> tells us where the Sun and Earth are; we check whether the terrain blocks them.</p>
-    <p class="note">Real hourly JPL Horizons positions at the best point. Elevation stretched relative to azimuth. Direct-to-Earth link (DTE) when its center is above the terrain.</p>
+    <p class="caption">Every hour from 14 Nov 2026 to 14 Nov 2029, <b>JPL Horizons</b> gives the direction of the Sun and of Earth as seen from the point. We check whether the terrain blocks them: the <b>Sun</b> counts when any part of its disc is above the horizon, <b>Earth</b> (direct-to-Earth link, DTE) when its centre is.</p>
+    <p class="note"><b>Data:</b> NASA JPL Horizons API (ssd.jpl.nasa.gov/horizons), topocentric hourly positions of the Sun (body id 10) and Earth (id 399) at the site, with the Sun's angular radius of 0.266°. Elevation is stretched relative to azimuth in the drawing.</p>
   </section>
 
   <!-- ===================================================== 4 -->
@@ -200,8 +207,8 @@
       </div>
       <div class="controls"></div>
     </div>
-    <p class="caption">What counts are the <b>hours with Sun and a direct link to Earth at the same time</b>.</p>
-    <p class="note">Each column of the bar ≈ 1 day. Check: the winner sits next to Connecting Ridge CR1, illuminated 92 % of the time according to Gläser et al. (2014).</p>
+    <p class="caption">Each column of the bar is one day. For every candidate we count the <b>hours with the Sun and a direct link to Earth at the same time</b>; the candidate with the most such hours is the best point of the area.</p>
+    <p class="note"><b>Check:</b> the winner lies next to Connecting Ridge CR1. Gläser et al. (2014, <i>Icarus</i> 243, 78–90) report 92.3 % sunlit time at 2 m height for CR1; this model gives 90.8 % for CR1 (see DATA_SOURCES.md, validation notes).</p>
   </section>
 
   <footer>
@@ -992,7 +999,7 @@
       };
       // keys pressed while the iframe has focus never reach the parent window: forward them
       window.addEventListener("keydown", (e) => {
-        if (e.code === "Space" || e.key === "ArrowRight" || e.key === "ArrowLeft") {
+        if (e.code === "Space" || e.key === "ArrowRight" || e.key === "ArrowLeft" || e.key === "Escape") {
           e.preventDefault();
           parent.postMessage({ type: "explainer-key", code: e.code, key: e.key, repeat: e.repeat }, "*");
         }
