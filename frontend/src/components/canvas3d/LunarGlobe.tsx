@@ -61,7 +61,7 @@ function engrave(
   const sx = 1 / Math.max(0.2, Math.cos(lat))
 
   // Letters are drawn in an offscreen layer (mask), so the shading and grain stay inside them
-  const lw = Math.ceil(fontPx * ENGRAVING.length * 1.2 * sx)
+  const lw = Math.ceil(fontPx * (ENGRAVING.length * 1.2 + 1.5) * sx)
   const lh = Math.ceil(fontPx * 1.8)
   const layer = document.createElement('canvas')
   layer.width = lw
@@ -72,10 +72,26 @@ function engrave(
     c.translate(lw / 2 + dx, lh / 2 + dy)
     c.scale(sx, 1)
     c.font = `900 ${fontPx}px "Arial Black", "Helvetica Neue", Arial, sans-serif`
-    c.textAlign = 'center'
+    c.textAlign = 'left'
     c.textBaseline = 'middle'
     ;(c as unknown as { letterSpacing: string }).letterSpacing = `${Math.round(fontPx * 0.18)}px`
-    c.fillText(ENGRAVING, 0, 0)
+    // Word + crescent Moon icon, centred together
+    const tw = c.measureText(ENGRAVING).width
+    const r = fontPx * 0.4
+    const gap = fontPx * 0.3
+    const x0 = -(tw + gap + 2 * r) / 2
+    c.fillText(ENGRAVING, x0, 0)
+    // Crescent: outer circle minus the same circle shifted right by d (two arcs between their intersections)
+    const cx = x0 + tw + gap + r
+    const cy = -fontPx * 0.04
+    const d = r * 0.85
+    const hh = Math.sqrt(r * r - (d * d) / 4)
+    const a = Math.atan2(hh, d / 2)
+    c.beginPath()
+    c.arc(cx, cy, r, a, 2 * Math.PI - a)
+    c.arc(cx + d, cy, r, -(Math.PI - a), Math.PI - a, true)
+    c.closePath()
+    c.fill()
     c.restore()
   }
   // 1. Base fill of the carved floor
