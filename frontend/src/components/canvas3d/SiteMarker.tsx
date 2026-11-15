@@ -8,9 +8,11 @@ interface SiteMarkerProps {
   site: LandingSite
   position: [number, number, number]
   lineHeight?: number
+  /** False keeps the marker hidden; switching to true plays its pop-in animation. */
+  revealed?: boolean
 }
 
-export function SiteMarker({ site, position, lineHeight = 4.0 }: SiteMarkerProps) {
+export function SiteMarker({ site, position, lineHeight = 4.0, revealed = true }: SiteMarkerProps) {
   const navigate = useNavigate()
 
   const siteData = useMemo(() => {
@@ -31,5 +33,5 @@ export function SiteMarker({ site, position, lineHeight = 4.0 }: SiteMarkerProps
   const sceneKey = site.scene_key
   const handleLandOnSite = sceneKey ? () => navigate(`/vista-sitio/${sceneKey}`) : undefined
 
-  return <LanderMarkerWithHud site={siteData} onLandOnSite={handleLandOnSite} lineHeight={lineHeight} />
+  return <LanderMarkerWithHud site={siteData} onLandOnSite={handleLandOnSite} lineHeight={lineHeight} revealed={revealed} />
 }

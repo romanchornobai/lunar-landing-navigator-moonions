@@ -14,10 +14,13 @@ import { ExplainerOverlay } from '../ui/ExplainerOverlay'
 import { startAreaSearch } from '../../services/areaSearch'
 import SouthPolarMap, { type MapViewInfo } from '../map2d/SouthPolarMap'
 import MiniSouthPoleTerrain from './MiniSouthPoleTerrain'
+import { INTRO_START_AZIMUTH, IntroCameraFlight } from './IntroCameraFlight'
 
 // Regional South Pole terrain: NASA Moon Trek (LRO LOLA) 1200x1200 Float32 grid, ~212 x 212 km around Shackleton.
 // Georeference, mirroring and height units: lib/southPoleGrid.ts (registered against LRO LOLA GDR, see DATA_SOURCES.md).
 const BASE = '/models/south_pole'
+/** Resting camera position (scene units); the intro flight ends here. */
+const DEFAULT_CAMERA: [number, number, number] = [0, 80, 115]
 
 /** Selected 15 x 15 km area: scene centre and its lat / lon (sent to the local backend). */
 interface SelectedArea {
@@ -122,6 +125,27 @@ function Terrain({
     }))
   }, [elevations])
 
+  // Intro flight: markers pop up one by one, in the order the orbiting camera sweeps past them
+  // (azimuth atan2(x, z) measured from the flight's start azimuth), between 30 % and 85 % of the flight.
+  const [revealed, setRevealed] = useState(0)
+  const revealRank = useMemo(() => {
+    const ranked = sitePositions
+      .map(({ site, position }) => {
+        const a = Math.atan2(position[0], position[2]) - INTRO_START_AZIMUTH
+        return { id: site.id, a: ((a % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI) }
+      })
+      .sort((p, q) => p.a - q.a)
+    return new Map(ranked.map((r, i) => [r.id, i]))
+  }, [sitePositions])
+  const handleIntroProgress = useCallback(
+    (t: number) => {
+      const n = sitePositions.length
+      const count = n === 0 ? 0 : Math.min(n, Math.floor(((t - 0.3) / 0.55) * n) + 1)
+      setRevealed((prev) => (count > prev ? count : prev))
+    },
+    [sitePositions.length],
+  )
+
   // Best point of the computed area (lat / lon from the backend -> scene)
   const best = compute.status === 'done' ? compute.result.best : null
   const bestPosition = useMemo(
@@ -180,8 +204,14 @@ function Terrain({
       {isPickerActive && hoverCenter && <AreaHighlight elevations={elevations} center={hoverCenter} opacity={0.22} />}
       {area && <AreaHighlight elevations={elevations} center={area.center} opacity={0.38} />}
 
+      <IntroCameraFlight
+        end={DEFAULT_CAMERA}
+        onProgress={handleIntroProgress}
+        onDone={() => setRevealed(sitePositions.length)}
+      />
+
       {sitePositions.map(({ site, position }) => (
-        <SiteMarker key={site.id} site={site} position={position} />
+        <SiteMarker key={site.id} site={site} position={position} revealed={(revealRank.get(site.id) ?? 0) < revealed} />
       ))}
 
       {bestPosition && <BestPointBeacon position={bestPosition} />}
@@ -263,7 +293,7 @@ export default function SouthPoleTerrain() {
       <Canvas
         frameloop={viewMode === '3d' ? 'always' : 'never'}
         dpr={[1, 1.5]}
-        camera={{ position: [0, 80, 115], fov: 45, near: 0.1, far: 2000 }}
+        camera={{ position: [-33, 262, -57], fov: 45, near: 0.1, far: 2000 }} // = start of the intro flight
         gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }}
         style={{ width: '100%', height: '100%' }}
       >
@@ -286,6 +316,7 @@ export default function SouthPoleTerrain() {
           />
         </Suspense>
         <OrbitControls
+          makeDefault
           target={[0, 0, 0]}
           enableDamping
           dampingFactor={0.05}

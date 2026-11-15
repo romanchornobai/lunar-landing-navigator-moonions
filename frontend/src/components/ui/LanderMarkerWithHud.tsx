@@ -25,13 +25,22 @@ interface LanderMarkerWithHudProps {
   /** Undefined hides the ALUNIZAR button (no first-person terrain for this point yet). */
   onLandOnSite?: (siteId: string) => void;
   lineHeight?: number;
+  /** False keeps the marker hidden; switching to true plays a short pop-in (line grows, lander scales up). */
+  revealed?: boolean;
 }
+
+const POP_S = 0.7;
+/** Ease-out with a small overshoot, so the marker "pops" into place. */
+const easeOutBack = (t: number) => 1 + 2.2 * Math.pow(t - 1, 3) + 1.2 * Math.pow(t - 1, 2);
 
 export const LanderMarkerWithHud: React.FC<LanderMarkerWithHudProps> = ({
   site,
   onLandOnSite,
   lineHeight = 4.0,
+  revealed = true,
 }) => {
+  const rootRef = useRef<THREE.Group>(null);
+  const popT = useRef(revealed ? 1 : 0); // 0..1 progress of the pop-in
   const [isHovered, setIsHovered] = useState(false);
   const landerHoverRef = useRef(false);
   const cardHoverRef = useRef(false);
@@ -62,6 +71,16 @@ export const LanderMarkerWithHud: React.FC<LanderMarkerWithHudProps> = ({
 
   // Rotación suave del lander cuando está en hover
   useFrame((_, delta) => {
+    // Pop-in: vertical stretch first (line grows from the ground), width follows with a little overshoot
+    const root = rootRef.current;
+    if (root) {
+      if (revealed && popT.current < 1) popT.current = Math.min(1, popT.current + delta / POP_S);
+      const t = popT.current;
+      root.visible = revealed && t > 0;
+      const y = easeOutBack(Math.min(1, t * 1.4));
+      const xz = easeOutBack(Math.max(0, (t - 0.15) / 0.85));
+      root.scale.set(Math.max(1e-3, xz), Math.max(1e-3, y), Math.max(1e-3, xz));
+    }
     if (landerMeshRef.current && isHovered) {
       landerMeshRef.current.rotation.y += delta * 1.5;
     }
@@ -126,7 +145,7 @@ export const LanderMarkerWithHud: React.FC<LanderMarkerWithHudProps> = ({
   const direction = screenSide ?? site.direction ?? (groundPos.x > 25 ? 'left' : 'right');
 
   return (
-    <group position={[groundPos.x, groundPos.y, groundPos.z]}>
+    <group ref={rootRef} position={[groundPos.x, groundPos.y, groundPos.z]} visible={revealed}>
       {/* 0. Punto de anclaje en el suelo y línea blanca minimalista */}
       <mesh position={[0, 0.04, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <ringGeometry args={[0.25, 0.42, 32]} />
