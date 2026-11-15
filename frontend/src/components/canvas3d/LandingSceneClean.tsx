@@ -1,6 +1,6 @@
-import { Suspense, useEffect, useMemo, useState } from 'react'
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
-import { Canvas } from '@react-three/fiber'
+import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { OrbitControls, Stars, useGLTF } from '@react-three/drei'
 import { useNavigate } from 'react-router-dom'
 import { LandingTerrainModel } from './LandingTerrainModel'
@@ -72,6 +72,59 @@ function ArtemisLander({ groundNormal = [-0.2871, 0.9229, -0.2567] }: { groundNo
       </group>
     </group>
   )
+}
+
+/** Resting camera (scene units, metres) and orbit target next to the lander. */
+const CAMERA_END: Vec3 = [0, 23.4, 85.8]
+const CAMERA_TARGET: Vec3 = [0, 1.5, 0]
+const INTRO_S = 2.6
+
+/**
+ * Short opening move once the terrain and lander are loaded: the camera comes in from 1.6x farther and a bit higher,
+ * swinging ~40 deg around the lander, and settles at CAMERA_END. OrbitControls are disabled meanwhile.
+ */
+function SiteIntroCamera() {
+  const { camera, controls } = useThree() as unknown as {
+    camera: THREE.PerspectiveCamera
+    controls: { enabled: boolean; target: THREE.Vector3; update: () => void } | null
+  }
+  const t = useRef(0)
+  const done = useRef(false)
+  const target = useMemo(() => new THREE.Vector3(...CAMERA_TARGET), [])
+  const end = useMemo(() => new THREE.Spherical().setFromVector3(new THREE.Vector3(...CAMERA_END).sub(target)), [target])
+  const start = useMemo(
+    () => new THREE.Spherical(end.radius * 1.6, Math.max(0.15, end.phi - 0.35), end.theta - THREE.MathUtils.degToRad(40)),
+    [end],
+  )
+  const s = useMemo(() => new THREE.Spherical(), [])
+
+  useEffect(() => {
+    if (controls) controls.enabled = false
+    return () => {
+      if (controls) controls.enabled = true
+    }
+  }, [controls])
+
+  useFrame((_, delta) => {
+    if (done.current) return
+    t.current = Math.min(1, t.current + Math.min(delta, 1 / 30) / INTRO_S)
+    const k = 1 - Math.pow(1 - t.current, 3) // ease-out
+    s.set(
+      THREE.MathUtils.lerp(start.radius, end.radius, k),
+      THREE.MathUtils.lerp(start.phi, end.phi, k),
+      THREE.MathUtils.lerp(start.theta, end.theta, k),
+    )
+    camera.position.setFromSpherical(s).add(target)
+    camera.lookAt(target)
+    if (t.current >= 1) {
+      done.current = true
+      if (controls) {
+        controls.enabled = true
+        controls.update()
+      }
+    }
+  })
+  return null
 }
 
 interface LandingSceneCleanProps {
@@ -162,7 +215,7 @@ export function LandingSceneClean({ siteId = 'cr1' }: LandingSceneCleanProps) {
       >
       <Canvas
         shadows
-        camera={{ position: [0, 7.8, 28.6], fov: 50, near: 0.5, far: 35000.0 }}
+        camera={{ position: CAMERA_END, fov: 50, near: 0.5, far: 35000.0 }}
         gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }}
       >
         <color attach="background" args={['#010306']} />
@@ -183,11 +236,12 @@ export function LandingSceneClean({ siteId = 'cr1' }: LandingSceneCleanProps) {
         <Suspense fallback={null}>
           <LandingTerrainModel key={modelPath} modelPath={modelPath} />
           <ArtemisLander groundNormal={groundNormal} />
+          <SiteIntroCamera key={siteId} />
         </Suspense>
 
         {/* Orbital camera controls */}
         <OrbitControls
-          target={[0, 1.5, 0]}
+          target={CAMERA_TARGET}
           makeDefault
           enableDamping
           dampingFactor={0.08}
